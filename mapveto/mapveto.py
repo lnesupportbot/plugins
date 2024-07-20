@@ -105,47 +105,45 @@ class MapVetoCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command()
-    async def create_mapveto(self, ctx, name: str):
+    @commands.group(name='mapveto', invoke_without_command=True)
+    async def mapveto(self, ctx):
+        """Affiche les options de gestion des templates de veto."""
+        await ctx.send_help(ctx.command)
+
+    @mapveto.command(name='create')
+    async def mapveto_create(self, ctx, name: str):
         """Crée un template de veto avec le nom donné."""
         if veto_config.create_veto(name):
             await ctx.send(f"Template de veto '{name}' créé avec succès.")
         else:
             await ctx.send(f"Un template de veto avec le nom '{name}' existe déjà.")
 
-    @commands.command()
-    async def show_mapveto(self, ctx, name: str):
-        """Affiche les détails du veto de maps avec le nom donné."""
-        if name not in vetos:
-            await ctx.send(f"Aucun veto de maps trouvé avec le nom {name}.")
-            return
+    @mapveto.command(name='add')
+    async def mapveto_add(self, ctx, name: str, map_name: str):
+        """Ajoute une map au template de veto spécifié."""
+        if veto_config.add_map(name, map_name):
+            await ctx.send(f"Map '{map_name}' ajoutée au template de veto '{name}'.")
+        else:
+            await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
 
-        veto = vetos[name]
-        await ctx.send(f"Veto '{name}':\nMaps: {', '.join(veto.maps)}\nPicks: {', '.join(veto.picks)}\nBans: {', '.join(veto.bans)}\nTour actuel: {veto.current_turn}\nAction actuelle: {veto.current_action_type()}")
+    @mapveto.command(name='rules')
+    async def mapveto_rules(self, ctx, name: str, *, rules: str):
+        """Définit les règles pour le template de veto spécifié."""
+        if veto_config.set_rules(name, rules):
+            await ctx.send(f"Règles '{rules}' définies pour le template de veto '{name}'.")
+        else:
+            await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
 
-    @commands.command()
-    async def mapveto(self, ctx, action: str, name: str, *args):
-        """Gère les actions pour les templates de veto: create, add, rules, delete."""
-        if action == "add":
-            map_name = args[0]
-            if veto_config.add_map(name, map_name):
-                await ctx.send(f"Map '{map_name}' ajoutée au template de veto '{name}'.")
-            else:
-                await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
-        elif action == "rules":
-            rules = ' '.join(args)
-            if veto_config.set_rules(name, rules):
-                await ctx.send(f"Règles '{rules}' définies pour le template de veto '{name}'.")
-            else:
-                await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
-        elif action == "delete":
-            if veto_config.delete_veto(name):
-                await ctx.send(f"Template de veto '{name}' supprimé avec succès.")
-            else:
-                await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
+    @mapveto.command(name='delete')
+    async def mapveto_delete(self, ctx, name: str):
+        """Supprime le template de veto spécifié."""
+        if veto_config.delete_veto(name):
+            await ctx.send(f"Template de veto '{name}' supprimé avec succès.")
+        else:
+            await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
 
-    @commands.command()
-    async def list_mapvetos(self, ctx):
+    @mapveto.command(name='list')
+    async def mapveto_list(self, ctx):
         """Liste tous les templates de veto disponibles."""
         if veto_config.vetos:
             await ctx.send(f"Templates de veto disponibles : {', '.join(veto_config.vetos.keys())}")
