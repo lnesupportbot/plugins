@@ -37,7 +37,7 @@ class MapVetoConfig(commands.Cog):
     def get_veto(self, name):
         return self.vetos.get(name, None)
 
-veto_config = MapVetoConfig()
+veto_config = MapVetoConfig(bot)
 
 class MapVeto:
     def __init__(self, name, maps, team_a_id, team_b_id, rules):
