@@ -175,7 +175,7 @@ class MapVetoCog(commands.Cog):
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-    async def help(self, ctx):
+    async def help_veto(self, ctx):
         """Affiche les commandes disponibles pour la gestion des veto de cartes."""
         embed = discord.Embed(title="Aide pour les Commandes MapVeto", description="Voici un résumé des commandes disponibles pour la gestion des veto de cartes.")
 
