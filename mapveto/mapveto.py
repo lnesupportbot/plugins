@@ -4,7 +4,6 @@ import random
 
 class MapVetoConfig(commands.Cog):
     def __init__(self):
-        self.bot = bot
         self.vetos = {}
 
     def create_veto(self, name):
