@@ -67,7 +67,7 @@ class MapButton(discord.ui.Button):
 
         if self.action_type == "ban":
             veto.ban_map(self.label)
-            message = f"Map {self.label} bannie par {interaction.user.mention}."
+            message = f"**Map {self.label} bannie par {interaction.user.mention}.**"
         elif self.action_type == "pick":
             veto.pick_map(self.label)
             message = f"**Map {self.label} choisie par {interaction.user.mention}.**"
@@ -116,7 +116,7 @@ async def send_ticket_message(bot, veto, channel):
         view.add_item(component)
 
     try:
-        await current_user.send(f"{current_user.mention}, c'est votre tour de {action} une map.", view=view)
+        await current_user.send(f"{current_user.mention}, c'est votre tour de {action.lower()} une map.", view=view)
     except discord.Forbidden:
         print(f"Cannot DM user {current_user.id}")
 
@@ -126,10 +126,10 @@ async def send_ticket_message(bot, veto, channel):
             random_map = random.choice(veto.maps)
             if action == "ban":
                 veto.ban_map(random_map)
-                await current_user.send(f"Map {random_map} bannie automatiquement.")
+                await current_user.send(f"**Map {random_map} bannie automatiquement.**")
             elif action == "pick":
                 veto.pick_map(random_map)
-                await current_user.send(f"Map {random_map} choisie automatiquement.")
+                await current_user.send(f"**Map {random_map} choisie automatiquement.**")
             veto.next_turn()
             if veto.current_turn is not None:
                 await send_ticket_message(bot, veto, channel)
@@ -164,15 +164,17 @@ class MapVeto:
     def next_turn(self):
         if self.stopped or self.paused:
             return
-        
-        if self.current_action_type() != "Continue":
-            self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
-        else:
-            # Stay on the same user if the action is "Continue"
+
+        current_action_type = self.current_action_type()
+
+        if current_action_type == "Continue":
             self.current_action += 1
             if self.current_action < len(self.rules) and self.rules[self.current_action] == "Continue":
                 self.next_turn()  # Handle consecutive "Continue"
-            return
+            else:
+                self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
+        else:
+            self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
 
         self.current_action += 1
 
@@ -223,7 +225,7 @@ class MapVetoCog(commands.Cog):
     async def add_map(self, ctx, name: str, *map_names):
         """Ajoute plusieurs maps au template de veto spécifié."""
         if veto_config.add_maps(name, map_names):
-            await ctx.send(f"Maps ajoutées au template de veto '{name}': {', '.join(map_names)}.")
+            await ctx.send(f"Maps ajoutées au template de veto '{name}' : {', '.join(map_names)}.")
         else:
             await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
 
