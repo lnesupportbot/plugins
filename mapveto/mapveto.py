@@ -2,6 +2,8 @@ import discord
 from discord.ext import commands
 import random
 
+from core import checks
+
 class MapVetoConfig:
     def __init__(self):
         self.vetos = {}
