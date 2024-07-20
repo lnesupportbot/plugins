@@ -58,14 +58,16 @@ class MapButton(discord.ui.Button):
         if veto.paused or veto.stopped:
             await interaction.response.send_message("Le veto est actuellement en pause ou a été arrêté.", ephemeral=True)
             return
-
+        
         if interaction.user.id != veto.get_current_turn():
             await interaction.response.send_message("Ce n'est pas votre tour.", ephemeral=True)
             return
 
+        opponent_user = interaction.client.get_user(veto.team_b_id if interaction.user.id == veto.team_a_id else veto.team_a_id)
+
         if self.action_type == "ban":
             veto.ban_map(self.label)
-            message = f"**Map {self.label} bannie par {interaction.user.mention}.**"
+            message = f"Map {self.label} bannie par {interaction.user.mention}."
         elif self.action_type == "pick":
             veto.pick_map(self.label)
             message = f"**Map {self.label} choisie par {interaction.user.mention}.**"
@@ -75,9 +77,6 @@ class MapButton(discord.ui.Button):
 
         await interaction.response.send_message(message)
         await self.channel.send(message)
-
-        # Notify the opponent if applicable
-        opponent_user = interaction.client.get_user(veto.team_b_id if interaction.user.id == veto.team_a_id else veto.team_a_id)
         if opponent_user:
             await opponent_user.send(message)
 
@@ -117,7 +116,7 @@ async def send_ticket_message(bot, veto, channel):
         view.add_item(component)
 
     try:
-        await current_user.send(f"{current_user.mention}, c'est votre tour de {action.lower()} une map.", view=view)
+        await current_user.send(f"{current_user.mention}, c'est votre tour de {action} une map.", view=view)
     except discord.Forbidden:
         print(f"Cannot DM user {current_user.id}")
 
@@ -127,10 +126,10 @@ async def send_ticket_message(bot, veto, channel):
             random_map = random.choice(veto.maps)
             if action == "ban":
                 veto.ban_map(random_map)
-                await current_user.send(f"**Map {random_map} bannie automatiquement.**")
+                await current_user.send(f"Map {random_map} bannie automatiquement.")
             elif action == "pick":
                 veto.pick_map(random_map)
-                await current_user.send(f"**Map {random_map} choisie automatiquement.**")
+                await current_user.send(f"Map {random_map} choisie automatiquement.")
             veto.next_turn()
             if veto.current_turn is not None:
                 await send_ticket_message(bot, veto, channel)
@@ -166,16 +165,29 @@ class MapVeto:
         if self.stopped or self.paused:
             return
 
-        current_action_type = self.current_action_type()
-
-        if current_action_type == "Continue":
-            # Allow the current user to act again
-            self.current_action += 1
-            return
-
-        # Switch turn for other action types
-        self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_a_id
-        self.current_action += 1
+        # Handle the "Continue" rule
+        if self.current_action < len(self.rules):
+            current_rule = self.rules[self.current_action]
+            if current_rule == "Continue":
+                self.current_action += 1
+                if self.current_action < len(self.rules):
+                    # If the next rule is also "Continue", repeat the turn
+                    if self.rules[self.current_action] == "Continue":
+                        return
+                else:
+                    # No more rules, end the veto
+                    self.stopped = True
+                    return
+            else:
+                # Normal action, switch turn
+                self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
+                self.current_action += 1
+                # Check if we need to handle consecutive "Continue" actions
+                if self.current_action < len(self.rules) and self.rules[self.current_action] == "Continue":
+                    self.next_turn()  # Handle consecutive "Continue"
+        else:
+            # No more rules, end the veto
+            self.stopped = True
 
     def ban_map(self, map_name):
         if map_name in self.maps:
@@ -240,7 +252,7 @@ class MapVetoCog(commands.Cog):
             else:
                 await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
         else:
-            await ctx.send(f"Les règles doivent être parmi : {', '.join(valid_rules)}")
+            await ctx.send(f"Règles invalides. Les règles valides sont: {', '.join(valid_rules)}.")
 
     @mapveto.command(name='delete')
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
@@ -317,47 +329,47 @@ class MapVetoCog(commands.Cog):
         embed = discord.Embed(title="Aide pour les Commandes MapVeto", description="Voici un résumé des commandes disponibles pour la gestion des veto de cartes.")
 
         embed.add_field(
-            name="`mapveto create <name>`",
+            name="mapveto create <name>",
             value="Crée un template de veto avec le nom donné.",
             inline=False
         )
         embed.add_field(
-            name="`mapveto add <name> <map_name>`",
+            name="mapveto add <name> <map_name>",
             value="Ajoute plusieurs maps au template de veto spécifié.",
             inline=False
         )
         embed.add_field(
-            name="`mapveto rules <name> <rules>`",
+            name="mapveto rules <name> <rules>",
             value="Définit les règles pour le template de veto spécifié.",
             inline=False
         )
         embed.add_field(
-            name="`mapveto delete <name>`",
+            name="mapveto delete <name>",
             value="Supprime le template de veto spécifié.",
             inline=False
         )
         embed.add_field(
-            name="`mapveto list`",
+            name="mapveto list",
             value="Liste tous les templates de veto disponibles.",
             inline=False
         )
         embed.add_field(
-            name="`start_mapveto <name> <team_a_id> <team_b_id>`",
+            name="start_mapveto <name> <team_a_id> <team_b_id>",
             value="Démarre un veto et envoie des messages en DM aux équipes spécifiées.",
             inline=False
         )
         embed.add_field(
-            name="`pause_mapveto <name>`",
+            name="pause_mapveto <name>",
             value="Met en pause le veto spécifié.",
             inline=False
         )
         embed.add_field(
-            name="`resume_mapveto <name>`",
+            name="resume_mapveto <name>",
             value="Reprend le veto spécifié.",
             inline=False
         )
         embed.add_field(
-            name="`stop_mapveto <name>`",
+            name="stop_mapveto <name>",
             value="Arrête complètement le veto spécifié et le supprime des enregistrements.",
             inline=False
         )
