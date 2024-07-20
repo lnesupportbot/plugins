@@ -173,5 +173,44 @@ class MapVetoCog(commands.Cog):
 
         await send_veto_message(ctx.channel, veto)
 
+    @commands.command()
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
+    async def help(self, ctx):
+        """Affiche les commandes disponibles pour la gestion des veto de cartes."""
+        embed = discord.Embed(title="Aide pour les Commandes MapVeto", description="Voici un résumé des commandes disponibles pour la gestion des veto de cartes.")
+
+        embed.add_field(
+            name="`mapveto create <name>`",
+            value="Crée un template de veto avec le nom donné.",
+            inline=False
+        )
+        embed.add_field(
+            name="`mapveto add <name> <map_name>`",
+            value="Ajoute une map au template de veto spécifié.",
+            inline=False
+        )
+        embed.add_field(
+            name="`mapveto rules <name> <rules>`",
+            value="Définit les règles pour le template de veto spécifié.",
+            inline=False
+        )
+        embed.add_field(
+            name="`mapveto delete <name>`",
+            value="Supprime le template de veto spécifié.",
+            inline=False
+        )
+        embed.add_field(
+            name="`mapveto list`",
+            value="Liste tous les templates de veto disponibles.",
+            inline=False
+        )
+        embed.add_field(
+            name="`start_mapveto <name> <team_a_id> <team_b_id>`",
+            value="Démarre un veto dans un thread spécifique avec les équipes spécifiées.",
+            inline=False
+        )
+
+        await ctx.send(embed=embed)
+
 async def setup(bot):
     await bot.add_cog(MapVetoCog(bot))
