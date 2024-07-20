@@ -68,6 +68,9 @@ class MapButton(discord.ui.Button):
         elif self.action_type == "pick":
             veto.pick_map(self.label)
             await interaction.response.send_message(f"Map {self.label} choisie par {interaction.user.mention}.")
+        elif self.action_type == "side":
+            veto.pick_side(self.label)
+            await interaction.response.send_message(f"Side {self.label} choisi par {interaction.user.mention}.")
 
         veto.next_turn()
         if veto.current_turn is not None:
@@ -94,8 +97,8 @@ async def send_ticket_message(bot, veto):
     components = []
     if action == "Side":
         # Side action: Attaque/Defense buttons
-        components.append(discord.ui.Button(label="Attaque", style=discord.ButtonStyle.primary, custom_id=f"{veto.name}_attaque_side"))
-        components.append(discord.ui.Button(label="Défense", style=discord.ButtonStyle.primary, custom_id=f"{veto.name}_defense_side"))
+        components.append(MapButton(label="Attaque", veto_name=veto.name, action_type="side"))
+        components.append(MapButton(label="Défense", veto_name=veto.name, action_type="side"))
     else:
         # Ban/Pick actions: Map buttons
         for map_name in veto.maps:
@@ -180,6 +183,9 @@ class MapVeto:
         if map_name in self.maps:
             self.maps.remove(map_name)
             self.picked_maps.append(map_name)
+
+    def pick_side(self, side):
+        self.picked_maps.append(f"{side} choisi")
 
     def pause(self):
         self.paused = True
