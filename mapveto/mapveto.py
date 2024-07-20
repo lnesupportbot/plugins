@@ -74,6 +74,13 @@ class MapButton(discord.ui.Button):
         else:
             await interaction.user.send("Le veto est terminé!")
 
+        # Disable the button and update the message
+        for item in interaction.message.components:
+            for button in item.children:
+                if button.label == self.label:
+                    button.disabled = True
+        await interaction.message.edit(view=interaction.message.view)
+
 async def send_ticket_message(bot, veto):
     action = veto.current_action_type()
     if action is None:
@@ -84,8 +91,14 @@ async def send_ticket_message(bot, veto):
         return
 
     components = []
-    for map_name in veto.maps:
-        components.append(MapButton(label=map_name, veto_name=veto.name))
+    if action == "Side":
+        # Side action: Attaque/Defense buttons
+        components.append(discord.ui.Button(label="Attaque", style=discord.ButtonStyle.primary, custom_id="side_att"))
+        components.append(discord.ui.Button(label="Défense", style=discord.ButtonStyle.primary, custom_id="side_def"))
+    else:
+        # Ban/Pick actions: Map buttons
+        for map_name in veto.maps:
+            components.append(MapButton(label=map_name, veto_name=veto.name))
 
     view = discord.ui.View(timeout=60)
     for component in components:
@@ -236,7 +249,7 @@ class MapVetoCog(commands.Cog):
     async def start_mapveto(self, ctx, name: str, team_a_id: int, team_b_id: int):
         """Démarre un veto et envoie des messages en DM aux équipes spécifiées."""
         if name not in veto_config.vetos:
-            await ctx.send(f"Aucun template de veto trouvé avec le nom {name}.")
+            await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
             return
 
         veto = MapVeto(name, veto_config.vetos[name]["maps"], team_a_id, team_b_id, veto_config.vetos[name]["rules"])
