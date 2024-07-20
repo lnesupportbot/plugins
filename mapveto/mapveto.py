@@ -96,7 +96,7 @@ class MapButton(discord.ui.Button):
 
 async def send_ticket_message(bot, veto, channel):
     action = veto.current_action_type()
-    if action is None or action == "Continue":
+    if action is None:
         return
 
     current_user = bot.get_user(veto.get_current_turn())
@@ -167,6 +167,13 @@ class MapVeto:
         
         if self.current_action_type() != "Continue":
             self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
+        else:
+            # Stay on the same user if the action is "Continue"
+            self.current_action += 1
+            if self.current_action < len(self.rules) and self.rules[self.current_action] == "Continue":
+                self.next_turn()  # Handle consecutive "Continue"
+            return
+
         self.current_action += 1
 
     def ban_map(self, map_name):
@@ -236,7 +243,7 @@ class MapVetoCog(commands.Cog):
 
     @mapveto.command(name='delete')
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-    async def delete_mapveto(self, ctx, name: str):
+    async def mapveto_delete(self, ctx, name: str):
         """Supprime le template de veto spécifié."""
         if veto_config.delete_veto(name):
             await ctx.send(f"Template de veto '{name}' supprimé avec succès.")
