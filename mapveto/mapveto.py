@@ -63,8 +63,6 @@ class MapButton(discord.ui.Button):
             await interaction.response.send_message("Ce n'est pas votre tour.", ephemeral=True)
             return
 
-        opponent_user = interaction.client.get_user(veto.team_b_id if interaction.user.id == veto.team_a_id else veto.team_a_id)
-
         if self.action_type == "ban":
             veto.ban_map(self.label)
             message = f"Map {self.label} bannie par {interaction.user.mention}."
@@ -77,6 +75,8 @@ class MapButton(discord.ui.Button):
 
         await interaction.response.send_message(message)
         await self.channel.send(message)
+
+        opponent_user = interaction.client.get_user(veto.team_b_id if interaction.user.id == veto.team_a_id else veto.team_a_id)
         if opponent_user:
             await opponent_user.send(message)
 
@@ -165,28 +165,24 @@ class MapVeto:
         if self.stopped or self.paused:
             return
 
-        # Handle the "Continue" rule
         if self.current_action < len(self.rules):
             current_rule = self.rules[self.current_action]
             if current_rule == "Continue":
-                self.current_action += 1
-                if self.current_action < len(self.rules):
-                    # If the next rule is also "Continue", repeat the turn
-                    if self.rules[self.current_action] == "Continue":
-                        return
-                else:
-                    # No more rules, end the veto
-                    self.stopped = True
-                    return
+                # Allow the same team to play again
+                return
             else:
                 # Normal action, switch turn
                 self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
                 self.current_action += 1
-                # Check if we need to handle consecutive "Continue" actions
-                if self.current_action < len(self.rules) and self.rules[self.current_action] == "Continue":
-                    self.next_turn()  # Handle consecutive "Continue"
+
+                # Handle consecutive "Continue" rules
+                while self.current_action < len(self.rules) and self.rules[self.current_action] == "Continue":
+                    self.current_action += 1
+                    if self.current_action < len(self.rules) and self.rules[self.current_action] != "Continue":
+                        # Switch turn after exiting consecutive "Continue"
+                        self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
         else:
-            # No more rules, end the veto
+            # No more actions, end the veto
             self.stopped = True
 
     def ban_map(self, map_name):
@@ -248,11 +244,11 @@ class MapVetoCog(commands.Cog):
         rules_list = rules.split()
         if all(rule in valid_rules for rule in rules_list):
             if veto_config.set_rules(name, rules):
-                await ctx.send(f"Règles '{rules}' définies pour le template de veto '{name}'.")
+                await ctx.send(f"Règles définies pour le template de veto '{name}' : {rules}.")
             else:
                 await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
         else:
-            await ctx.send(f"Règles invalides. Les règles valides sont: {', '.join(valid_rules)}.")
+            await ctx.send(f"Règles invalides. Les règles valides sont : {', '.join(valid_rules)}.")
 
     @mapveto.command(name='delete')
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
