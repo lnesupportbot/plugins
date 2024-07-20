@@ -114,8 +114,18 @@ async def send_ticket_message(user, bot, veto, message=None):
     if message is None:
         message = f"C'est votre tour de {veto.current_action_type()} une map."
 
+    # Create buttons based on the current action
+    view = discord.ui.View(timeout=60)
+    action = veto.current_action_type()
+    if action == "ban" or action == "pick":
+        for map_name in veto.maps:
+            view.add_item(MapButton(label=map_name, veto_name=veto.name, bot=bot))
+    elif action == "Side":
+        view.add_item(SideButton(label="Attaque", veto_name=veto.name, bot=bot))
+        view.add_item(SideButton(label="Défense", veto_name=veto.name, bot=bot))
+
     try:
-        await user.send(message)
+        await user.send(message, view=view)
     except discord.Forbidden:
         # Handle the case where the user has DMs disabled
         print(f"Impossible d'envoyer un message à l'utilisateur {user.id}. Ils ont probablement les DMs désactivés.")
@@ -216,7 +226,7 @@ class MapVetoCog(commands.Cog):
         if veto_config.set_rules(name, rules):
             await ctx.send(f"Règles '{rules}' définies pour le template de veto '{name}'.")
         else:
-            await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}' ou règles invalides.")
+            await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
 
     @mapveto.command(name='delete')
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
