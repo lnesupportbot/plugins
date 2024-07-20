@@ -2,9 +2,6 @@ import discord
 from discord.ext import commands
 import random
 
-from core import checks
-from core.models import PermissionLevel
-
 class MapVetoConfig:
     def __init__(self):
         self.vetos = {}
@@ -43,9 +40,10 @@ veto_config = MapVetoConfig()
 vetos = {}
 
 class MapButton(discord.ui.Button):
-    def __init__(self, label, veto_name):
-        super().__init__(label=label, style=discord.ButtonStyle.primary)
+    def __init__(self, label, veto_name, action_type):
+        super().__init__(label=label, style=discord.ButtonStyle.primary, custom_id=f"{veto_name}_{label}_{action_type}")
         self.veto_name = veto_name
+        self.action_type = action_type
 
     async def callback(self, interaction: discord.Interaction):
         veto = vetos.get(self.veto_name)
@@ -61,11 +59,10 @@ class MapButton(discord.ui.Button):
             await interaction.response.send_message("Ce n'est pas votre tour.", ephemeral=True)
             return
 
-        action = veto.current_action_type()
-        if action == "ban":
+        if self.action_type == "ban":
             veto.ban_map(self.label)
             await interaction.response.send_message(f"Map {self.label} bannie par {interaction.user.mention}.")
-        elif action == "pick":
+        elif self.action_type == "pick":
             veto.pick_map(self.label)
             await interaction.response.send_message(f"Map {self.label} choisie par {interaction.user.mention}.")
 
@@ -76,11 +73,11 @@ class MapButton(discord.ui.Button):
             await interaction.user.send("Le veto est terminé!")
 
         # Disable the button and update the message
-        for item in interaction.message.components:
-            for button in item.children:
-                if button.label == self.label:
-                    button.disabled = True
-        await interaction.message.edit(view=interaction.message.view)
+        view = interaction.message.view
+        for item in view.children:
+            if isinstance(item, discord.ui.Button) and item.custom_id == self.custom_id:
+                item.disabled = True
+        await interaction.message.edit(view=view)
 
 async def send_ticket_message(bot, veto):
     action = veto.current_action_type()
@@ -94,12 +91,12 @@ async def send_ticket_message(bot, veto):
     components = []
     if action == "Side":
         # Side action: Attaque/Defense buttons
-        components.append(discord.ui.Button(label="Attaque", style=discord.ButtonStyle.primary, custom_id="side_att"))
-        components.append(discord.ui.Button(label="Défense", style=discord.ButtonStyle.primary, custom_id="side_def"))
+        components.append(discord.ui.Button(label="Attaque", style=discord.ButtonStyle.primary, custom_id=f"{veto.name}_attaque_side"))
+        components.append(discord.ui.Button(label="Défense", style=discord.ButtonStyle.primary, custom_id=f"{veto.name}_defense_side"))
     else:
         # Ban/Pick actions: Map buttons
         for map_name in veto.maps:
-            components.append(MapButton(label=map_name, veto_name=veto.name))
+            components.append(MapButton(label=map_name, veto_name=veto.name, action_type=action.lower()))
 
     view = discord.ui.View(timeout=60)
     for component in components:
