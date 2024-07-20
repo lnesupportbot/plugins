@@ -25,10 +25,10 @@ class MapVetoConfig:
         return False
 
     def set_rules(self, name, rules):
-        allowed_rules = {"Ban", "Pick", "Side", "Continue"}
-        split_rules = rules.split()
-        if name in self.vetos and all(rule in allowed_rules for rule in split_rules):
-            self.vetos[name]["rules"] = split_rules
+        valid_rules = {'Ban', 'Pick', 'Side', 'Continue'}
+        rule_list = rules.split()
+        if name in self.vetos and all(rule in valid_rules for rule in rule_list):
+            self.vetos[name]["rules"] = rule_list
             return True
         return False
 
@@ -44,67 +44,6 @@ class MapVetoConfig:
 veto_config = MapVetoConfig()
 vetos = {}
 
-class MapVeto:
-    def __init__(self, name, maps, team_a_id, team_b_id, rules):
-        self.name = name
-        self.maps = maps
-        self.rules = rules
-        self.current_turn = team_a_id  # L'équipe qui commence
-        self.team_a_id = team_a_id
-        self.team_b_id = team_b_id
-        self.current_action_index = 0
-
-    def current_action_type(self):
-        if self.rules:
-            if self.current_action_index < len(self.rules):
-                return self.rules[self.current_action_index]
-        return None
-
-    def next_turn(self):
-        action = self.current_action_type()
-        if action == "Continue":
-            # Continue avec la même équipe si la règle est "Continue"
-            pass
-        else:
-            # Passer au tour suivant
-            self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
-        self.current_action_index += 1
-
-    def ban_map(self, map_name):
-        if map_name in self.maps:
-            self.maps.remove(map_name)
-
-    def pick_map(self, map_name):
-        if map_name in self.maps:
-            self.maps.remove(map_name)
-
-    def get_current_turn(self):
-        return self.current_turn
-
-class SideButton(discord.ui.Button):
-    def __init__(self, label, veto_name):
-        super().__init__(label=label, style=discord.ButtonStyle.primary)
-        self.veto_name = veto_name
-
-    async def callback(self, interaction: discord.Interaction):
-        if self.veto_name not in vetos:
-            await interaction.response.send_message("Veto non trouvé.", ephemeral=True)
-            return
-
-        veto = vetos[self.veto_name]
-        if interaction.user.id != veto.current_turn:
-            await interaction.response.send_message("Ce n'est pas votre tour.", ephemeral=True)
-            return
-
-        veto.pick_map(self.label)
-        await interaction.response.send_message(f"Map {self.label} choisie comme '{self.label}' par {interaction.user.mention}.")
-        veto.next_turn()
-
-        if veto.current_turn is not None:
-            await send_veto_message(interaction.channel, veto)
-        else:
-            await interaction.channel.send("Le veto est terminé!")
-
 class MapButton(discord.ui.Button):
     def __init__(self, label, veto_name):
         super().__init__(label=label, style=discord.ButtonStyle.primary)
@@ -116,7 +55,7 @@ class MapButton(discord.ui.Button):
             return
         
         veto = vetos[self.veto_name]
-        if interaction.user.id != veto.current_turn:
+        if interaction.user.id != veto.get_current_turn():
             await interaction.response.send_message("Ce n'est pas votre tour.", ephemeral=True)
             return
 
@@ -128,12 +67,37 @@ class MapButton(discord.ui.Button):
             await interaction.response.send_message(f"Map {self.label} choisie par {interaction.user.mention}.")
 
         veto.next_turn()
-        if veto.current_turn is not None:
-            await send_veto_message(interaction.channel, veto)
+        if veto.get_current_turn() is not None:
+            await send_veto_message(self.bot, interaction.channel, veto)
         else:
             await interaction.channel.send("Le veto est terminé!")
 
-async def send_veto_message(channel, veto):
+class SideButton(discord.ui.Button):
+    def __init__(self, label, veto_name):
+        super().__init__(label=label, style=discord.ButtonStyle.primary)
+        self.veto_name = veto_name
+
+    async def callback(self, interaction: discord.Interaction):
+        if self.veto_name not in vetos:
+            await interaction.response.send_message("Veto non trouvé.", ephemeral=True)
+            return
+        
+        veto = vetos[self.veto_name]
+        if interaction.user.id != veto.get_current_turn():
+            await interaction.response.send_message("Ce n'est pas votre tour.", ephemeral=True)
+            return
+
+        if veto.current_action_type() == "Side":
+            veto.pick_map(self.label)
+            await interaction.response.send_message(f"Choix '{self.label}' effectué par {interaction.user.mention}.")
+        
+        veto.next_turn()
+        if veto.get_current_turn() is not None:
+            await send_veto_message(self.bot, interaction.channel, veto)
+        else:
+            await interaction.channel.send("Le veto est terminé!")
+
+async def send_veto_message(bot, channel, veto):
     action = veto.current_action_type()
     if action is None:
         return
@@ -150,8 +114,11 @@ async def send_veto_message(channel, veto):
     for component in components:
         view.add_item(component)
 
-    current_team = bot.get_user(veto.current_turn)
-    message = await channel.send(f"{current_team.mention}, c'est votre tour de {action} une map.", view=view)
+    current_team = bot.get_user(veto.get_current_turn())
+    if current_team:
+        message = await channel.send(f"{current_team.mention}, c'est votre tour de {action} une map.", view=view)
+    else:
+        message = await channel.send(f"C'est au tour d'une équipe de {action} une map.", view=view)
 
     async def timeout():
         await view.wait()
@@ -164,17 +131,55 @@ async def send_veto_message(channel, veto):
                 veto.pick_map(random_map)
                 await channel.send(f"Map {random_map} choisie automatiquement.")
             elif action == "Side":
-                # Choix automatique entre "Attaque" ou "Défense"
                 side_choice = random.choice(["Attaque", "Défense"])
                 veto.pick_map(side_choice)
                 await channel.send(f"Choix automatique : '{side_choice}'.")
             veto.next_turn()
-            if veto.current_turn is not None:
-                await send_veto_message(channel, veto)
+            if veto.get_current_turn() is not None:
+                await send_veto_message(bot, channel, veto)
             else:
                 await channel.send("Le veto est terminé!")
 
     bot.loop.create_task(timeout())
+
+class MapVeto:
+    def __init__(self, name, maps, team_a_id, team_b_id, rules):
+        self.name = name
+        self.maps = maps
+        self.team_a_id = team_a_id
+        self.team_b_id = team_b_id
+        self.rules = rules
+        self.current_turn = team_a_id
+        self.current_action = 0
+        self.picked_maps = []
+        self.banned_maps = []
+
+    def current_action_type(self):
+        if self.current_action < len(self.rules):
+            return self.rules[self.current_action]
+        return None
+
+    def get_current_turn(self):
+        return self.current_turn
+
+    def next_turn(self):
+        if self.current_action_type() == "Continue":
+            return
+        self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
+        self.current_action += 1
+
+    def ban_map(self, map_name):
+        if map_name in self.maps:
+            self.maps.remove(map_name)
+            self.banned_maps.append(map_name)
+
+    def pick_map(self, map_name):
+        if map_name in self.maps:
+            self.maps.remove(map_name)
+            self.picked_maps.append(map_name)
+
+async def setup(bot):
+    await bot.add_cog(MapVetoCog(bot))
 
 class MapVetoCog(commands.Cog):
     def __init__(self, bot):
@@ -211,7 +216,7 @@ class MapVetoCog(commands.Cog):
         if veto_config.set_rules(name, rules):
             await ctx.send(f"Règles '{rules}' définies pour le template de veto '{name}'.")
         else:
-            await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
+            await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}' ou règles invalides.")
 
     @mapveto.command(name='delete')
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
@@ -233,6 +238,7 @@ class MapVetoCog(commands.Cog):
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
+    @checks.thread_only()
     async def start_mapveto(self, ctx, name: str, team_a_id: int, team_b_id: int):
         """Démarre un veto dans un thread spécifique avec les équipes spécifiées."""
         if name not in veto_config.vetos:
@@ -242,7 +248,7 @@ class MapVetoCog(commands.Cog):
         veto = MapVeto(name, veto_config.vetos[name]["maps"], team_a_id, team_b_id, veto_config.vetos[name]["rules"])
         vetos[name] = veto
 
-        await send_veto_message(ctx.channel, veto)
+        await send_veto_message(self.bot, ctx.channel, veto)
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
@@ -282,6 +288,3 @@ class MapVetoCog(commands.Cog):
         )
 
         await ctx.send(embed=embed)
-
-async def setup(bot):
-    await bot.add_cog(MapVetoCog(bot))
