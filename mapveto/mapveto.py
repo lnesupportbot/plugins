@@ -168,16 +168,12 @@ class MapVeto:
         current_action_type = self.current_action_type()
 
         if current_action_type == "Continue":
-            # Skip consecutive "Continue" rules
-            while self.current_action < len(self.rules) and self.rules[self.current_action] == "Continue":
-                self.current_action += 1
-            # Switch turn only after skipping all "Continue" rules
-            self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_a_id
-        else:
-            # Switch turn for other action types
-            self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
+            # Allow the current user to act again
+            self.current_action += 1
+            return
 
-        # Move to the next action
+        # Switch turn for other action types
+        self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_a_id
         self.current_action += 1
 
     def ban_map(self, map_name):
@@ -243,7 +239,7 @@ class MapVetoCog(commands.Cog):
             else:
                 await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
         else:
-            await ctx.send(f"Règles invalides. Les règles valides sont: {', '.join(valid_rules)}")
+            await ctx.send(f"Les règles doivent être parmi : {', '.join(valid_rules)}")
 
     @mapveto.command(name='delete')
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
