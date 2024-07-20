@@ -67,24 +67,18 @@ class MapButton(discord.ui.Button):
 
         if self.action_type == "ban":
             veto.ban_map(self.label)
-            await interaction.response.send_message(f"Map {self.label} bannie par {interaction.user.mention}.")
-            await self.channel.send(f"Map {self.label} bannie par {interaction.user.mention}.")
-            if opponent_user:
-                await opponent_user.send(f"Map {self.label} bannie par {interaction.user.mention}.")
-
+            message = f"**Map {self.label} bannie par {interaction.user.mention}.**"
         elif self.action_type == "pick":
             veto.pick_map(self.label)
-            await interaction.response.send_message(f"Map {self.label} choisie par {interaction.user.mention}.")
-            await self.channel.send(f"Map {self.label} choisie par {interaction.user.mention}.")
-            if opponent_user:
-                await opponent_user.send(f"Map {self.label} choisie par {interaction.user.mention}.")
-
+            message = f"**Map {self.label} choisie par {interaction.user.mention}.**"
         elif self.action_type == "side":
             veto.pick_side(self.label)
-            await interaction.response.send_message(f"Side {self.label} choisi par {interaction.user.mention}.")
-            await self.channel.send(f"Side {self.label} choisi par {interaction.user.mention}.")
-            if opponent_user:
-                await opponent_user.send(f"Side {self.label} choisi par {interaction.user.mention}.")
+            message = f"**Side {self.label} choisi par {interaction.user.mention}.**"
+
+        await interaction.response.send_message(message)
+        await self.channel.send(message)
+        if opponent_user:
+            await opponent_user.send(message)
 
         veto.next_turn()
         if veto.current_turn is not None:
@@ -102,7 +96,7 @@ class MapButton(discord.ui.Button):
 
 async def send_ticket_message(bot, veto, channel):
     action = veto.current_action_type()
-    if action is None:
+    if action is None or action == "Continue":
         return
 
     current_user = bot.get_user(veto.get_current_turn())
