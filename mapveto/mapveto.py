@@ -67,7 +67,7 @@ class MapButton(discord.ui.Button):
 
         if self.action_type == "ban":
             veto.ban_map(self.label)
-            message = f"**Map {self.label} bannie par {interaction.user.mention}.**"
+            message = f"Map {self.label} bannie par {interaction.user.mention}."
         elif self.action_type == "pick":
             veto.pick_map(self.label)
             message = f"**Map {self.label} choisie par {interaction.user.mention}.**"
