@@ -37,45 +37,6 @@ class MapVetoConfig:
         return self.vetos.get(name, None)
 
 veto_config = MapVetoConfig()
-
-class MapVeto:
-    def __init__(self, name, maps, team_a_id, team_b_id, rules):
-        self.name = name
-        self.maps = list(maps)
-        self.team_a_id = team_a_id
-        self.team_b_id = team_b_id
-        self.current_turn = team_a_id
-        self.actions = rules
-        self.current_action = 0
-        self.picks = []
-        self.bans = []
-
-    def next_turn(self):
-        self.current_action += 1
-        if self.current_action < len(self.actions):
-            self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
-        else:
-            self.current_turn = None  # Veto terminé
-
-    def current_action_type(self):
-        if self.current_action < len(self.actions):
-            return self.actions[self.current_action]
-        return None
-
-    def pick_map(self, map_name):
-        if map_name in self.maps and map_name not in self.picks and map_name not in self.bans:
-            self.picks.append(map_name)
-            self.maps.remove(map_name)
-            return True
-        return False
-
-    def ban_map(self, map_name):
-        if map_name in self.maps and map_name not in self.picks and map_name not in self.bans:
-            self.bans.append(map_name)
-            self.maps.remove(map_name)
-            return True
-        return False
-
 vetos = {}
 
 class MapButton(discord.ui.Button):
@@ -140,8 +101,9 @@ async def send_veto_message(channel, veto):
 
     bot.loop.create_task(timeout())
 
-async def setup(bot):
+async def setup(bot_instance):
     global bot
+    bot = bot_instance
     bot.add_command(create_mapveto)
     bot.add_command(show_mapveto)
     bot.add_command(mapveto)
