@@ -48,11 +48,11 @@ class MapButton(discord.ui.Button):
         self.veto_name = veto_name
 
     async def callback(self, interaction: discord.Interaction):
-        if self.veto_name not in vetos:
+        veto = vetos.get(self.veto_name)
+        if not veto:
             await interaction.response.send_message("Veto non trouvé.", ephemeral=True)
             return
         
-        veto = vetos[self.veto_name]
         if veto.paused or veto.stopped:
             await interaction.response.send_message("Le veto est actuellement en pause ou a été arrêté.", ephemeral=True)
             return
@@ -70,13 +70,17 @@ class MapButton(discord.ui.Button):
 
         veto.next_turn()
         if veto.current_turn is not None:
-            await send_ticket_message(interaction.user, interaction.client, veto)
+            await send_ticket_message(interaction.client, veto)
         else:
             await interaction.user.send("Le veto est terminé!")
 
-async def send_ticket_message(user, bot, veto):
+async def send_ticket_message(bot, veto):
     action = veto.current_action_type()
     if action is None:
+        return
+
+    current_user = bot.get_user(veto.get_current_turn())
+    if not current_user:
         return
 
     components = []
@@ -87,7 +91,10 @@ async def send_ticket_message(user, bot, veto):
     for component in components:
         view.add_item(component)
 
-    message = await user.send(f"{user.mention}, c'est votre tour de {action} une map.", view=view)
+    try:
+        await current_user.send(f"{current_user.mention}, c'est votre tour de {action} une map.", view=view)
+    except discord.Forbidden:
+        print(f"Cannot DM user {current_user.id}")
 
     async def timeout():
         await view.wait()
@@ -95,15 +102,15 @@ async def send_ticket_message(user, bot, veto):
             random_map = random.choice(veto.maps)
             if action == "ban":
                 veto.ban_map(random_map)
-                await user.send(f"Map {random_map} bannie automatiquement.")
+                await current_user.send(f"Map {random_map} bannie automatiquement.")
             elif action == "pick":
                 veto.pick_map(random_map)
-                await user.send(f"Map {random_map} choisie automatiquement.")
+                await current_user.send(f"Map {random_map} choisie automatiquement.")
             veto.next_turn()
             if veto.current_turn is not None:
-                await send_ticket_message(user, bot, veto)
+                await send_ticket_message(bot, veto)
             else:
-                await user.send("Le veto est terminé!")
+                await current_user.send("Le veto est terminé!")
 
     bot.loop.create_task(timeout())
 
@@ -135,6 +142,11 @@ class MapVeto:
         
         if self.current_action_type() == "Continue":
             return
+
+        if self.current_action_type() == "Side":
+            # Allow the same team to go again if "Continue" rule is used
+            if "Continue" in self.rules:
+                return
 
         self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
         self.current_action += 1
@@ -230,13 +242,7 @@ class MapVetoCog(commands.Cog):
         veto = MapVeto(name, veto_config.vetos[name]["maps"], team_a_id, team_b_id, veto_config.vetos[name]["rules"])
         vetos[name] = veto
 
-        # Start the veto by sending messages to team A's and team B's DMs
-        team_a = self.bot.get_user(team_a_id)
-        team_b = self.bot.get_user(team_b_id)
-        if team_a:
-            await send_ticket_message(team_a, self.bot, veto)
-        if team_b:
-            await send_ticket_message(team_b, self.bot, veto)
+        await send_ticket_message(self.bot, veto)
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
