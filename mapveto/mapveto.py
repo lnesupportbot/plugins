@@ -18,12 +18,6 @@ class MapVetoConfig:
             return True
         return False
 
-    def add_map(self, name, map_name):
-        if name in self.vetos:
-            self.vetos[name]["maps"].append(map_name)
-            return True
-        return False
-
     def add_maps(self, name, map_names):
         if name in self.vetos:
             self.vetos[name]["maps"].extend(map_names)
@@ -31,8 +25,10 @@ class MapVetoConfig:
         return False
 
     def set_rules(self, name, rules):
-        if name in self.vetos:
-            self.vetos[name]["rules"] = rules.split()
+        allowed_rules = {"Ban", "Pick", "Side"}
+        split_rules = rules.split()
+        if name in self.vetos and all(rule in allowed_rules for rule in split_rules):
+            self.vetos[name]["rules"] = split_rules
             return True
         return False
 
@@ -47,6 +43,30 @@ class MapVetoConfig:
 
 veto_config = MapVetoConfig()
 vetos = {}
+
+class SideButton(discord.ui.Button):
+    def __init__(self, label, veto_name):
+        super().__init__(label=label, style=discord.ButtonStyle.primary)
+        self.veto_name = veto_name
+
+    async def callback(self, interaction: discord.Interaction):
+        if self.veto_name not in vetos:
+            await interaction.response.send_message("Veto non trouvé.", ephemeral=True)
+            return
+
+        veto = vetos[self.veto_name]
+        if interaction.user.id != veto.current_turn:
+            await interaction.response.send_message("Ce n'est pas votre tour.", ephemeral=True)
+            return
+
+        veto.pick_map(self.label)
+        await interaction.response.send_message(f"Map {self.label} choisie comme '{self.label}' par {interaction.user.mention}.")
+        veto.next_turn()
+
+        if veto.current_turn is not None:
+            await send_veto_message(interaction.channel, veto)
+        else:
+            await interaction.channel.send("Le veto est terminé!")
 
 class MapButton(discord.ui.Button):
     def __init__(self, label, veto_name):
@@ -82,8 +102,12 @@ async def send_veto_message(channel, veto):
         return
 
     components = []
-    for map_name in veto.maps:
-        components.append(MapButton(label=map_name, veto_name=veto.name))
+    if action == "Side":
+        components.append(SideButton(label="Attaque", veto_name=veto.name))
+        components.append(SideButton(label="Défense", veto_name=veto.name))
+    else:
+        for map_name in veto.maps:
+            components.append(MapButton(label=map_name, veto_name=veto.name))
 
     view = discord.ui.View(timeout=60)
     for component in components:
@@ -102,6 +126,11 @@ async def send_veto_message(channel, veto):
             elif action == "pick":
                 veto.pick_map(random_map)
                 await channel.send(f"Map {random_map} choisie automatiquement.")
+            elif action == "Side":
+                # Automatiquement choisir "Attaque" ou "Défense"
+                side_choice = random.choice(["Attaque", "Défense"])
+                veto.pick_map(side_choice)
+                await channel.send(f"Choix automatique : '{side_choice}'.")
             veto.next_turn()
             if veto.current_turn is not None:
                 await send_veto_message(channel, veto)
@@ -132,10 +161,9 @@ class MapVetoCog(commands.Cog):
     @mapveto.command(name='add')
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def add_map(self, ctx, name: str, *map_names):
-        """Ajoute plusieurs maps au template de veto spécifié.
-            Pour ajouter plusieurs maps en une seule fois, vous devez écrire le nom de chaque map séparé par des espaces."""
+        """Ajoute plusieurs maps au template de veto spécifié."""
         if veto_config.add_maps(name, map_names):
-            await ctx.send(f"Maps ajoutées au template de veto '{name}': {', '.join(map_names)}.")
+            await ctx.send(f"Maps ajoutées au template de veto '{name}' : {', '.join(map_names)}.")
         else:
             await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
 
@@ -146,7 +174,7 @@ class MapVetoCog(commands.Cog):
         if veto_config.set_rules(name, rules):
             await ctx.send(f"Règles '{rules}' définies pour le template de veto '{name}'.")
         else:
-            await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
+            await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}' ou règles invalides.")
 
     @mapveto.command(name='delete')
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
@@ -193,12 +221,12 @@ class MapVetoCog(commands.Cog):
         )
         embed.add_field(
             name="`mapveto add <name> <map_name>`",
-            value="Ajoute plusieurs maps au template de veto spécifié. Séparez les noms de maps par des espaces.",
+            value="Ajoute une ou plusieurs maps au template de veto spécifié.",
             inline=False
         )
         embed.add_field(
             name="`mapveto rules <name> <rules>`",
-            value="Définit les règles pour le template de veto spécifié.",
+            value="Définit les règles pour le template de veto spécifié. Les règles doivent être 'Ban', 'Pick', ou 'Side'.",
             inline=False
         )
         embed.add_field(
