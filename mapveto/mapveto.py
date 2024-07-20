@@ -44,6 +44,43 @@ class MapVetoConfig:
 veto_config = MapVetoConfig()
 vetos = {}
 
+class MapVeto:
+    def __init__(self, name, maps, team_a_id, team_b_id, rules):
+        self.name = name
+        self.maps = maps
+        self.rules = rules
+        self.current_turn = team_a_id  # L'équipe qui commence
+        self.team_a_id = team_a_id
+        self.team_b_id = team_b_id
+        self.current_action_index = 0
+
+    def current_action_type(self):
+        if self.rules:
+            if self.current_action_index < len(self.rules):
+                return self.rules[self.current_action_index]
+        return None
+
+    def next_turn(self):
+        action = self.current_action_type()
+        if action == "Continue":
+            # Continue avec la même équipe si la règle est "Continue"
+            pass
+        else:
+            # Passer au tour suivant
+            self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
+        self.current_action_index += 1
+
+    def ban_map(self, map_name):
+        if map_name in self.maps:
+            self.maps.remove(map_name)
+
+    def pick_map(self, map_name):
+        if map_name in self.maps:
+            self.maps.remove(map_name)
+
+    def get_current_turn(self):
+        return self.current_turn
+
 class SideButton(discord.ui.Button):
     def __init__(self, label, veto_name):
         super().__init__(label=label, style=discord.ButtonStyle.primary)
@@ -174,7 +211,7 @@ class MapVetoCog(commands.Cog):
         if veto_config.set_rules(name, rules):
             await ctx.send(f"Règles '{rules}' définies pour le template de veto '{name}'.")
         else:
-            await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}' ou règles invalides.")
+            await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
 
     @mapveto.command(name='delete')
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
@@ -196,7 +233,6 @@ class MapVetoCog(commands.Cog):
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-    @checks.thread_only()
     async def start_mapveto(self, ctx, name: str, team_a_id: int, team_b_id: int):
         """Démarre un veto dans un thread spécifique avec les équipes spécifiées."""
         if name not in veto_config.vetos:
