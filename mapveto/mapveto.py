@@ -25,7 +25,7 @@ class MapVetoConfig:
         return False
 
     def set_rules(self, name, rules):
-        allowed_rules = {"Ban", "Pick", "Side"}
+        allowed_rules = {"Ban", "Pick", "Side", "Continue"}
         split_rules = rules.split()
         if name in self.vetos and all(rule in allowed_rules for rule in split_rules):
             self.vetos[name]["rules"] = split_rules
@@ -127,7 +127,7 @@ async def send_veto_message(channel, veto):
                 veto.pick_map(random_map)
                 await channel.send(f"Map {random_map} choisie automatiquement.")
             elif action == "Side":
-                # Automatiquement choisir "Attaque" ou "Défense"
+                # Choix automatique entre "Attaque" ou "Défense"
                 side_choice = random.choice(["Attaque", "Défense"])
                 veto.pick_map(side_choice)
                 await channel.send(f"Choix automatique : '{side_choice}'.")
@@ -226,7 +226,7 @@ class MapVetoCog(commands.Cog):
         )
         embed.add_field(
             name="`mapveto rules <name> <rules>`",
-            value="Définit les règles pour le template de veto spécifié. Les règles doivent être 'Ban', 'Pick', ou 'Side'.",
+            value="Définit les règles pour le template de veto spécifié. Les règles doivent être 'Ban', 'Pick', 'Side', ou 'Continue'.",
             inline=False
         )
         embed.add_field(
