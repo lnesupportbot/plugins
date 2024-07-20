@@ -3,7 +3,7 @@ from discord.ext import commands
 import random
 
 class MapVetoConfig(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self):
         self.bot = bot
         self.vetos = {}
 
@@ -37,7 +37,7 @@ class MapVetoConfig(commands.Cog):
     def get_veto(self, name):
         return self.vetos.get(name, None)
 
-veto_config = MapVetoConfig(bot)
+veto_config = MapVetoConfig()
 
 class MapVeto:
     def __init__(self, name, maps, team_a_id, team_b_id, rules):
@@ -141,7 +141,7 @@ async def send_veto_message(channel, veto):
 
     bot.loop.create_task(timeout())
 
-@bot.command()
+@create_mapveto.command()
 async def create_mapveto(ctx, name: str, team_a_id: int, team_b_id: int, template_name: str):
     template = veto_config.get_veto(template_name)
     if not template:
@@ -156,7 +156,7 @@ async def create_mapveto(ctx, name: str, team_a_id: int, team_b_id: int, templat
     await ctx.send(f"Veto de maps '{name}' créé avec succès entre les équipes {team_a_id} et {team_b_id}.")
     await send_veto_message(ctx.channel, vetos[name])
 
-@bot.command()
+@show_mapveto.command()
 async def show_mapveto(ctx, name: str):
     if name not in vetos:
         await ctx.send(f"Aucun veto de maps trouvé avec le nom {name}.")
@@ -165,7 +165,7 @@ async def show_mapveto(ctx, name: str):
     veto = vetos[name]
     await ctx.send(f"Veto '{name}':\nMaps: {', '.join(veto.maps)}\nPicks: {', '.join(veto.picks)}\nBans: {', '.join(veto.bans)}\nTour actuel: {veto.current_turn}\nAction actuelle: {veto.current_action_type()}")
 
-@bot.command()
+@mapveto.command()
 async def mapveto(ctx, action: str, name: str, *args):
     if action == "create":
         if veto_config.create_veto(name):
@@ -190,7 +190,7 @@ async def mapveto(ctx, action: str, name: str, *args):
         else:
             await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
 
-@bot.command()
+@list_mapvetos.command()
 async def list_mapvetos(ctx):
     if veto_config.vetos:
         await ctx.send(f"Templates de veto disponibles : {', '.join(veto_config.vetos.keys())}")
