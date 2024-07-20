@@ -87,7 +87,11 @@ async def send_ticket_message(user, bot, veto):
     for component in components:
         view.add_item(component)
 
-    message = await user.send(f"{user.mention}, c'est votre tour de {action} une map.", view=view)
+    try:
+        await user.send(f"{user.mention}, c'est votre tour de {action} une map.", view=view)
+    except discord.Forbidden:
+        # Handle case where the bot can't DM the user
+        print(f"Cannot DM user {user.id}")
 
     async def timeout():
         await view.wait()
