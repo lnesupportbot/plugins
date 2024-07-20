@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 import random
 
-class MapVetoConfig(command.Cog):
+class MapVetoConfig(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.vetos = {}
