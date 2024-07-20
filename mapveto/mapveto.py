@@ -3,7 +3,8 @@ from discord.ext import commands
 import random
 
 class MapVetoConfig:
-    def __init__(self):
+    def __init__(self, bot):
+        self.bot = bot
         self.vetos = {}
 
     def create_veto(self, name):
