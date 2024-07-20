@@ -139,7 +139,7 @@ async def show_mapveto(ctx, name: str):
     await ctx.send(f"Veto '{name}':\nMaps: {', '.join(veto.maps)}\nPicks: {', '.join(veto.picks)}\nBans: {', '.join(veto.bans)}\nTour actuel: {veto.current_turn}\nAction actuelle: {veto.current_action_type()}")
 
 @commands.command(name="mapveto", usage="<option>", invoke_without_command=True)
-@checks.has_permissions(PermissionLevel.MODERATOR)
+@checks.has_permissions(PermissionLevel.ADMINISTRATOR)
 async def mapveto(ctx, action: str, name: str, *args):
     if action == "create":
         if veto_config.create_veto(name):
@@ -163,6 +163,7 @@ async def mapveto(ctx, action: str, name: str, *args):
             await ctx.send(f"Template de veto '{name}' supprimé avec succès.")
         else:
             await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
+    await ctx.send_help(ctx.command)
 
 @commands.command()
 async def list_mapvetos(ctx):
