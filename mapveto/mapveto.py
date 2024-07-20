@@ -125,12 +125,12 @@ class MapVetoCog(commands.Cog):
 
     @mapveto.command(name='add')
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-    async def mapveto_add(self, ctx, name: str, map_name: str):
-        """Ajoute une map au template de veto spécifié."""
-        if veto_config.add_map(name, map_name):
-            await ctx.send(f"Map '{map_name}' ajoutée au template de veto '{name}'.")
-        else:
-            await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
+    async def add_map(ctx, name: str, *map_names):
+    """Ajoute plusieurs maps au template de veto spécifié."""
+    if veto_config.add_maps(name, map_names):
+        await ctx.send(f"Maps ajoutées au template de veto '{name}': {', '.join(map_names)}.")
+    else:
+        await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
 
     @mapveto.command(name='rules')
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
