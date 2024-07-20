@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 import random
 
-# Classe pour gérer les veto de cartes
+# Classes pour gérer les veto et la configuration
 class MapVeto:
     def __init__(self, name, maps, team_a_id, team_b_id, rules):
         self.name = name
@@ -39,7 +39,6 @@ class MapVeto:
         elif self.current_action_type() == "pick":
             self.current_turn = self.team_b_id if self.current_turn == self.team_a_id else self.team_a_id
 
-# Classe pour gérer la configuration des templates de veto
 class MapVetoConfig:
     def __init__(self):
         self.vetos = {}
