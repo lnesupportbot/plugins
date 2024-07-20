@@ -2,43 +2,6 @@ import discord
 from discord.ext import commands
 import random
 
-# Classes pour gérer les veto et la configuration
-class MapVeto:
-    def __init__(self, name, maps, team_a_id, team_b_id, rules):
-        self.name = name
-        self.maps = maps
-        self.rules = rules
-        self.team_a_id = team_a_id
-        self.team_b_id = team_b_id
-        self.current_turn = team_a_id
-        self.bans = []
-        self.picks = []
-        self.current_action_index = 0
-
-    def current_action_type(self):
-        if not self.rules:
-            return None
-        return self.rules[self.current_action_index]
-
-    def ban_map(self, map_name):
-        if map_name in self.maps:
-            self.maps.remove(map_name)
-            self.bans.append(map_name)
-
-    def pick_map(self, map_name):
-        if map_name in self.maps:
-            self.maps.remove(map_name)
-            self.picks.append(map_name)
-
-    def next_turn(self):
-        if not self.rules:
-            return
-        self.current_action_index = (self.current_action_index + 1) % len(self.rules)
-        if self.current_action_type() == "ban":
-            self.current_turn = self.team_b_id if self.current_turn == self.team_a_id else self.team_a_id
-        elif self.current_action_type() == "pick":
-            self.current_turn = self.team_b_id if self.current_turn == self.team_a_id else self.team_a_id
-
 class MapVetoConfig:
     def __init__(self):
         self.vetos = {}
@@ -138,87 +101,75 @@ async def send_veto_message(channel, veto):
 
     bot.loop.create_task(timeout())
 
-class MapVetoCog(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
+async def setup(bot_instance):
+    global bot
+    bot = bot_instance
+    bot.add_command(create_mapveto)
+    bot.add_command(show_mapveto)
+    bot.add_command(mapveto)
+    bot.add_command(list_mapvetos)
+    bot.add_command(start_mapveto)
 
-    @commands.command()
-    async def mapveto(self, ctx, action: str, name: str, *args):
-        """Commandes pour créer, ajouter des cartes, définir des règles et supprimer un template de veto"""
-        if action == "create":
-            if veto_config.create_veto(name):
-                await ctx.send(f"Template de veto '{name}' créé avec succès.")
-            else:
-                await ctx.send(f"Un template de veto avec le nom '{name}' existe déjà.")
-        elif action == "add":
-            map_name = args[0]
-            if veto_config.add_map(name, map_name):
-                await ctx.send(f"Map '{map_name}' ajoutée au template de veto '{name}'.")
-            else:
-                await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
-        elif action == "rules":
-            rules = ' '.join(args)
-            if veto_config.set_rules(name, rules):
-                await ctx.send(f"Règles '{rules}' définies pour le template de veto '{name}'.")
-            else:
-                await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
-        elif action == "delete":
-            if veto_config.delete_veto(name):
-                await ctx.send(f"Template de veto '{name}' supprimé avec succès.")
-            else:
-                await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
+@commands.command()
+async def create_mapveto(ctx, name: str):
+    """Crée un template de veto avec le nom donné."""
+    if veto_config.create_veto(name):
+        await ctx.send(f"Template de veto '{name}' créé avec succès.")
+    else:
+        await ctx.send(f"Un template de veto avec le nom '{name}' existe déjà.")
 
-    @commands.command()
-    async def list_mapvetos(self, ctx):
-        """Liste tous les templates de veto disponibles"""
-        if veto_config.vetos:
-            await ctx.send(f"Templates de veto disponibles : {', '.join(veto_config.vetos.keys())}")
+@commands.command()
+async def show_mapveto(ctx, name: str):
+    """Affiche les détails du veto de maps avec le nom donné."""
+    if name not in vetos:
+        await ctx.send(f"Aucun veto de maps trouvé avec le nom {name}.")
+        return
+
+    veto = vetos[name]
+    await ctx.send(f"Veto '{name}':\nMaps: {', '.join(veto.maps)}\nPicks: {', '.join(veto.picks)}\nBans: {', '.join(veto.bans)}\nTour actuel: {veto.current_turn}\nAction actuelle: {veto.current_action_type()}")
+
+@commands.command()
+async def mapveto(ctx, action: str, name: str, *args):
+    """Gère les actions pour les templates de veto: create, add, rules, delete."""
+    if action == "add":
+        map_name = args[0]
+        if veto_config.add_map(name, map_name):
+            await ctx.send(f"Map '{map_name}' ajoutée au template de veto '{name}'.")
         else:
-            await ctx.send("Aucun template de veto disponible.")
-
-    @commands.command()
-    async def start_mapveto(self, ctx, name: str, team_a_id: int, team_b_id: int):
-        """Démarre un veto dans un thread avec les utilisateurs spécifiés."""
-        if name not in veto_config.vetos:
-            await ctx.send(f"Aucun veto de maps trouvé avec le nom {name}.")
-            return
-
-        veto = MapVeto(name, veto_config.vetos[name]["maps"], team_a_id, team_b_id, veto_config.vetos[name]["rules"])
-        vetos[name] = veto
-
-        # Crée un thread pour le veto
-        thread = await ctx.channel.create_thread(name=f"Veto de {name}", type=discord.ChannelType.public_thread)
-
-        await thread.send(f"Démarrage du veto '{name}' dans ce thread. Vous pouvez maintenant faire des choix.")
-
-        await send_veto_message(thread, veto)
-
-    @commands.command()
-    async def help(self, ctx, command=None):
-        """Affiche l'aide pour les commandes disponibles."""
-        embed = discord.Embed(title="Aide des commandes")
-        if command is None:
-            embed.description = (
-                "**?mapveto create <nom>** - Crée un nouveau template de veto.\n"
-                "**?mapveto add <nom> <map>** - Ajoute une map au template de veto.\n"
-                "**?mapveto rules <nom> <ordre>** - Définit les règles pour le veto.\n"
-                "**?mapveto delete <nom>** - Supprime un template de veto.\n"
-                "**?mapveto start <nom> <ID équipe A> <ID équipe B>** - Démarre un veto dans un thread.\n"
-                "**?list_mapvetos** - Liste tous les templates de veto disponibles."
-            )
+            await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
+    elif action == "rules":
+        rules = ' '.join(args)
+        if veto_config.set_rules(name, rules):
+            await ctx.send(f"Règles '{rules}' définies pour le template de veto '{name}'.")
         else:
-            if command == "mapveto":
-                embed.description = (
-                    "**?mapveto create <nom>** - Crée un nouveau template de veto.\n"
-                    "**?mapveto add <nom> <map>** - Ajoute une map au template de veto.\n"
-                    "**?mapveto rules <nom> <ordre>** - Définit les règles pour le veto.\n"
-                    "**?mapveto delete <nom>** - Supprime un template de veto.\n"
-                    "**?mapveto start <nom> <ID équipe A> <ID équipe B>** - Démarre un veto dans un thread."
-                )
-            else:
-                embed.description = "Commande inconnue. Utilisez `?help` pour voir la liste des commandes disponibles."
+            await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
+    elif action == "delete":
+        if veto_config.delete_veto(name):
+            await ctx.send(f"Template de veto '{name}' supprimé avec succès.")
+        else:
+            await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
 
-        await ctx.send(embed=embed)
+@commands.command()
+async def list_mapvetos(ctx):
+    """Liste tous les templates de veto disponibles."""
+    if veto_config.vetos:
+        await ctx.send(f"Templates de veto disponibles : {', '.join(veto_config.vetos.keys())}")
+    else:
+        await ctx.send("Aucun template de veto disponible.")
 
-def setup(bot):
-    bot.add_cog(MapVetoCog(bot))
+@commands.command()
+async def start_mapveto(ctx, name: str, team_a_id: int, team_b_id: int):
+    """Démarre un veto avec les équipes spécifiées dans un thread."""
+    if name not in veto_config.vetos:
+        await ctx.send(f"Aucun template de veto trouvé avec le nom {name}.")
+        return
+
+    veto = MapVeto(name, veto_config.vetos[name]["maps"], team_a_id, team_b_id, veto_config.vetos[name]["rules"])
+    vetos[name] = veto
+
+    # Crée un thread pour le veto
+    thread = await ctx.channel.create_thread(name=f"Veto de {name}", type=discord.ChannelType.public_thread)
+
+    await thread.send(f"Démarrage du veto '{name}' dans ce thread. Vous pouvez maintenant faire des choix.")
+
+    await send_veto_message(thread, veto)
