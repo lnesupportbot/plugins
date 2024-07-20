@@ -190,34 +190,32 @@ class MapVetoCog(commands.Cog):
         # Crée un thread pour le veto
         thread = await ctx.channel.create_thread(name=f"Veto de {name}", type=discord.ChannelType.public_thread)
 
-        await thread.send(f"Démarrage du veto '{name}' dans ce thread. Vous pouvez maintenant faire des picks et des bans.")
+        await thread.send(f"Démarrage du veto '{name}' dans ce thread. Vous pouvez maintenant faire des choix.")
+
         await send_veto_message(thread, veto)
 
     @commands.command()
-    async def help(self, ctx, command: str = None):
-        """Affiche l'aide pour les commandes disponibles"""
-        embed = discord.Embed(title="Commandes Map Veto", color=discord.Color.blue())
-        
+    async def help(self, ctx, command=None):
+        """Affiche l'aide pour les commandes disponibles."""
+        embed = discord.Embed(title="Aide des commandes")
         if command is None:
             embed.description = (
-                "**?mapveto <action> <nom> [arguments...]** - Gère les templates de veto (create, add, rules, delete).\n"
-                "**?list_mapvetos** - Liste tous les templates de veto disponibles.\n"
-                "**?start_mapveto <nom> <ID équipe A> <ID équipe B>** - Démarre un veto dans un thread."
+                "**?mapveto create <nom>** - Crée un nouveau template de veto.\n"
+                "**?mapveto add <nom> <map>** - Ajoute une map au template de veto.\n"
+                "**?mapveto rules <nom> <ordre>** - Définit les règles pour le veto.\n"
+                "**?mapveto delete <nom>** - Supprime un template de veto.\n"
+                "**?mapveto start <nom> <ID équipe A> <ID équipe B>** - Démarre un veto dans un thread.\n"
+                "**?list_mapvetos** - Liste tous les templates de veto disponibles."
             )
         else:
             if command == "mapveto":
                 embed.description = (
-                    "**?mapveto create <nom> <ID équipe A> <ID équipe B> <nom template>** - Crée un nouveau veto de carte.\n"
-                    "**?mapveto add <nom> <nom_carte>** - Ajoute une carte à un template.\n"
-                    "**?mapveto rules <nom> <ordre>** - Définit les règles pour un template.\n"
-                    "**?mapveto delete <nom>** - Supprime un template de veto."
+                    "**?mapveto create <nom>** - Crée un nouveau template de veto.\n"
+                    "**?mapveto add <nom> <map>** - Ajoute une map au template de veto.\n"
+                    "**?mapveto rules <nom> <ordre>** - Définit les règles pour le veto.\n"
+                    "**?mapveto delete <nom>** - Supprime un template de veto.\n"
+                    "**?mapveto start <nom> <ID équipe A> <ID équipe B>** - Démarre un veto dans un thread."
                 )
-            elif command == "show_mapveto":
-                embed.description = "**?show_mapveto <nom>** - Affiche les détails d'un veto de carte."
-            elif command == "list_mapvetos":
-                embed.description = "**?list_mapvetos** - Liste tous les templates de veto disponibles."
-            elif command == "start_mapveto":
-                embed.description = "**?start_mapveto <nom> <ID équipe A> <ID équipe B>** - Démarre un veto dans un thread."
             else:
                 embed.description = "Commande inconnue. Utilisez `?help` pour voir la liste des commandes disponibles."
 
