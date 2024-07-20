@@ -2,10 +2,41 @@ import discord
 from discord.ext import commands
 import random
 
-from core import checks
-from core.models import PermissionLevel
-from core.paginator import EmbedPaginatorSession
-from core.utils import human_join
+class MapVeto:
+    def __init__(self, name, maps, team_a_id, team_b_id, rules):
+        self.name = name
+        self.maps = maps
+        self.rules = rules
+        self.team_a_id = team_a_id
+        self.team_b_id = team_b_id
+        self.current_turn = team_a_id
+        self.bans = []
+        self.picks = []
+        self.current_action_index = 0
+
+    def current_action_type(self):
+        if not self.rules:
+            return None
+        return self.rules[self.current_action_index]
+
+    def ban_map(self, map_name):
+        if map_name in self.maps:
+            self.maps.remove(map_name)
+            self.bans.append(map_name)
+
+    def pick_map(self, map_name):
+        if map_name in self.maps:
+            self.maps.remove(map_name)
+            self.picks.append(map_name)
+
+    def next_turn(self):
+        if not self.rules:
+            return
+        self.current_action_index = (self.current_action_index + 1) % len(self.rules)
+        if self.current_action_type() == "ban":
+            self.current_turn = self.team_b_id if self.current_turn == self.team_a_id else self.team_a_id
+        elif self.current_action_type() == "pick":
+            self.current_turn = self.team_b_id if self.current_turn == self.team_a_id else self.team_a_id
 
 class MapVetoConfig:
     def __init__(self):
@@ -106,14 +137,6 @@ async def send_veto_message(channel, veto):
 
     bot.loop.create_task(timeout())
 
-async def setup(bot_instance):
-    global bot
-    bot = bot_instance
-    bot.add_command(create_mapveto)
-    bot.add_command(show_mapveto)
-    bot.add_command(mapveto)
-    bot.add_command(list_mapvetos)
-
 @commands.command()
 async def create_mapveto(ctx, name: str, team_a_id: int, team_b_id: int, template_name: str):
     template = veto_config.get_veto(template_name)
@@ -127,7 +150,7 @@ async def create_mapveto(ctx, name: str, team_a_id: int, team_b_id: int, templat
 
     vetos[name] = MapVeto(name, template["maps"], team_a_id, team_b_id, template["rules"])
     await ctx.send(f"Veto de maps '{name}' créé avec succès entre les équipes {team_a_id} et {team_b_id}.")
-    await send_veto_message(ctx.channel, vetos[name])
+    await ctx.send(f"Utilisez `?start_mapveto {name} <ID équipe A> <ID équipe B>` pour démarrer le veto dans un thread.")
 
 @commands.command()
 async def show_mapveto(ctx, name: str):
@@ -138,8 +161,7 @@ async def show_mapveto(ctx, name: str):
     veto = vetos[name]
     await ctx.send(f"Veto '{name}':\nMaps: {', '.join(veto.maps)}\nPicks: {', '.join(veto.picks)}\nBans: {', '.join(veto.bans)}\nTour actuel: {veto.current_turn}\nAction actuelle: {veto.current_action_type()}")
 
-@commands.command(name="mapveto", usage="<option>", invoke_without_command=True)
-@checks.has_permissions(PermissionLevel.ADMINISTRATOR)
+@commands.command()
 async def mapveto(ctx, action: str, name: str, *args):
     if action == "create":
         if veto_config.create_veto(name):
@@ -163,7 +185,6 @@ async def mapveto(ctx, action: str, name: str, *args):
             await ctx.send(f"Template de veto '{name}' supprimé avec succès.")
         else:
             await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
-    await ctx.send_help(ctx.command)
 
 @commands.command()
 async def list_mapvetos(ctx):
@@ -172,6 +193,18 @@ async def list_mapvetos(ctx):
     else:
         await ctx.send("Aucun template de veto disponible.")
 
+@commands.command()
+async def start_mapveto(ctx, name: str, team_a_id: int, team_b_id: int):
+    """Démarre un veto dans un thread avec les utilisateurs spécifiés."""
+    if name not in vetos:
+        await ctx.send(f"Aucun veto de maps trouvé avec le nom {name}.")
+        return
+
+    veto = vetos[name]
+    thread = await ctx.channel.create_thread(name=f"Veto de {name}", type=discord.ChannelType.public_thread)
+
+    await thread.send(f"Démarrage du veto '{name}' dans ce thread. Vous pouvez maintenant faire des picks et des bans.")
+    await send_veto_message(thread, veto)
 
 @commands.command()
 async def help(ctx, command: str = None):
@@ -180,14 +213,10 @@ async def help(ctx, command: str = None):
     
     if command is None:
         embed.description = (
-            "Voici les commandes disponibles pour gérer les veto de cartes :\n"
-            "**?mapveto create <nom> <ID équipe A> <ID équipe B> <nom template>** - Crée un veto de carte.\n"
-            "**?show_mapveto <nom>** - Affiche les détails d'un veto de carte.\n"
             "**?mapveto <action> <nom> [arguments...]** - Gère les templates de veto (create, add, rules, delete).\n"
-            "**?list_mapvetos** - Liste tous les templates de veto disponibles."
+            "**?list_mapvetos** - Liste tous les templates de veto disponibles.\n"
+            "**?start_mapveto <nom> <ID équipe A> <ID équipe B>** - Démarre un veto dans un thread."
         )
-        embed.add_field(name="Commandes pour gérer les templates", value="`?mapveto create`, `?mapveto add`, `?mapveto rules`, `?mapveto delete`", inline=False)
-        embed.add_field(name="Autres commandes", value="`?show_mapveto`, `?list_mapvetos`", inline=False)
     else:
         if command == "mapveto":
             embed.description = (
@@ -200,7 +229,12 @@ async def help(ctx, command: str = None):
             embed.description = "**?show_mapveto <nom>** - Affiche les détails d'un veto de carte."
         elif command == "list_mapvetos":
             embed.description = "**?list_mapvetos** - Liste tous les templates de veto disponibles."
+        elif command == "start_mapveto":
+            embed.description = "**?start_mapveto <nom> <ID équipe A> <ID équipe B>** - Démarre un veto dans un thread."
         else:
             embed.description = "Commande inconnue. Utilisez `?help` pour voir la liste des commandes disponibles."
 
     await ctx.send(embed=embed)
+
+def setup(bot):
+    bot.add_cog(MapVetoCog(bot))
