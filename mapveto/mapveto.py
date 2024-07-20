@@ -61,10 +61,11 @@ class MapButton(discord.ui.Button):
             await interaction.response.send_message("Ce n'est pas votre tour.", ephemeral=True)
             return
 
-        if veto.current_action_type() == "ban":
+        action = veto.current_action_type()
+        if action == "ban":
             veto.ban_map(self.label)
             await interaction.response.send_message(f"Map {self.label} bannie par {interaction.user.mention}.")
-        elif veto.current_action_type() == "pick":
+        elif action == "pick":
             veto.pick_map(self.label)
             await interaction.response.send_message(f"Map {self.label} choisie par {interaction.user.mention}.")
 
@@ -154,11 +155,17 @@ class MapVeto:
             return
         
         if self.current_action_type() == "Continue":
+            if self.current_turn == self.team_a_id:
+                self.current_turn = self.team_b_id
+            else:
+                self.current_turn = self.team_a_id
+            self.current_action += 1
             return
 
         if self.current_action_type() == "Side":
-            # Allow the same team to go again if "Continue" rule is used
             if "Continue" in self.rules:
+                # Allow the same team to go again if "Continue" rule is used
+                self.current_action += 1
                 return
 
         self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
@@ -231,7 +238,7 @@ class MapVetoCog(commands.Cog):
     async def mapveto_delete(self, ctx, name: str):
         """Supprime le template de veto spécifié."""
         if veto_config.delete_veto(name):
-            await ctx.send(f"Template de veto '{name}' supprimé avec succès.")
+            await ctx.send(f"Template de veto '{name}' supprimé.")
         else:
             await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
 
