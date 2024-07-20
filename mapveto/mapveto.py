@@ -63,8 +63,6 @@ class MapButton(discord.ui.Button):
             await interaction.response.send_message("Ce n'est pas votre tour.", ephemeral=True)
             return
 
-        opponent_user = interaction.client.get_user(veto.team_b_id if interaction.user.id == veto.team_a_id else veto.team_a_id)
-
         if self.action_type == "ban":
             veto.ban_map(self.label)
             message = f"**Map {self.label} bannie par {interaction.user.mention}.**"
@@ -77,6 +75,9 @@ class MapButton(discord.ui.Button):
 
         await interaction.response.send_message(message)
         await self.channel.send(message)
+
+        # Notify the opponent if applicable
+        opponent_user = interaction.client.get_user(veto.team_b_id if interaction.user.id == veto.team_a_id else veto.team_a_id)
         if opponent_user:
             await opponent_user.send(message)
 
