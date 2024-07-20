@@ -134,7 +134,7 @@ async def show_mapveto(ctx, name: str):
     await ctx.send(f"Veto '{name}':\nMaps: {', '.join(veto.maps)}\nPicks: {', '.join(veto.picks)}\nBans: {', '.join(veto.bans)}\nTour actuel: {veto.current_turn}\nAction actuelle: {veto.current_action_type()}")
 
 @commands.command(name="mapveto", usage="<option>", invoke_without_command=True)
-@checks.has_permissions(PermissionLevel.MODERATOR))
+@checks.has_permissions(PermissionLevel.MODERATOR)
 async def mapveto(ctx, action: str, name: str, *args):
     if action == "create":
         if veto_config.create_veto(name):
