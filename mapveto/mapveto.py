@@ -164,3 +164,36 @@ async def list_mapvetos(ctx):
         await ctx.send(f"Templates de veto disponibles : {', '.join(veto_config.vetos.keys())}")
     else:
         await ctx.send("Aucun template de veto disponible.")
+
+
+@commands.command()
+async def help(ctx, command: str = None):
+    """Affiche l'aide pour les commandes disponibles."""
+    embed = discord.Embed(title="Commandes Map Veto", color=discord.Color.blue())
+    
+    if command is None:
+        embed.description = (
+            "Voici les commandes disponibles pour gérer les veto de cartes :\n"
+            "**?mapveto create <nom> <ID équipe A> <ID équipe B> <nom template>** - Crée un veto de carte.\n"
+            "**?show_mapveto <nom>** - Affiche les détails d'un veto de carte.\n"
+            "**?mapveto <action> <nom> [arguments...]** - Gère les templates de veto (create, add, rules, delete).\n"
+            "**?list_mapvetos** - Liste tous les templates de veto disponibles."
+        )
+        embed.add_field(name="Commandes pour gérer les templates", value="`?mapveto create`, `?mapveto add`, `?mapveto rules`, `?mapveto delete`", inline=False)
+        embed.add_field(name="Autres commandes", value="`?show_mapveto`, `?list_mapvetos`", inline=False)
+    else:
+        if command == "mapveto":
+            embed.description = (
+                "**?mapveto create <nom> <ID équipe A> <ID équipe B> <nom template>** - Crée un nouveau veto de carte.\n"
+                "**?mapveto add <nom> <nom_carte>** - Ajoute une carte à un template.\n"
+                "**?mapveto rules <nom> <ordre>** - Définit les règles pour un template.\n"
+                "**?mapveto delete <nom>** - Supprime un template de veto."
+            )
+        elif command == "show_mapveto":
+            embed.description = "**?show_mapveto <nom>** - Affiche les détails d'un veto de carte."
+        elif command == "list_mapvetos":
+            embed.description = "**?list_mapvetos** - Liste tous les templates de veto disponibles."
+        else:
+            embed.description = "Commande inconnue. Utilisez `?help` pour voir la liste des commandes disponibles."
+
+    await ctx.send(embed=embed)
