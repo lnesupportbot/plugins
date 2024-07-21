@@ -181,19 +181,26 @@ class MapVeto:
         # Maps choisies
         picked_maps_str = []
         last_map = None
-        for map_name in self.picked_maps:
+        for i, map_name in enumerate(self.picked_maps):
             if "choisi" in map_name:
                 side = map_name.split(" ")[0]  # Extract the side (e.g., "Attaque")
                 if last_map:
-                    picked_maps_str.append(f"{last_map} / Side {side} choisi par {self.team_a_name if self.current_turn == self.team_a_id else self.team_b_name}")
+                    # Determine which team made the choice based on the current turn
+                    choosing_team = self.team_a_name if (i % 2 == 0) else self.team_b_name
+                    picked_maps_str.append(f"{last_map} / Side {side} choisi par {choosing_team}")
                     last_map = None
                 else:
-                    picked_maps_str.append(f"Side {side} choisi par {self.team_a_name if self.current_turn == self.team_a_id else self.team_b_name}")
+                    # No map to pair with the side choice
+                    choosing_team = self.team_a_name if (i % 2 == 0) else self.team_b_name
+                    picked_maps_str.append(f"Side {side} choisi par {choosing_team}")
             else:
                 last_map = map_name
-        
+    
+        # Handle the case where the last map is chosen as the default
         if last_map:
-            picked_maps_str.append(f"{last_map} par DECIDER / Side {self.picked_maps[-1].split(' ')[0]} choisi par {self.team_a_name if self.current_turn == self.team_a_id else self.team_b_name}")
+            last_side = self.picked_maps[-1].split(' ')[0]  # Assume the last side is the default side
+            choosing_team = self.team_a_name if (len(self.picked_maps) % 2 == 0) else self.team_b_name
+            picked_maps_str.append(f"{last_map} par DECIDER / Side {last_side} choisi par {choosing_team}")
     
         if picked_maps_str:
             embed.add_field(name="Maps choisies", value="\n".join(picked_maps_str), inline=False)
@@ -205,6 +212,7 @@ class MapVeto:
         embed.add_field(name="Maps bannies", value=banned_maps_str, inline=False)
     
         return embed
+
 
     def current_action_type(self):
         if self.current_action < len(self.rules):
