@@ -203,8 +203,7 @@ class MapVeto:
                 return
             elif current_rule == "Fin":
                 # Handle the end of the veto
-                print("End of veto detected, stopping the veto.")
-                self.end_veto()  # Call the method to end the veto
+                # self.end_veto()  # Call the method to end the veto
                 return
             else:
                 if current_rule in {"Ban", "Pick", "Side"}:
