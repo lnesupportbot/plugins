@@ -380,9 +380,6 @@ class MapVetoCog(commands.Cog):
         veto = vetos[name]
         veto.stop()  # Call stop to end the veto
         embed = veto.create_summary_embed()  # Get the summary embed
-        veto.current_action = 0
-        veto.picked_maps = []
-        veto.banned_maps = []
         del vetos[name]  # Remove the veto from memory
         await ctx.send(embed=embed)  # Send the summary embed
 
