@@ -110,6 +110,8 @@ class MapButton(discord.ui.Button):
         for item in view.children:
             if isinstance(item, discord.ui.Button) and item.custom_id == self.custom_id:
                 item.disabled = True
+
+        # Update the message with the modified view
         await interaction.message.edit(view=view)
 
 async def send_ticket_message(bot, veto, channel):
@@ -127,8 +129,11 @@ async def send_ticket_message(bot, veto, channel):
         components.append(MapButton(label="Défense", veto_name=veto.name, action_type="side", channel=channel))
     else:
         for map_name in veto.maps:
-            components.append(MapButton(label=map_name, veto_name=veto.name, action_type=action.lower(), channel=channel))
-
+            # Disable buttons for banned or picked maps
+            button = MapButton(label=map_name, veto_name=veto.name, action_type=action.lower(), channel=channel)
+            if map_name in veto.banned_maps or map_name in veto.picked_maps:
+                button.disabled = True
+            components.append(button)
     view = discord.ui.View(timeout=60)
     for component in components:
         view.add_item(component)
@@ -205,6 +210,19 @@ class MapVeto:
             self.stopped = True
             return self.create_summary_embed()
 
+    def create_summary_embed(self):
+        embed = discord.Embed(title=f"Map Veto {self.team_a_name} - {self.team_b_name} terminé!", color=discord.Color.green())
+        for i, map_name in enumerate(self.picked_maps):
+            side = "Non défini"
+            if i < len(self.picked_maps):
+                side = self.picked_maps[i].split(" ")[0] if " choisi" in self.picked_maps[i] else "Non défini"
+            embed.add_field(
+                name=f"Map {i + 1}",
+                value=f"**Map :** {map_name} choisie par {self.team_a_name if i % 2 == 0 else self.team_b_name} ({side})",
+                inline=False
+            )
+        return embed
+    
     def ban_map(self, map_name):
         if map_name in self.maps:
             self.maps.remove(map_name)
@@ -261,7 +279,7 @@ class MapVetoCog(commands.Cog):
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def mapveto_rules(self, ctx, name: str, *, rules: str):
         """Définit les règles pour le template de veto spécifié."""
-        valid_rules = {"Pick", "Ban", "Continue", "Side"}
+        valid_rules = {"Pick", "Ban", "Continue", "Side", "Fin"}
         rules_list = rules.split()
         if all(rule in valid_rules for rule in rules_list):
             if veto_config.set_rules(name, rules):
