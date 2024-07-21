@@ -166,7 +166,7 @@ async def send_ticket_message(bot, veto, channel):
     bot.loop.create_task(timeout())
 
 
-class MapVeto(veto):
+class MapVeto():
     def __init__(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules):
         self.name = name
         self.maps = maps
@@ -267,7 +267,8 @@ class MapVeto(veto):
         self.stopped = True
         self.paused = False
         #self.current_action = len(self.rules)  # Réinitialiser l'action courante
-    
+
+veto = MapVeto()    
 
 class MapVetoCog(commands.Cog):
     def __init__(self, bot):
