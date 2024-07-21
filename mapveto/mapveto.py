@@ -176,10 +176,31 @@ class MapVeto:
         self.bot = bot  # Ajouter une référence au bot
         
     def create_summary_embed(self):
-        embed = discord.Embed(title=f"Résumé du veto: {self.name}", color=discord.Color.blue())
-        embed.add_field(name="Maps bannies", value=", ".join(self.banned_maps) if self.banned_maps else "Aucune", inline=False)
-        embed.add_field(name="Maps choisies", value=", ".join(self.picked_maps) if self.picked_maps else "Aucune", inline=False)
-        embed.add_field(name="Côtés choisis", value=", ".join(filter(lambda x: "choisi" in x, self.picked_maps)) if any("choisi" in s for s in self.picked_maps) else "Aucun", inline=False)
+        """Crée un embed résumant les résultats du veto."""
+        embed = discord.Embed(title=f"Résumé du Veto: {self.name}", color=discord.Color.blue())
+    
+        # Afficher les maps choisies et les sides
+        chosen_maps = []
+        for map_name in self.picked_maps:
+            # Determine which team picked the map
+            team_name = self.team_a_name if map_name.endswith("(équipe A)") else self.team_b_name
+            chosen_maps.append(f"{map_name} par {team_name}")
+    
+        # Afficher les sides choisis
+        for side in self.picked_maps:
+            if "choisi" in side:
+                # Determine which team chose the side
+                team_name = self.team_a_name if side.startswith("Attaque") else self.team_b_name
+                chosen_maps.append(f"/ {side} choisi par {team_name}")
+    
+        # Ajouter la dernière map restante si elle existe
+        if self.maps:
+            last_map = self.maps[0]  # La dernière map restante
+            chosen_maps.append(f"{last_map} choisie par DECIDER")
+        
+        # Formatage du message
+        embed.description = "\n".join(chosen_maps)
+        
         return embed
 
 
@@ -242,7 +263,7 @@ class MapVeto:
             self.picked_maps.append(map_name)
 
     def pick_side(self, side):
-        self.picked_maps.append(f"{side} choisi")
+        self.picked_maps.append(f"{side} choisi par {self.team_a_name if self.current_turn == self.team_a_id else self.team_b_name}")
 
     def pause(self):
         self.paused = True
@@ -274,7 +295,6 @@ class MapVeto:
                         self.bot.loop.create_task(participant.send(embed=embed))
                     except discord.Forbidden:
                         print(f"Cannot DM user {participant_id}")
-
 
 class MapVetoCog(commands.Cog):
     def __init__(self, bot):
