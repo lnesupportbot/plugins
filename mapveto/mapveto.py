@@ -82,13 +82,13 @@ class MapButton(discord.ui.Button):
 
         if self.action_type == "ban":
             veto.ban_map(self.label)
-            message = f"Map {self.label} bannie par {interaction.user.mention}."
+            message = f"Map {self.label} bannie par {interaction.user.mention} (Équipe {veto.team_a_name if interaction.user.id == veto.team_a_id else veto.team_b_name})."
         elif self.action_type == "pick":
             veto.pick_map(self.label)
-            message = f"**Map {self.label} choisie par {interaction.user.mention}.**"
+            message = f"**Map {self.label} choisie par {interaction.user.mention} (Équipe {veto.team_a_name if interaction.user.id == veto.team_a_id else veto.team_b_name}).**"
         elif self.action_type == "side":
             veto.pick_side(self.label)
-            message = f"*Side {self.label} choisi par {interaction.user.mention}.*"
+            message = f"*Side {self.label} choisi par {interaction.user.mention} (Équipe {veto.team_a_name if interaction.user.id == veto.team_a_id else veto.team_b_name}).*"
 
         await interaction.response.send_message(message)
         await self.channel.send(message)
@@ -132,8 +132,10 @@ async def send_ticket_message(bot, veto, channel):
     for component in components:
         view.add_item(component)
 
+    team_name = veto.team_a_name if veto.get_current_turn() == veto.team_a_id else veto.team_b_name
+
     try:
-        await current_user.send(f"{current_user.mention}, c'est votre tour de {action} une map.", view=view)
+        await current_user.send(f"{current_user.mention}, c'est votre tour de {action} une map. Vous êtes dans l'équipe '{team_name}'.", view=view)
     except discord.Forbidden:
         print(f"Cannot DM user {current_user.id}")
 
@@ -157,11 +159,13 @@ async def send_ticket_message(bot, veto, channel):
     bot.loop.create_task(timeout())
 
 class MapVeto:
-    def __init__(self, name, maps, team_a_id, team_b_id, rules):
+    def __init__(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules):
         self.name = name
         self.maps = maps
         self.team_a_id = team_a_id
+        self.team_a_name = team_a_name
         self.team_b_id = team_b_id
+        self.team_b_name = team_b_name
         self.rules = rules
         self.current_turn = team_a_id
         self.current_action = 0
@@ -245,9 +249,10 @@ class MapVetoCog(commands.Cog):
             await ctx.send(f"Un template de veto avec le nom '{name}' existe déjà.")
 
     @mapveto.command(name='add')
-    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-    async def add_map(self, ctx, name: str, *map_names):
+    @checks.has_permissions(PermissionLevel.MODERATOR)
+    async def mapveto_add(self, ctx, name: str, *, maps: str):
         """Ajoute plusieurs maps au template de veto spécifié."""
+        map_names = maps.split()
         if veto_config.add_maps(name, map_names):
             await ctx.send(f"Maps ajoutées au template de veto '{name}' : {', '.join(map_names)}.")
         else:
@@ -257,7 +262,7 @@ class MapVetoCog(commands.Cog):
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def mapveto_rules(self, ctx, name: str, *, rules: str):
         """Définit les règles pour le template de veto spécifié."""
-        valid_rules = {"Ban", "Pick", "Side", "Continue"}
+        valid_rules = {"Pick", "Ban", "Continue", "Side"}
         rules_list = rules.split()
         if all(rule in valid_rules for rule in rules_list):
             if veto_config.set_rules(name, rules):
@@ -287,13 +292,13 @@ class MapVetoCog(commands.Cog):
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-    async def start_mapveto(self, ctx, name: str, team_a_id: int, team_b_id: int):
+    async def start_mapveto(self, ctx, name: str, team_a_id: int, team_a_name: str, team_b_id: int, team_b_name: str):
         """Démarre un veto et envoie des messages en DM aux équipes spécifiées."""
         if name not in veto_config.vetos:
             await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
             return
 
-        veto = MapVeto(name, veto_config.vetos[name]["maps"], team_a_id, team_b_id, veto_config.vetos[name]["rules"])
+        veto = MapVeto(name, veto_config.vetos[name]["maps"], team_a_id, team_a_name, team_b_id, team_b_name, veto_config.vetos[name]["rules"])
         vetos[name] = veto
 
         await send_ticket_message(self.bot, veto, ctx.channel)
@@ -368,7 +373,7 @@ class MapVetoCog(commands.Cog):
             inline=False
         )
         embed.add_field(
-            name="start_mapveto <name> <team_a_id> <team_b_id>",
+            name="start_mapveto <name> <team_a_id> <team_a_name> <team_b_id> <team_b_name>",
             value="Démarre un veto et envoie des messages en DM aux équipes spécifiées.",
             inline=False
         )
