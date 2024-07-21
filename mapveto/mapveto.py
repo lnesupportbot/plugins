@@ -135,7 +135,7 @@ async def send_ticket_message(bot, veto, channel):
     team_name = veto.team_a_name if veto.get_current_turn() == veto.team_a_id else veto.team_b_name
 
     try:
-        await current_user.send(f"{current_user.mention}, c'est votre tour de {action} une map. Vous êtes dans l'équipe '{team_name}'.", view=view)
+        await current_user.send(f"{current_user.mention}, c'est votre tour de {action} une map.", view=view)
     except discord.Forbidden:
         print(f"Cannot DM user {current_user.id}")
 
