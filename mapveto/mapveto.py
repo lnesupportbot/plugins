@@ -8,7 +8,7 @@ from core.models import PermissionLevel
 class MapVetoConfig:
     def __init__(self, db):
         self.db = db
-        self.collection = self.db['veto_templates']
+        self.collection = self.bot.plugin_db.get_parttion(self)
 
     async def create_veto(self, name):
         if self.collection.find_one({"name": name}) is None:
