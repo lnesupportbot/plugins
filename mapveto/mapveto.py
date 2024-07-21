@@ -231,19 +231,9 @@ class MapVeto:
             self.maps.remove(map_name)
             self.picked_maps.append(map_name)
 
-    def pick_side(self, side):
-        self.picked_maps.append(f"{side} choisi")
-
-    def pause(self):
-        self.paused = True
-
-    def resume(self):
-        self.paused = False
-
-    def stop(self):
-        self.stopped = True
-        self.paused = False
-        return self.create_summary_embed()  # Return the embed for further use
+    def pick_side(self, side_name):
+        if side_name in ["Attaque", "Défense"]:
+            self.picked_maps[-1] = f"{self.picked_maps[-1]} {side_name} choisi"
 
 class MapVetoCog(commands.Cog):
     def __init__(self, bot):
@@ -271,7 +261,7 @@ class MapVetoCog(commands.Cog):
             return
 
         veto = vetos[name]
-        embed = veto.stop()  # Call stop to end the veto and get the summary embed
+        embed = veto.create_summary_embed()  # Call stop to end the veto and get the summary embed
         del vetos[name]
         veto_config.delete_veto(name)  # Ensure to remove from file as well
         await ctx.send(f"Le veto '{name}' a été arrêté et supprimé.")
