@@ -175,6 +175,32 @@ class MapButton(discord.ui.Button):
                 await channel.send("Le veto est terminé!")
                 embed = veto.create_summary_embed()
                 await channel.send(embed=embed)
+                # Notify the other team
+                opponent_user = bot.get_user(veto.team_b_id if current_user.id == veto.team_a_id else veto.team_a_id)
+                if opponent_user:
+                    await opponent_user.send("Le veto est terminé!")
+                    await opponent_user.send(embed=embed)
+
+    bot.loop.create_task(timeout())
+
+
+    async def timeout():
+        await view.wait()
+        if not view.is_finished():
+            random_map = random.choice(veto.maps)
+            if action == "ban":
+                veto.ban_map(random_map)
+                await current_user.send(f"Map {random_map} bannie automatiquement.")
+            elif action == "pick":
+                veto.pick_map(random_map)
+                await current_user.send(f"Map {random_map} choisie automatiquement.")
+            veto.next_turn()
+            if veto.current_turn is not None:
+                await send_ticket_message(bot, veto, channel)
+            else:
+                await channel.send("Le veto est terminé!")
+                embed = veto.create_summary_embed()
+                await channel.send(embed=embed)
                 await send_summary_to_players(bot, veto, embed)  # Envoie du résumé aux joueurs
 
     bot.loop.create_task(timeout())
@@ -203,30 +229,36 @@ class MapVeto:
     def get_current_turn(self):
         return self.current_turn
 
-def next_turn(self):
-    if self.stopped or self.paused:
-        return
-
-    if self.current_action < len(self.rules):
-        current_rule = self.rules[self.current_action]
-        if current_rule == "Continue":
-            # Allow the same team to play again
+    def next_turn(self):
+        if self.stopped or self.paused:
             return
-        else:
-            # Normal action, switch turn
-            self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
-            self.current_action += 1
-
-            # Handle consecutive "Continue" rules
-            while self.current_action < len(self.rules) and self.rules[self.current_action] == "Continue":
+    
+        if self.current_action < len(self.rules):
+            current_rule = self.rules[self.current_action]
+            if current_rule == "Continue":
+                # Allow the same team to play again
+                return
+            else:
+                # Normal action, switch turn
+                self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
                 self.current_action += 1
-                if self.current_action < len(self.rules) and self.rules[self.current_action] != "Continue":
-                    # Switch turn after exiting consecutive "Continue"
-                    self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
-    else:
-        # No more actions, end the veto
-        self.stopped = True
-        return self.create_summary_embed()
+    
+                # Handle consecutive "Continue" rules
+                while self.current_action < len(self.rules) and self.rules[self.current_action] == "Continue":
+                    self.current_action += 1
+                    if self.current_action < len(self.rules) and self.rules[self.current_action] != "Continue":
+                        # Switch turn after exiting consecutive "Continue"
+                        self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
+        else:
+            # No more actions, end the veto
+            self.stopped = True
+            return self.create_summary_embed()
+    
+        # If this is the last rule
+        if self.current_action >= len(self.rules):
+            self.stopped = True
+            return self.create_summary_embed()
+
 
     def create_summary_embed(self):
         embed = discord.Embed(title=f"Map Veto {self.team_a_name} - {self.team_b_name} terminé!", color=discord.Color.green())
