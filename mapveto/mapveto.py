@@ -1,8 +1,9 @@
 import discord
-from discord.ext import commands, tasks
+from discord.ext import commands
 import random
 import json
 import os
+
 from core import checks
 from core.models import PermissionLevel
 
@@ -139,39 +140,21 @@ async def send_ticket_message(bot, veto, channel):
     except discord.Forbidden:
         print(f"Cannot DM user {current_user.id}")
 
-    # Start the countdown
-    countdown_task = CountdownTask(60, current_user, veto, action, bot, channel)
-    countdown_task.start()
+    async def timeout():
+        await view.wait()
+        if not view.is_finished():
+            random_map = random.choice(veto.maps)
+            if action == "ban":
+                veto.ban_map(random_map)
+                await current_user.send(f"Map {random_map} bannie automatiquement.")
+            elif action == "pick":
+                veto.pick_map(random_map)
+                await current_user.send(f"Map {random_map} choisie automatiquement.")
+            veto.next_turn()
+            if veto.current_turn is not None:
+                await send_ticket_message(bot, veto, channel)
 
-class CountdownTask:
-    def __init__(self, duration, current_user, veto, action, bot, channel):
-        self.duration = duration
-        self.current_user = current_user
-        self.veto = veto
-        self.action = action
-        self.bot = bot
-        self.channel = channel
-
-    async def update_timer_message(self):
-        timer_message = await self.current_user.send(f"Il vous reste {self.duration} secondes pour {self.action.lower()} une map.")
-        for i in range(self.duration, 0, -1):
-            await timer_message.edit(content=f"Il vous reste {i} secondes pour {self.action.lower()} une map.")
-            await asyncio.sleep(1)
-        
-        if self.duration == 0:
-            random_map = random.choice(self.veto.maps)
-            if self.action == "ban":
-                self.veto.ban_map(random_map)
-                await self.current_user.send(f"Map {random_map} bannie automatiquement.")
-            elif self.action == "pick":
-                self.veto.pick_map(random_map)
-                await self.current_user.send(f"Map {random_map} choisie automatiquement.")
-            self.veto.next_turn()
-            if self.veto.current_turn is not None:
-                await send_ticket_message(self.bot, self.veto, self.channel)
-
-    def start(self):
-        self.bot.loop.create_task(self.update_timer_message())
+    bot.loop.create_task(timeout())
 
 class MapVeto:
     def __init__(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules):
@@ -206,31 +189,36 @@ class MapVeto:
             print(f"Processing rule: {current_rule}")
 
             if current_rule == "Continue":
+                # Allow the same team to play again
                 return
             elif current_rule == "Fin":
-                self.end_veto()
+                # Handle the end of the veto
+                print("End of veto detected, stopping the veto.")
+                self.end_veto()  # Call the method to end the veto
                 return
             else:
                 if current_rule in {"Ban", "Pick", "Side"}:
                     self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
                     self.current_action += 1
 
+                # Handle consecutive "Continue" rules
                 while self.current_action < len(self.rules) and self.rules[self.current_action] == "Continue":
                     self.current_action += 1
                     if self.current_action < len(self.rules) and self.rules[self.current_action] != "Continue":
+                        # Switch turn after exiting consecutive "Continue"
                         self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
 
+                # If there are no more actions, stop the veto
                 if self.current_action >= len(self.rules):
                     print("No more rules, stopping the veto")
-                    self.end_veto()
+                    self.end_veto()  # Call the method to end the veto
                     return
-        else:
-            print("No more actions, stopping the veto")
-            self.end_veto()
-            return
 
-    def end_veto(self):
-        self.stopped = True
+        else:
+            # No more actions, end the veto
+            print("No more actions, stopping the veto")
+            self.end_veto()  # Call the method to end the veto
+            return
 
     def ban_map(self, map_name):
         if map_name in self.maps:
@@ -243,86 +231,192 @@ class MapVeto:
             self.picked_maps.append(map_name)
 
     def pick_side(self, side):
-        self.picked_maps.append(side)
+        self.picked_maps.append(f"{side} choisi")
+
+    def pause(self):
+        self.paused = True
+
+    def resume(self):
+        self.paused = False
 
     def create_summary_embed(self):
-        embed = discord.Embed(title="Résumé du Veto", description=f"Résumé du veto pour {self.name}")
-        embed.add_field(name="Maps bannies", value=", ".join(self.banned_maps) if self.banned_maps else "Aucune", inline=False)
-        embed.add_field(name="Maps choisies", value=", ".join(self.picked_maps) if self.picked_maps else "Aucune", inline=False)
+        embed = discord.Embed(title=f"Résumé du veto : {self.name}")
+        if self.picked_maps:
+            embed.add_field(name="Maps choisies", value=", ".join(self.picked_maps), inline=False)
+        if self.banned_maps:
+            embed.add_field(name="Maps bannies", value=", ".join(self.banned_maps), inline=False)
         return embed
 
-@commands.guild_only()
-class VetoManager(commands.Cog):
+    async def stop(self, channel):
+        self.stopped = True
+        self.paused = False
+
+        # Envoyer un message avec les maps choisies avant de stopper
+        embed = self.create_summary_embed()
+        await channel.send("Le veto est maintenant terminé ! Voici un récapitulatif :", embed=embed)
+
+class MapVetoCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command()
-    @checks.has_permissions(PermissionLevel.ADMIN)
-    async def createveto(self, ctx, name):
+    @commands.group(name='mapveto', invoke_without_command=True)
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
+    async def mapveto(self, ctx):
+        """Affiche les options de gestion des templates de veto."""
+        await ctx.send_help(ctx.command)
+
+    @mapveto.command(name='create')
+    @checks.has_permissions(PermissionLevel.MODERATOR)
+    async def mapveto_create(self, ctx, name: str):
+        """Crée un template de veto avec le nom donné."""
         if veto_config.create_veto(name):
-            await ctx.send(f"Veto '{name}' créé.")
+            await ctx.send(f"Template de veto '{name}' créé avec succès.")
         else:
-            await ctx.send(f"Un veto avec le nom '{name}' existe déjà.")
+            await ctx.send(f"Un template de veto avec le nom '{name}' existe déjà.")
 
-    @commands.command()
-    @checks.has_permissions(PermissionLevel.ADMIN)
-    async def addmaps(self, ctx, name, *, maps):
-        map_list = [map_name.strip() for map_name in maps.split(',')]
-        if veto_config.add_maps(name, map_list):
-            await ctx.send(f"Maps ajoutées au veto '{name}': {', '.join(map_list)}")
+    @mapveto.command(name='add')
+    @checks.has_permissions(PermissionLevel.MODERATOR)
+    async def mapveto_add(self, ctx, name: str, *, maps: str):
+        """Ajoute plusieurs maps au template de veto spécifié."""
+        map_names = maps.split()
+        if veto_config.add_maps(name, map_names):
+            await ctx.send(f"Maps ajoutées au template de veto '{name}' : {', '.join(map_names)}.")
         else:
-            await ctx.send(f"Veto '{name}' non trouvé.")
+            await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
 
-    @commands.command()
-    @checks.has_permissions(PermissionLevel.ADMIN)
-    async def setrules(self, ctx, name, *, rules):
-        if veto_config.set_rules(name, rules):
-            await ctx.send(f"Règles définies pour le veto '{name}': {rules}")
+    @mapveto.command(name='rules')
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
+    async def mapveto_rules(self, ctx, name: str, *, rules: str):
+        """Définit les règles pour le template de veto spécifié."""
+        valid_rules = {"Pick", "Ban", "Continue", "Side"}
+        rules_list = rules.split()
+        if all(rule in valid_rules for rule in rules_list):
+            if veto_config.set_rules(name, rules):
+                await ctx.send(f"Règles définies pour le template de veto '{name}' : {rules}.")
+            else:
+                await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
         else:
-            await ctx.send(f"Veto '{name}' non trouvé.")
+            await ctx.send(f"Règles invalides. Les règles valides sont : {', '.join(valid_rules)}.")
 
+    @mapveto.command(name='delete')
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
+    async def mapveto_delete(self, ctx, name: str):
+        """Supprime le template de veto spécifié."""
+        if veto_config.delete_veto(name):
+            await ctx.send(f"Template de veto '{name}' supprimé avec succès.")
+        else:
+            await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
+
+    @mapveto.command(name='list')
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
+    async def mapveto_list(self, ctx):
+        """Liste tous les templates de veto disponibles."""
+        if veto_config.vetos:
+            await ctx.send(f"Templates de veto disponibles : {', '.join(veto_config.vetos.keys())}")
+        else:
+            await ctx.send("Aucun template de veto disponible.")
+            
     @commands.command()
-    @checks.has_permissions(PermissionLevel.ADMIN)
-    async def startveto(self, ctx, name, team_a: discord.Member, team_b: discord.Member):
-        veto_data = veto_config.get_veto(name)
-        if not veto_data:
-            await ctx.send(f"Veto '{name}' non trouvé.")
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
+    async def start_mapveto(self, ctx, name: str, team_a_id: int, team_a_name: str, team_b_id: int, team_b_name: str):
+        """Démarre un veto et envoie des messages en DM aux équipes spécifiées."""
+        if name not in veto_config.vetos:
+            await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
             return
 
-        veto = MapVeto(name, veto_data["maps"], team_a.id, team_a.display_name, team_b.id, team_b.display_name, veto_data["rules"])
+        veto = MapVeto(name, veto_config.vetos[name]["maps"], team_a_id, team_a_name, team_b_id, team_b_name, veto_config.vetos[name]["rules"])
         vetos[name] = veto
 
-        await ctx.send(f"Veto '{name}' commencé entre {team_a.mention} et {team_b.mention}.")
         await send_ticket_message(self.bot, veto, ctx.channel)
 
     @commands.command()
-    @checks.has_permissions(PermissionLevel.ADMIN)
-    async def stopveto(self, ctx, name):
-        if name in vetos:
-            vetos[name].stopped = True
-            del vetos[name]
-            await ctx.send(f"Veto '{name}' arrêté.")
-        else:
-            await ctx.send(f"Veto '{name}' non trouvé.")
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
+    async def pause_mapveto(self, ctx, name: str):
+        """Met en pause le veto spécifié."""
+        if name not in vetos:
+            await ctx.send(f"Aucun veto en cours avec le nom '{name}'.")
+            return
+
+        veto = vetos[name]
+        veto.pause()
+        await ctx.send(f"Le veto '{name}' a été mis en pause.")
 
     @commands.command()
-    @checks.has_permissions(PermissionLevel.ADMIN)
-    async def pauseveto(self, ctx, name):
-        if name in vetos:
-            vetos[name].paused = True
-            await ctx.send(f"Veto '{name}' en pause.")
-        else:
-            await ctx.send(f"Veto '{name}' non trouvé.")
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
+    async def resume_mapveto(self, ctx, name: str):
+        """Reprend le veto spécifié."""
+        if name not in vetos:
+            await ctx.send(f"Aucun veto en cours avec le nom '{name}'.")
+            return
+
+        veto = vetos[name]
+        veto.resume()
+        await ctx.send(f"Le veto '{name}' a repris.")
 
     @commands.command()
-    @checks.has_permissions(PermissionLevel.ADMIN)
-    async def resumeveto(self, ctx, name):
-        if name in vetos:
-            vetos[name].paused = False
-            await ctx.send(f"Veto '{name}' repris.")
-            await send_ticket_message(self.bot, vetos[name], ctx.channel)
-        else:
-            await ctx.send(f"Veto '{name}' non trouvé.")
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
+    async def stop_mapveto(self, ctx, name: str):
+        """Arrête complètement le veto spécifié mais ne supprime pas le template."""
+        if name not in vetos:
+            await ctx.send(f"Aucun veto en cours avec le nom '{name}'.")
+            return
 
-def setup(bot):
-    bot.add_cog(VetoManager(bot))
+        veto = vetos[name]
+        await veto.stop(ctx.channel)  # Passer le canal pour envoyer le message de récapitulatif
+
+    @commands.command()
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
+    async def help_veto(self, ctx):
+        """Affiche les commandes disponibles pour la gestion des veto de cartes."""
+        embed = discord.Embed(title="Aide pour les Commandes MapVeto", description="Voici un résumé des commandes disponibles pour la gestion des veto de cartes.")
+
+        embed.add_field(
+            name="mapveto create <name>",
+            value="Crée un template de veto avec le nom donné.",
+            inline=False
+        )
+        embed.add_field(
+            name="mapveto add <name> <map_name>",
+            value="Ajoute plusieurs maps au template de veto spécifié.",
+            inline=False
+        )
+        embed.add_field(
+            name="mapveto rules <name> <rules>",
+            value="Définit les règles pour le template de veto spécifié.",
+            inline=False
+        )
+        embed.add_field(
+            name="mapveto delete <name>",
+            value="Supprime le template de veto spécifié.",
+            inline=False
+        )
+        embed.add_field(
+            name="mapveto list",
+            value="Liste tous les templates de veto disponibles.",
+            inline=False
+        )
+        embed.add_field(
+            name="start_mapveto <name> <team_a_id> <team_a_name> <team_b_id> <team_b_name>",
+            value="Démarre un veto et envoie des messages en DM aux équipes spécifiées.",
+            inline=False
+        )
+        embed.add_field(
+            name="pause_mapveto <name>",
+            value="Met en pause le veto spécifié.",
+            inline=False
+        )
+        embed.add_field(
+            name="resume_mapveto <name>",
+            value="Reprend le veto spécifié.",
+            inline=False
+        )
+        embed.add_field(
+            name="stop_mapveto <name>",
+            value="Arrête complètement le veto spécifié et le supprime des enregistrements.",
+            inline=False
+        )
+
+        await ctx.send(embed=embed)
+
+async def setup(bot):
+    await bot.add_cog(MapVetoCog(bot))
