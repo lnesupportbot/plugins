@@ -157,7 +157,7 @@ async def send_ticket_message(bot, veto, channel):
     bot.loop.create_task(timeout())
 
 class MapVeto:
-    def __init__(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules):
+    def __init__(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel):
         self.name = name
         self.maps = maps
         self.team_a_id = team_a_id
@@ -171,6 +171,16 @@ class MapVeto:
         self.banned_maps = []
         self.paused = False
         self.stopped = False
+        self.channel = channel  # Le canal de discussion où la commande a été lancée
+        self.participants = [team_a_id, team_b_id]  # Ajouter les participants
+        
+    def create_summary_embed(self):
+        embed = discord.Embed(title=f"Résumé du veto: {self.name}", color=discord.Color.blue())
+        embed.add_field(name="Maps bannies", value=", ".join(self.banned_maps) if self.banned_maps else "Aucune", inline=False)
+        embed.add_field(name="Maps choisies", value=", ".join(self.picked_maps) if self.picked_maps else "Aucune", inline=False)
+        embed.add_field(name="Côtés choisis", value=", ".join(filter(lambda x: "choisi" in x, self.picked_maps)) if any("choisi" in s for s in self.picked_maps) else "Aucun", inline=False)
+        return embed
+
 
     def current_action_type(self):
         if self.current_action < len(self.rules):
@@ -194,8 +204,7 @@ class MapVeto:
             elif current_rule == "Fin":
                 # Handle the end of the veto
                 print("End of veto detected, stopping the veto.")
-                if self.channel:  # Assurez-vous que le canal est disponible
-                    self.end_veto(self.channel)  # Call the method to end the veto
+                self.end_veto()  # Call the method to end the veto
                 return
             else:
                 if current_rule in {"Ban", "Pick", "Side"}:
@@ -212,15 +221,13 @@ class MapVeto:
                 # If there are no more actions, stop the veto
                 if self.current_action >= len(self.rules):
                     print("No more rules, stopping the veto")
-                    if self.channel:  # Assurez-vous que le canal est disponible
-                        self.end_veto(self.channel)  # Call the method to end the veto
+                    self.end_veto()  # Call the method to end the veto
                     return
 
         else:
             # No more actions, end the veto
             print("No more actions, stopping the veto")
-            if self.channel:  # Assurez-vous que le canal est disponible
-                self.end_veto(self.channel)  # Call the method to end the veto
+            self.end_veto()  # Call the method to end the veto
             return
 
     def ban_map(self, map_name):
@@ -242,28 +249,31 @@ class MapVeto:
     def resume(self):
         self.paused = False
 
-    def create_summary_embed(self):
-        embed = discord.Embed(title=f"Résumé du veto : {self.name}")
-        if self.picked_maps:
-            embed.add_field(name="Maps choisies", value=", ".join(self.picked_maps), inline=False)
-        if self.banned_maps:
-            embed.add_field(name="Maps bannies", value=", ".join(self.banned_maps), inline=False)
-        return embed
-
-    async def stop(self, channel):
+    def stop(self):
         self.stopped = True
         self.paused = False
+    
+    def end_veto(self):
+        if not self.stopped:
+            self.stopped = True
+            self.paused = False
 
-        # Envoyer un message avec les maps choisies avant de stopper
-        await self.end_veto(channel)
+            # Créer l'embed de résumé
+            embed = self.create_summary_embed()
 
-    async def end_veto(self, channel):
-        self.stopped = True
-        self.paused = False
-        
-        # Créer et envoyer un message avec les maps choisies et bannies
-        embed = self.create_summary_embed()
-        await channel.send("Le veto est maintenant terminé ! Voici un récapitulatif :", embed=embed)
+            # Envoyer le résumé dans le canal où la commande a été lancée
+            if self.channel:
+                self.bot.loop.create_task(self.channel.send(embed=embed))
+
+            # Envoyer le résumé aux participants en DM
+            for participant_id in self.participants:
+                participant = self.bot.get_user(participant_id)
+                if participant:
+                    try:
+                        self.bot.loop.create_task(participant.send(embed=embed))
+                    except discord.Forbidden:
+                        print(f"Cannot DM user {participant_id}")
+
 
 class MapVetoCog(commands.Cog):
     def __init__(self, bot):
@@ -334,7 +344,7 @@ class MapVetoCog(commands.Cog):
             await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
             return
 
-        veto = MapVeto(name, veto_config.vetos[name]["maps"], team_a_id, team_a_name, team_b_id, team_b_name, veto_config.vetos[name]["rules"])
+        veto = MapVeto(name, veto_config.vetos[name]["maps"], team_a_id, team_a_name, team_b_id, team_b_name, veto_config.vetos[name]["rules"], ctx.channel)
         vetos[name] = veto
 
         await send_ticket_message(self.bot, veto, ctx.channel)
@@ -372,7 +382,7 @@ class MapVetoCog(commands.Cog):
             return
 
         veto = vetos[name]
-        await veto.stop(ctx.channel)  # Passer le canal pour envoyer le message de récapitulatif
+        veto.stop()  # Call stop to end the veto
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
