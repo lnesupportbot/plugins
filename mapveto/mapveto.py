@@ -224,7 +224,7 @@ class MapVeto:
                 print("Last action reached, stopping after current action")
                 self.end_veto()  # Call the method to end the veto after this action
                 return
-
+    
         else:
             # No more actions, end the veto
             print("No more actions, stopping the veto")
