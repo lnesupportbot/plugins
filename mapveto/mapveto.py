@@ -194,7 +194,8 @@ class MapVeto:
             elif current_rule == "Fin":
                 # Handle the end of the veto
                 print("End of veto detected, stopping the veto.")
-                self.end_veto()  # Call the method to end the veto
+                if self.channel:  # Assurez-vous que le canal est disponible
+                    self.end_veto(self.channel)  # Call the method to end the veto
                 return
             else:
                 if current_rule in {"Ban", "Pick", "Side"}:
@@ -211,13 +212,15 @@ class MapVeto:
                 # If there are no more actions, stop the veto
                 if self.current_action >= len(self.rules):
                     print("No more rules, stopping the veto")
-                    self.end_veto()  # Call the method to end the veto
+                    if self.channel:  # Assurez-vous que le canal est disponible
+                        self.end_veto(self.channel)  # Call the method to end the veto
                     return
 
         else:
             # No more actions, end the veto
             print("No more actions, stopping the veto")
-            self.end_veto()  # Call the method to end the veto
+            if self.channel:  # Assurez-vous que le canal est disponible
+                self.end_veto(self.channel)  # Call the method to end the veto
             return
 
     def ban_map(self, map_name):
@@ -252,6 +255,13 @@ class MapVeto:
         self.paused = False
 
         # Envoyer un message avec les maps choisies avant de stopper
+        await self.end_veto(channel)
+
+    async def end_veto(self, channel):
+        self.stopped = True
+        self.paused = False
+        
+        # Créer et envoyer un message avec les maps choisies et bannies
         embed = self.create_summary_embed()
         await channel.send("Le veto est maintenant terminé ! Voici un récapitulatif :", embed=embed)
 
