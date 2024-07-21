@@ -191,13 +191,15 @@ class MapVeto:
 
         if self.current_action < len(self.rules):
             current_rule = self.rules[self.current_action]
+            print(f"Processing rule: {current_rule}")
 
             if current_rule == "Continue":
                 # Allow the same team to play again
                 return
             elif current_rule == "Fin":
                 # Handle the end of the veto
-                self.stop()  # End the veto and create the summary
+                print("End of veto detected, stopping the veto.")
+                self.end_veto()  # Call the method to end the veto
                 return
             else:
                 if current_rule in {"Ban", "Pick", "Side"}:
@@ -213,12 +215,14 @@ class MapVeto:
 
                 # If there are no more actions, stop the veto
                 if self.current_action >= len(self.rules):
-                    self.stop()  # End the veto and create the summary
+                    print("No more rules, stopping the veto")
+                    self.end_veto()  # Call the method to end the veto
                     return
 
         else:
             # No more actions, end the veto
-            self.stop()  # End the veto and create the summary
+            print("No more actions, stopping the veto")
+            self.end_veto()  # Call the method to end the veto
             return
 
     def create_summary_embed(self):
@@ -253,10 +257,18 @@ class MapVeto:
     def resume(self):
         self.paused = False
 
+    def end_veto(self):
+        """Handle the end of the veto and create the summary."""
+        self.stop()  # Stop the veto
+        summary_embed = self.create_summary_embed()  # Create the summary embed
+        # Send the summary embed to the channel or perform any other final actions
+        # For example, you might need to use bot context or channel to send the message
+        return summary_embed
+
     def stop(self):
         self.stopped = True
         self.paused = False
-        return self.create_summary_embed()  # Return the summary embed
+        # Additional stop logic if needed
 
 class MapVetoCog(commands.Cog):
     def __init__(self, bot):
