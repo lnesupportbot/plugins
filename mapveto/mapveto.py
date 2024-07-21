@@ -264,6 +264,9 @@ class MapVeto():
         await ctx.send(embed=embed)  # Send the summary embed
 
     def stop(self):
+        self.current_action = 0
+        self.picked_maps = []
+        self.banned_maps = []
         self.stopped = True
         self.paused = False
         #self.current_action = len(self.rules)  # Réinitialiser l'action couranted 
