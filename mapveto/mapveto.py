@@ -116,7 +116,7 @@ class MapButton(discord.ui.Button):
 
 async def send_ticket_message(bot, veto, channel):
     action = veto.current_action_type()
-    if action is None or veto.stopped:
+    if action is None:
         return
 
     current_user = bot.get_user(veto.get_current_turn())
@@ -156,10 +156,15 @@ async def send_ticket_message(bot, veto, channel):
                 veto.pick_map(random_map)
                 await current_user.send(f"Map {random_map} choisie automatiquement.")
             veto.next_turn()
-            if veto.current_turn is not None and not veto.stopped:
+            if veto.current_turn is not None:
                 await send_ticket_message(bot, veto, channel)
+            else:
+                # Finalize the veto
+                summary_embed = veto.end_veto()
+                await channel.send(embed=summary_embed)
 
     bot.loop.create_task(timeout())
+
 
 class MapVeto:
     def __init__(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules):
