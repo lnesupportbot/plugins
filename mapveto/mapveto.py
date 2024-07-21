@@ -186,88 +186,88 @@ class MapVeto:
             return self.rules[self.current_action]
         return None
         
-def create_summary_embed(self):
-    """Crée un embed résumant les résultats du veto."""
-    embed = discord.Embed(title="__**Résumé du Veto**__", color=discord.Color.blue())
-
-    # Ajouter les maps choisies
-    embed.add_field(name="**Maps choisies**", value=self.format_chosen_maps(), inline=False)
+    def create_summary_embed(self):
+        """Crée un embed résumant les résultats du veto."""
+        embed = discord.Embed(title="__**Résumé du Veto**__", color=discord.Color.blue())
     
-    # Ajouter les maps bannies
-    banned_maps_str = ", ".join(self.banned_maps)
-    embed.add_field(name="**Maps bannies**", value=banned_maps_str, inline=False)
-
-    return embed
-
-def format_chosen_maps(self):
-    """Format les maps choisies pour l'embed."""
-    chosen_maps_lines = []
+        # Ajouter les maps choisies
+        embed.add_field(name="**Maps choisies**", value=self.format_chosen_maps(), inline=False)
+        
+        # Ajouter les maps bannies
+        banned_maps_str = ", ".join(self.banned_maps)
+        embed.add_field(name="**Maps bannies**", value=banned_maps_str, inline=False)
     
-    # Associe les maps choisies à leurs équipes ou à DECIDER
-    for map_name in self.picked_maps:
-        if "choisi" in map_name:
-            # Determine quelle équipe a choisi le side
-            if "Attaque" in map_name or "Défense" in map_name:
-                side = map_name.split()[0]
+        return embed
+    
+    def format_chosen_maps(self):
+        """Format les maps choisies pour l'embed."""
+        chosen_maps_lines = []
+        
+        # Associe les maps choisies à leurs équipes ou à DECIDER
+        for map_name in self.picked_maps:
+            if "choisi" in map_name:
+                # Determine quelle équipe a choisi le side
+                if "Attaque" in map_name or "Défense" in map_name:
+                    side = map_name.split()[0]
+                    team_name = self.team_a_name if self.current_turn == self.team_a_id else self.team_b_name
+                    chosen_maps_lines.append(f"{map_name} / {side} choisi par {team_name}")
+                else:
+                    # Dernière map choisie par DECIDER
+                    chosen_maps_lines.append(f"{map_name} choisi par DECIDER")
+            else:
+                # Si c'est une map choisie sans mention spéciale
                 team_name = self.team_a_name if self.current_turn == self.team_a_id else self.team_b_name
-                chosen_maps_lines.append(f"{map_name} / {side} choisi par {team_name}")
-            else:
-                # Dernière map choisie par DECIDER
-                chosen_maps_lines.append(f"{map_name} choisi par DECIDER")
-        else:
-            # Si c'est une map choisie sans mention spéciale
-            team_name = self.team_a_name if self.current_turn == self.team_a_id else self.team_b_name
-            chosen_maps_lines.append(f"{map_name} choisi par {team_name}")
+                chosen_maps_lines.append(f"{map_name} choisi par {team_name}")
+        
+        return "\n".join(chosen_maps_lines)
     
-    return "\n".join(chosen_maps_lines)
-
-    def current_action_type(self):
-        if self.current_action < len(self.rules):
-            return self.rules[self.current_action]
-        return None
-
-    def get_current_turn(self):
-        return self.current_turn
-
-    def next_turn(self):
-        if self.stopped or self.paused:
-            return
-
-        if self.current_action < len(self.rules):
-            current_rule = self.rules[self.current_action]
-            print(f"Processing rule: {current_rule}")
-
-            if current_rule == "Continue":
-                # Allow the same team to play again
+        def current_action_type(self):
+            if self.current_action < len(self.rules):
+                return self.rules[self.current_action]
+            return None
+    
+        def get_current_turn(self):
+            return self.current_turn
+    
+        def next_turn(self):
+            if self.stopped or self.paused:
                 return
-            elif current_rule == "Fin":
-                # Handle the end of the veto
-                print("End of veto detected, stopping the veto.")
-                self.end_veto()  # Call the method to end the veto
-                return
-            else:
-                if current_rule in {"Ban", "Pick", "Side"}:
-                    self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
-                    self.current_action += 1
-
-                # Handle consecutive "Continue" rules
-                while self.current_action < len(self.rules) and self.rules[self.current_action] == "Continue":
-                    self.current_action += 1
-                    if self.current_action < len(self.rules) and self.rules[self.current_action] != "Continue":
-                        # Switch turn after exiting consecutive "Continue"
-                        self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
-
-                # If there are no more actions, stop the veto
-                if self.current_action >= len(self.rules):
-                    print("No more rules, stopping the veto")
+    
+            if self.current_action < len(self.rules):
+                current_rule = self.rules[self.current_action]
+                print(f"Processing rule: {current_rule}")
+    
+                if current_rule == "Continue":
+                    # Allow the same team to play again
+                    return
+                elif current_rule == "Fin":
+                    # Handle the end of the veto
+                    print("End of veto detected, stopping the veto.")
                     self.end_veto()  # Call the method to end the veto
                     return
-
-        else:
-            # No more actions, end the veto
-            print("No more actions, stopping the veto")
-            self.end_veto()  # Call the method to end the veto
-            return
+                else:
+                    if current_rule in {"Ban", "Pick", "Side"}:
+                        self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
+                        self.current_action += 1
+    
+                    # Handle consecutive "Continue" rules
+                    while self.current_action < len(self.rules) and self.rules[self.current_action] == "Continue":
+                        self.current_action += 1
+                        if self.current_action < len(self.rules) and self.rules[self.current_action] != "Continue":
+                            # Switch turn after exiting consecutive "Continue"
+                            self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
+    
+                    # If there are no more actions, stop the veto
+                    if self.current_action >= len(self.rules):
+                        print("No more rules, stopping the veto")
+                        self.end_veto()  # Call the method to end the veto
+                        return
+    
+            else:
+                # No more actions, end the veto
+                print("No more actions, stopping the veto")
+                self.end_veto()  # Call the method to end the veto
+                return
 
     def ban_map(self, map_name):
         if map_name in self.maps:
