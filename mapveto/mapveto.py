@@ -197,8 +197,8 @@ class MapVeto:
                 return
             elif current_rule == "Fin":
                 # End the veto and send summary
-                self.stopped = True
-                return self.create_summary_embed()
+                self.stop()  # Call stop to end the veto
+                return  # Prevent further actions
             else:
                 # Normal action, switch turn
                 self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
@@ -212,8 +212,8 @@ class MapVeto:
                         self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
         else:
             # No more actions, end the veto
-            self.stopped = True
-            return self.create_summary_embed()
+            self.stop()  # Call stop to end the veto
+            return  # Prevent further actions
 
     def create_summary_embed(self):
         embed = discord.Embed(title=f"Map Veto {self.team_a_name} - {self.team_b_name} terminé!", color=discord.Color.green())
@@ -354,13 +354,13 @@ class MapVetoCog(commands.Cog):
         if name not in vetos:
             await ctx.send(f"Aucun veto en cours avec le nom '{name}'.")
             return
-
+    
         veto = vetos[name]
         veto.stop()  # Call stop to end the veto
         embed = veto.create_summary_embed()  # Get the summary embed
         del vetos[name]  # Remove the veto from memory
-        await ctx.send(f"Le veto '{name}' a été arrêté.")
         await ctx.send(embed=embed)  # Send the summary embed
+
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
