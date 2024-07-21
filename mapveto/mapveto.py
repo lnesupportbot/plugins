@@ -374,9 +374,9 @@ class MapVetoCog(commands.Cog):
             return
 
         veto = vetos[name]
-        summary_embed = veto.stop()  # Call stop to end the veto and get the summary embed
-        await ctx.send(embed=summary_embed)  # Send the summary embed
-        del vetos[name]  # Optionally remove the veto from the active list
+        veto.stop()  # Call stop to end the veto
+        embed = veto.create_summary_embed()  # Get the summary embed
+        await ctx.send(embed=embed)  # Send the summary embed
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
