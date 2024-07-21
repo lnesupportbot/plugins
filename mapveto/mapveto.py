@@ -219,7 +219,7 @@ class MapVeto:
                 return
 
             if current_rule == "Continue":
-                # Allow the same team to play again without advancing the turn
+                # Allow the same team to play again
                 return
 
             # Normal action
