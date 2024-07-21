@@ -263,8 +263,6 @@ class MapVeto:
 
     def end_veto(self):
         """Handle the end of the veto and create the summary."""
-        self.stop()  # Stop the veto
-        summary_embed = self.create_summary_embed()  # Create the summary embed
         # Send the summary embed to the channel or perform any other final actions
         # For example, you might need to use bot context or channel to send the message
         return stop_mapveto
