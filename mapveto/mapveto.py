@@ -213,24 +213,25 @@ class MapVeto:
 
         if self.current_action < len(self.rules):
             current_rule = self.rules[self.current_action]
-            if current_rule == "Continue":
-                # Allow the same team to play again
-                return
-            elif current_rule == "Fin":
+            if current_rule == "Fin":
                 # End the veto and send summary
                 self.stop()
                 return
-            else:
-                # Normal action, switch turn
-                self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
-                self.current_action += 1
 
-                # Handle consecutive "Continue" rules
-                while self.current_action < len(self.rules) and self.rules[self.current_action] == "Continue":
-                    self.current_action += 1
-                    if self.current_action < len(self.rules) and self.rules[self.current_action] != "Continue":
-                        # Switch turn after exiting consecutive "Continue"
-                        self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
+            if current_rule == "Continue":
+                # Allow the same team to play again
+                return
+
+            # Normal action
+            self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
+            self.current_action += 1
+
+            # Handle consecutive "Continue" rules
+            while self.current_action < len(self.rules) and self.rules[self.current_action] == "Continue":
+                self.current_action += 1
+                if self.current_action < len(self.rules) and self.rules[self.current_action] != "Continue":
+                    # Switch turn after exiting consecutive "Continue"
+                    self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
         else:
             # No more actions, end the veto
             self.stop()
