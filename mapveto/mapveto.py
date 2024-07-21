@@ -158,7 +158,7 @@ class MapButton(discord.ui.Button):
         except discord.Forbidden:
             print(f"Cannot DM user {current_user.id}")
     
-        async def timeout():
+        async def timeout(bot):
             await view.wait()
             if not view.is_finished():
                 random_map = random.choice(veto.maps)
@@ -177,7 +177,8 @@ class MapButton(discord.ui.Button):
                     await channel.send(embed=embed)
     
         # Schedule the timeout function to run in the bot's event loop
-        bot.loop.create_task(timeout())
+        bot.loop.create_task(timeout(bot))
+
 
 
     async def timeout():
