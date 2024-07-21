@@ -266,7 +266,7 @@ class MapVeto:
     def stop(self):
         self.stopped = True
         self.paused = False
-        self.current_action = len(self.rules)  # Réinitialiser l'action courante
+        #self.current_action = len(self.rules)  # Réinitialiser l'action courante
     
 
 class MapVetoCog(commands.Cog):
