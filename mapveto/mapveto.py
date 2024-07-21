@@ -177,11 +177,30 @@ class MapVeto:
         
     def create_summary_embed(self):
         embed = discord.Embed(title=f"Résumé du veto: {self.name}", color=discord.Color.blue())
-        embed.add_field(name="Maps bannies", value=", ".join(self.banned_maps) if self.banned_maps else "Aucune", inline=False)
-        embed.add_field(name="Maps choisies", value=", ".join(self.picked_maps) if self.picked_maps else "Aucune", inline=False)
-        embed.add_field(name="Côtés choisis", value=", ".join(filter(lambda x: "choisi" in x, self.picked_maps)) if any("choisi" in s for s in self.picked_maps) else "Aucun", inline=False)
+    
+        # Maps choisies
+        picked_maps_str = []
+        last_map = None
+        for map_name in self.picked_maps:
+            if "choisi" in map_name:
+                side = map_name.split(" ")[0]  # Extract the side (e.g., "Attaque")
+                picked_maps_str.append(f"{last_map} / Side {side} choisi par {self.team_a_name if self.current_turn == self.team_a_id else self.team_b_name}")
+                last_map = None
+            else:
+                last_map = map_name
+        if last_map:
+            picked_maps_str.append(f"{last_map} par DECIDER / Side {self.picked_maps[-1].split(' ')[0]} choisi par {self.team_a_name if self.current_turn == self.team_a_id else self.team_b_name}")
+    
+        if picked_maps_str:
+            embed.add_field(name="Maps choisies", value="\n".join(picked_maps_str), inline=False)
+        else:
+            embed.add_field(name="Maps choisies", value="Aucune", inline=False)
+    
+        # Maps bannies
+        banned_maps_str = ", ".join(self.banned_maps) if self.banned_maps else "Aucune"
+        embed.add_field(name="Maps bannies", value=banned_maps_str, inline=False)
+    
         return embed
-
 
     def current_action_type(self):
         if self.current_action < len(self.rules):
