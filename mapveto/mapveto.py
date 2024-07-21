@@ -116,7 +116,7 @@ async def send_ticket_message(bot, veto, channel):
         view.add_item(component)
 
     try:
-        await current_user.send(f"{current_user.mention}, c'est votre tour de {action} une map.", view=view)
+        await current_user.send(f"{current_user.mention} ({veto.team_a_name if current_user.id == veto.team_a_id else veto.team_b_name}), c'est votre tour de {action} une map.", view=view)
     except discord.Forbidden:
         print(f"Cannot DM user {current_user.id}")
 
@@ -134,8 +134,15 @@ async def send_ticket_message(bot, veto, channel):
             if veto.current_turn is not None:
                 await send_ticket_message(bot, veto, channel)
             else:
-                await current_user.send("Le veto est terminé!")
-                await channel.send("Le veto est terminé!")
+                # Send final embed message when veto ends
+                embed = discord.Embed(title="Le Map Veto est terminé!", description="Voici le résumé des choix de cartes et des côtés.")
+                for i, map_name in enumerate(veto.picked_maps):
+                    team_name = veto.team_a_name if i % 2 == 0 else veto.team_b_name
+                    side = veto.get_side_choice(veto.team_a_id if i % 2 == 0 else veto.team_b_id)
+                    embed.add_field(name=f"Carte {i + 1}", value=f"{map_name} / {team_name} ({side})", inline=False)
+
+                await current_user.send(embed=embed)
+                await channel.send(embed=embed)
 
     bot.loop.create_task(timeout())
 
@@ -145,6 +152,8 @@ class MapVeto:
         self.maps = maps
         self.team_a_id = team_a_id
         self.team_b_id = team_b_id
+        self.team_a_name = ""
+        self.team_b_name = ""
         self.rules = rules
         self.current_turn = team_a_id
         self.current_action = 0
@@ -152,6 +161,7 @@ class MapVeto:
         self.banned_maps = []
         self.paused = False
         self.stopped = False
+        self.side_choices = {}  # Dict to keep track of sides chosen by each team
 
     def current_action_type(self):
         if self.current_action < len(self.rules):
@@ -196,6 +206,7 @@ class MapVeto:
             self.picked_maps.append(map_name)
 
     def pick_side(self, side):
+        self.side_choices[self.current_turn] = side
         self.picked_maps.append(f"{side} choisi")
 
     def pause(self):
@@ -207,6 +218,9 @@ class MapVeto:
     def stop(self):
         self.stopped = True
         self.paused = False
+
+    def get_side_choice(self, team_id):
+        return self.side_choices.get(team_id, "Non choisi")
 
 class MapVetoCog(commands.Cog):
     def __init__(self, bot):
@@ -268,18 +282,20 @@ class MapVetoCog(commands.Cog):
         else:
             await ctx.send("Aucun template de veto disponible.")
 
-    @commands.command()
-    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-    async def start_mapveto(self, ctx, name: str, team_a_id: int, team_b_id: int):
-        """Démarre un veto et envoie des messages en DM aux équipes spécifiées."""
-        if name not in veto_config.vetos:
-            await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
-            return
+@commands.command()
+@checks.has_permissions(PermissionLevel.ADMINISTRATOR)
+async def start_mapveto(self, ctx, name: str, team_a_id: int, team_a_name: str, team_b_id: int, team_b_name: str):
+    """Démarre un veto et envoie des messages en DM aux équipes spécifiées avec les noms des équipes."""
+    if name not in veto_config.vetos:
+        await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
+        return
 
-        veto = MapVeto(name, veto_config.vetos[name]["maps"], team_a_id, team_b_id, veto_config.vetos[name]["rules"])
-        vetos[name] = veto
+    veto = MapVeto(name, veto_config.vetos[name]["maps"], team_a_id, team_b_id, veto_config.vetos[name]["rules"])
+    veto.team_a_name = team_a_name
+    veto.team_b_name = team_b_name
+    vetos[name] = veto
 
-        await send_ticket_message(self.bot, veto, ctx.channel)
+    await send_ticket_message(self.bot, veto, ctx.channel)
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
