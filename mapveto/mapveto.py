@@ -93,7 +93,7 @@ class MapButton(discord.ui.Button):
         await interaction.response.send_message(message)
         await self.channel.send(message)
 
-        opponent_user = interaction.client.get_user(veto.team_b_id if interaction.user.id == veto.team_a_id else veto.team_a_id)
+        opponent_user = interaction.client.get_user(veto.team_b_id if interaction.user.id == veto.team_a_id else veto.team_b_id)
         if opponent_user:
             await opponent_user.send(message)
 
@@ -104,13 +104,17 @@ class MapButton(discord.ui.Button):
             await self.channel.send("Le veto est terminé!")
             embed = veto.create_summary_embed()
             await self.channel.send(embed=embed)
+            await send_summary_to_players(interaction.client, veto, embed)
 
-        # Disable the button and update the message
-        view = interaction.message.view
-        for item in view.children:
-            if isinstance(item, discord.ui.Button) and item.custom_id == self.custom_id:
-                item.disabled = True
-        await interaction.message.edit(view=view)
+            # Disable all buttons
+            view = interaction.message.view
+            for item in view.children:
+                if isinstance(item, discord.ui.Button):
+                    item.disabled = True
+            await interaction.message.edit(view=view)
+
+            # Send an ephemeral message to indicate the veto has ended
+            await interaction.response.send_message("Ce mapveto est fini, vous ne pouvez plus interagir avec ces boutons!", ephemeral=True)
 
 async def send_ticket_message(bot, veto, channel):
     action = veto.current_action_type()
@@ -184,30 +188,30 @@ class MapVeto:
     def get_current_turn(self):
         return self.current_turn
 
-    def next_turn(self):
-        if self.stopped or self.paused:
+def next_turn(self):
+    if self.stopped or self.paused:
+        return
+
+    if self.current_action < len(self.rules):
+        current_rule = self.rules[self.current_action]
+        if current_rule == "Continue":
+            # Allow the same team to play again
             return
-
-        if self.current_action < len(self.rules):
-            current_rule = self.rules[self.current_action]
-            if current_rule == "Continue":
-                # Allow the same team to play again
-                return
-            else:
-                # Normal action, switch turn
-                self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
-                self.current_action += 1
-
-                # Handle consecutive "Continue" rules
-                while self.current_action < len(self.rules) and self.rules[self.current_action] == "Continue":
-                    self.current_action += 1
-                    if self.current_action < len(self.rules) and self.rules[self.current_action] != "Continue":
-                        # Switch turn after exiting consecutive "Continue"
-                        self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
         else:
-            # No more actions, end the veto
-            self.stopped = True
-            return self.create_summary_embed()
+            # Normal action, switch turn
+            self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
+            self.current_action += 1
+
+            # Handle consecutive "Continue" rules
+            while self.current_action < len(self.rules) and self.rules[self.current_action] == "Continue":
+                self.current_action += 1
+                if self.current_action < len(self.rules) and self.rules[self.current_action] != "Continue":
+                    # Switch turn after exiting consecutive "Continue"
+                    self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
+    else:
+        # No more actions, end the veto
+        self.stopped = True
+        return self.create_summary_embed()
 
     def create_summary_embed(self):
         embed = discord.Embed(title=f"Map Veto {self.team_a_name} - {self.team_b_name} terminé!", color=discord.Color.green())
@@ -358,6 +362,7 @@ class MapVetoCog(commands.Cog):
         del vetos[name]  # Remove the veto from memory
         await ctx.send(f"Le veto '{name}' a été arrêté.")
         await ctx.send(embed=embed)  # Send the summary embed
+        await self.send_summary_to_players(veto, embed)  # Send the summary to players
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
@@ -412,6 +417,15 @@ class MapVetoCog(commands.Cog):
         )
 
         await ctx.send(embed=embed)
+
+    async def send_summary_to_players(self, veto, embed):
+        """Envoie le résumé du veto aux joueurs impliqués."""
+        team_a_user = self.bot.get_user(veto.team_a_id)
+        team_b_user = self.bot.get_user(veto.team_b_id)
+        if team_a_user:
+            await team_a_user.send(embed=embed)
+        if team_b_user:
+            await team_b_user.send(embed=embed)
 
 async def setup(bot):
     await bot.add_cog(MapVetoCog(bot))
