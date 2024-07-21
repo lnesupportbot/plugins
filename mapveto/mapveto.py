@@ -113,12 +113,8 @@ class MapButton(discord.ui.Button):
         await interaction.message.edit(view=view)
 
 async def send_ticket_message(bot, veto, channel):
-    action = veto.current_action_type()
+    action = veto.current_action_type()  # Assurez-vous que cette méthode existe
     if action is None:
-        return
-
-    current_user = bot.get_user(veto.get_current_turn())
-    if not current_user:
         return
 
     components = []
@@ -156,8 +152,9 @@ async def send_ticket_message(bot, veto, channel):
 
     bot.loop.create_task(timeout())
 
+
 class MapVeto:
-    def __init__(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel, bot):
+    def __init__(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules):
         self.name = name
         self.maps = maps
         self.team_a_id = team_a_id
@@ -171,9 +168,16 @@ class MapVeto:
         self.banned_maps = []
         self.paused = False
         self.stopped = False
-        self.channel = channel  # Le canal de discussion où la commande a été lancée
-        self.participants = [team_a_id, team_b_id]  # Ajouter les participants
-        self.bot = bot  # Ajouter une référence au bot
+        self.channel = None  # Vous devrez peut-être définir ce champ
+
+    def current_action_type(self):
+        """Retourne le type d'action actuelle (Pick, Ban, Side, etc.) basé sur la règle en cours."""
+        if self.current_action < len(self.rules):
+            return self.rules[self.current_action]
+        return None
+
+    # ... autres méthodes
+
         
 def create_summary_embed(self):
     """Crée un embed résumant les résultats du veto."""
