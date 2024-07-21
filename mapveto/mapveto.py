@@ -220,10 +220,10 @@ class MapVeto:
                 return
     
             # If current_action is the last action, ensure we don't go out of bounds
-            if self.current_action == len(self.rules) - 1:
-                print("Last action reached, stopping after current action")
-                self.end_veto()  # Call the method to end the veto after this action
-                return
+            # if self.current_action == len(self.rules):
+               # print("Last action reached, stopping after current action")
+               # self.end_veto()  # Call the method to end the veto after this action
+               # return
     
         else:
             # No more actions, end the veto
