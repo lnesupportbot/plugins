@@ -81,6 +81,11 @@ class MapButton(discord.ui.Button):
             await interaction.response.send_message("Ce n'est pas votre tour.", ephemeral=True)
             return
 
+        # Ensure no double actions
+        if veto.current_action_completed:
+            await interaction.response.send_message("Cette action a déjà été effectuée.", ephemeral=True)
+            return
+
         if self.action_type == "ban":
             veto.ban_map(self.label)
             message = f"Map {self.label} bannie par {interaction.user.mention} (Équipe {veto.team_a_name if interaction.user.id == veto.team_a_id else veto.team_b_name})."
@@ -90,6 +95,9 @@ class MapButton(discord.ui.Button):
         elif self.action_type == "side":
             veto.pick_side(self.label)
             message = f"*Side {self.label} choisi par {interaction.user.mention} (Équipe {veto.team_a_name if interaction.user.id == veto.team_a_id else veto.team_b_name}).*"
+
+        # Mark the action as completed
+        veto.current_action_completed = True
 
         await interaction.response.send_message(message)
         await self.channel.send(message)
@@ -137,7 +145,7 @@ class MapButton(discord.ui.Button):
 
 async def send_ticket_message(bot, veto, channel):
     action = veto.current_action_type()
-    if action is None:
+    if action is None or action == "Fin":
         return
 
     components = []
@@ -198,6 +206,7 @@ class MapVeto:
         self.banned_maps = []
         self.paused = False
         self.stopped = False
+        self.current_action_completed = False  # Track if current action is completed
 
     def current_action_type(self):
         if self.current_action < len(self.rules):
@@ -227,18 +236,11 @@ class MapVeto:
             self.current_turn = self.team_b_id if self.current_turn == self.team_a_id else self.team_a_id
             self.current_action += 1
 
-            # Handle consecutive "Continue" rules
-            while self.current_action < len(self.rules) and self.rules[self.current_action] == "Continue":
-                self.current_action += 1
-                if self.current_action < len(self.rules) and self.rules[self.current_action] != "Continue":
-                    # Switch turn after exiting consecutive "Continue"
-                    self.current_turn = self.team_b_id if self.current_turn == self.team_a_id else self.team_a_id
-        else:
-            # No more actions, end the veto
-            self.stop()
+            # Mark the current action as not completed
+            self.current_action_completed = False
 
     def create_summary_embed(self):
-        embed = discord.Embed(title=f"Résumé du Veto {self.team_a_name} - {self.team_b_name}", color=discord.Color.green())
+        embed = discord.Embed(title=f"Résumé du veto : {self.team_a_name} - {self.team_b_name}", color=discord.Color.green())
         for i, map_name in enumerate(self.picked_maps):
             side = "Non défini"
             embed.add_field(name=f"Map {i+1}", value=f"{map_name} - {side}", inline=False)
@@ -249,11 +251,11 @@ class MapVeto:
             self.banned_maps.append(map_name)
             if map_name in self.picked_maps:
                 self.picked_maps.remove(map_name)
-    
+
     def pick_map(self, map_name):
         if map_name not in self.picked_maps and map_name not in self.banned_maps:
             self.picked_maps.append(map_name)
-    
+
     def pick_side(self, side):
         pass  # Implement side picking logic
 
