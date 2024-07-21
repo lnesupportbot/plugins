@@ -3,6 +3,7 @@ from discord.ext import commands, tasks
 import random
 import json
 import os
+import time
 from core import checks
 from core.models import PermissionLevel
 
@@ -120,6 +121,8 @@ class MapButton(discord.ui.Button):
         await interaction.message.edit(view=view)
 
 class MapVeto:
+    TURN_DURATION = 30  # durée d'un tour en secondes (à ajuster selon vos besoins)
+
     def __init__(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules):
         self.name = name
         self.maps = maps
@@ -134,6 +137,7 @@ class MapVeto:
         self.banned_maps = []
         self.paused = False
         self.stopped = False
+        self.turn_start_time = time.time()  # Ajout de l'heure de début du tour
 
     def current_action_type(self):
         if self.current_action < len(self.rules):
@@ -152,35 +156,31 @@ class MapVeto:
             print(f"Processing rule: {current_rule}")
 
             if current_rule == "Continue":
-                # Allow the same team to play again
                 return
             elif current_rule == "Fin":
-                # Handle the end of the veto
                 print("End of veto detected, stopping the veto.")
-                self.end_veto()  # Call the method to end the veto
+                self.end_veto()
                 return
             else:
                 if current_rule in {"Ban", "Pick", "Side"}:
                     self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
                     self.current_action += 1
 
-                # Handle consecutive "Continue" rules
                 while self.current_action < len(self.rules) and self.rules[self.current_action] == "Continue":
                     self.current_action += 1
                     if self.current_action < len(self.rules) and self.rules[self.current_action] != "Continue":
-                        # Switch turn after exiting consecutive "Continue"
                         self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
 
-                # If there are no more actions, stop the veto
                 if self.current_action >= len(self.rules):
                     print("No more rules, stopping the veto")
-                    self.end_veto()  # Call the method to end the veto
+                    self.end_veto()
                     return
 
+                self.turn_start_time = time.time()  # Réinitialisation de l'heure de début du tour
+
         else:
-            # No more actions, end the veto
             print("No more actions, stopping the veto")
-            self.end_veto()  # Call the method to end the veto
+            self.end_veto()
             return
 
     def ban_map(self, map_name):
@@ -211,12 +211,10 @@ class MapVeto:
         self.stopped = True
         self.paused = False
 
-        # Create the summary embed
         embed = discord.Embed(title=f"Résumé du veto '{self.name}'")
         embed.add_field(name="Maps bannies", value=", ".join(self.banned_maps) if self.banned_maps else "Aucune", inline=False)
         embed.add_field(name="Maps choisies", value=", ".join(self.picked_maps) if self.picked_maps else "Aucune", inline=False)
 
-        # Send the embed to the users
         team_a_user = self.bot.get_user(self.team_a_id)
         team_b_user = self.bot.get_user(self.team_b_id)
         if team_a_user:
@@ -224,13 +222,17 @@ class MapVeto:
         if team_b_user:
             self.bot.loop.create_task(team_b_user.send(embed=embed))
 
-        # Reset the veto for future use
         self.picked_maps.clear()
         self.banned_maps.clear()
         self.current_action = 0
         self.current_turn = self.team_a_id
         self.paused = False
         self.stopped = False
+
+    def get_remaining_time(self):
+        elapsed_time = time.time() - self.turn_start_time
+        remaining_time = self.TURN_DURATION - elapsed_time
+        return max(0, int(remaining_time))
 
 class MapVetoCog(commands.Cog):
     def __init__(self, bot):
