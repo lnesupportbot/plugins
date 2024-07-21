@@ -223,11 +223,11 @@ class MapVeto:
                     self.end_veto()  # Call the method to end the veto
                     return
 
-        else:
+        #else:
             # No more actions, end the veto
-            print("No more actions, stopping the veto")
-            self.end_veto()  # Call the method to end the veto
-            return
+         #   print("No more actions, stopping the veto")
+          #  self.end_veto()  # Call the method to end the veto
+           # return
 
     def create_summary_embed(self):
         embed = discord.Embed(title=f"Map Veto {self.team_a_name} - {self.team_b_name} terminé!", color=discord.Color.green())
