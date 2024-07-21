@@ -135,36 +135,42 @@ class MapButton(discord.ui.Button):
             await interaction.response.send_message("Ce n'est pas votre tour.", ephemeral=True)
             return
 
-        if self.action_type == "ban":
-            veto.ban_map(self.label)
-            message = f"Map {self.label} bannie par {interaction.user.mention}."
-        elif self.action_type == "pick":
-            veto.pick_map(self.label)
-            message = f"**Map {self.label} choisie par {interaction.user.mention}.**"
-        elif self.action_type == "side":
-            veto.pick_side(self.label)
-            message = f"*Side {self.label} choisi par {interaction.user.mention}.*"
+        try:
+            if self.action_type == "ban":
+                veto.ban_map(self.label)
+                message = f"Map {self.label} bannie par {interaction.user.mention}."
+            elif self.action_type == "pick":
+                veto.pick_map(self.label)
+                message = f"**Map {self.label} choisie par {interaction.user.mention}.**"
+            elif self.action_type == "side":
+                veto.pick_side(self.label)
+                message = f"*Side {self.label} choisi par {interaction.user.mention}.*"
+            else:
+                await interaction.response.send_message("Action invalide.", ephemeral=True)
+                return
 
-        await interaction.response.send_message(message)
-        await self.channel.send(message)
+            await interaction.response.send_message(message)
+            await self.channel.send(message)
 
-        opponent_user = interaction.client.get_user(veto.team_b_id if interaction.user.id == veto.team_a_id else veto.team_b_id)
-        if opponent_user:
-            await opponent_user.send(message)
+            opponent_user = interaction.client.get_user(veto.team_b_id if interaction.user.id == veto.team_a_id else veto.team_b_id)
+            if opponent_user:
+                await opponent_user.send(message)
 
-        veto.next_turn()
-        if veto.current_turn is not None:
-            await send_ticket_message(interaction.client, veto, self.channel)
-        else:
-            await interaction.user.send("Le veto est terminé!")
-            await self.channel.send("Le veto est terminé!")
+            veto.next_turn()
+            if veto.current_turn is not None:
+                await send_ticket_message(interaction.client, veto, self.channel)
+            else:
+                await interaction.user.send("Le veto est terminé!")
+                await self.channel.send("Le veto est terminé!")
 
-        # Disable the button and update the message
-        view = interaction.message.view
-        for item in view.children:
-            if isinstance(item, discord.ui.Button) and item.custom_id == self.custom_id:
-                item.disabled = True
-        await interaction.message.edit(view=view)
+            # Disable the button and update the message
+            view = interaction.message.view
+            for item in view.children:
+                if isinstance(item, discord.ui.Button) and item.custom_id == self.custom_id:
+                    item.disabled = True
+            await interaction.message.edit(view=view)
+        except Exception as e:
+            await interaction.response.send_message(f"Une erreur est survenue : {e}", ephemeral=True)
 
 # Envoi des messages de veto
 async def send_ticket_message(bot, veto, channel):
@@ -222,11 +228,11 @@ class MapVetoCog(commands.Cog):
     @commands.group(name='mapveto', invoke_without_command=True)
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def mapveto(self, ctx):
-        """Affiche les options de gestion des templates de veto."""
+        """Gère les templates de veto de cartes."""
         await ctx.send_help(ctx.command)
 
     @mapveto.command(name='create')
-    @checks.has_permissions(PermissionLevel.MODERATOR)
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def mapveto_create(self, ctx, name: str):
         """Crée un template de veto avec le nom donné."""
         if await self.veto_config.create_veto(name):
@@ -236,10 +242,10 @@ class MapVetoCog(commands.Cog):
 
     @mapveto.command(name='add')
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-    async def add_map(self, ctx, name: str, *map_names):
+    async def mapveto_add(self, ctx, name: str, *map_names: str):
         """Ajoute plusieurs maps au template de veto spécifié."""
         if await self.veto_config.add_maps(name, map_names):
-            await ctx.send(f"Maps ajoutées au template de veto '{name}' : {', '.join(map_names)}.")
+            await ctx.send(f"Maps ajoutées au template de veto '{name}': {', '.join(map_names)}.")
         else:
             await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
 
