@@ -156,8 +156,6 @@ async def send_ticket_message(bot, veto, channel):
 
     bot.loop.create_task(timeout())
 
-
-
 class MapVeto:
     def __init__(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel=None, bot=None):
         self.name = name
@@ -173,9 +171,9 @@ class MapVeto:
         self.banned_maps = []
         self.paused = False
         self.stopped = False
-        self.channel = channel  # Assurez-vous d'utiliser cette variable si nécessaire
-        self.bot = bot  # Assurez-vous d'utiliser cette variable si nécessaire
-        self.current_turn = team_a_id
+        self.channel = channel
+        self.bot = bot
+        self.participants = [team_a_id, team_b_id]  # Assuming participants are teams
 
     def get_current_turn(self):
         return self.current_turn
@@ -220,187 +218,89 @@ class MapVeto:
                 chosen_maps_lines.append(f"{map_name} choisi par {team_name}")
         
         return "\n".join(chosen_maps_lines)
-    
-        def current_action_type(self):
-            if self.current_action < len(self.rules):
-                return self.rules[self.current_action]
-            return None
-    
-        def get_current_turn(self):
-            return self.current_turn
-    
-        def next_turn(self):
-            if self.stopped or self.paused:
-                return
-    
-            if self.current_action < len(self.rules):
-                current_rule = self.rules[self.current_action]
-                print(f"Processing rule: {current_rule}")
-    
-                if current_rule == "Continue":
-                    # Allow the same team to play again
-                    return
-                elif current_rule == "Fin":
-                    # Handle the end of the veto
-                    print("End of veto detected, stopping the veto.")
-                    self.end_veto()  # Call the method to end the veto
-                    return
-                else:
-                    if current_rule in {"Ban", "Pick", "Side"}:
-                        self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
-                        self.current_action += 1
-    
-                    # Handle consecutive "Continue" rules
-                    while self.current_action < len(self.rules) and self.rules[self.current_action] == "Continue":
-                        self.current_action += 1
-                        if self.current_action < len(self.rules) and self.rules[self.current_action] != "Continue":
-                            # Switch turn after exiting consecutive "Continue"
-                            self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
-    
-                    # If there are no more actions, stop the veto
-                    if self.current_action >= len(self.rules):
-                        print("No more rules, stopping the veto")
-                        self.end_veto()  # Call the method to end the veto
-                        return
-    
-            else:
-                # No more actions, end the veto
-                print("No more actions, stopping the veto")
-                self.end_veto()  # Call the method to end the veto
-                return
 
     def ban_map(self, map_name):
-        if map_name in self.maps:
-            self.maps.remove(map_name)
+        """Ban un map."""
+        if map_name not in self.banned_maps and map_name in self.maps:
             self.banned_maps.append(map_name)
+            self.maps.remove(map_name)
+            if map_name in self.picked_maps:
+                self.picked_maps.remove(map_name)
 
     def pick_map(self, map_name):
-        if map_name in self.maps:
-            self.maps.remove(map_name)
+        """Choisi un map."""
+        if map_name not in self.picked_maps and map_name in self.maps:
             self.picked_maps.append(map_name)
+            self.maps.remove(map_name)
 
     def pick_side(self, side):
-        # Ajoute le side choisi par l'équipe actuelle
-        self.picked_maps.append(f"{side} choisi par {self.team_a_name if self.current_turn == self.team_a_id else self.team_b_name}")
+        """Choisi un side (Attaque ou Défense)."""
+        if side in ["Attaque", "Défense"]:
+            self.picked_maps.append(side)
 
-    def pause(self):
-        self.paused = True
-
-    def resume(self):
-        self.paused = False
-
-    def stop(self):
-        self.stopped = True
-        self.paused = False
-    
-    def end_veto(self):
-        if not self.stopped:
+    def next_turn(self):
+        """Détermine le tour suivant et met à jour l'état."""
+        if self.current_action < len(self.rules):
+            self.current_action += 1
+            self.current_turn = self.team_b_id if self.current_turn == self.team_a_id else self.team_a_id
+        else:
             self.stopped = True
-            self.paused = False
-    
-            # Créer l'embed de résumé
-            embed = self.create_summary_embed()
-    
-            # Envoyer le résumé dans le canal où la commande a été lancée
-            if self.channel:
-                self.bot.loop.create_task(self.channel.send(embed=embed))
-    
-            # Envoyer le résumé aux participants en DM
-            for participant_id in self.participants:
-                participant = self.bot.get_user(participant_id)
-                if participant:
-                    try:
-                        self.bot.loop.create_task(participant.send(embed=embed))
-                    except discord.Forbidden:
-                        print(f"Cannot DM user {participant_id}")
 
-class MapVetoCog(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
+@commands.group()
+@commands.guild_only()
+@commands.check(checks.has_permissions(PermissionLevel.ADMIN))
+async def mapveto(ctx):
+    if ctx.invoked_subcommand is None:
+        await ctx.send("Command not recognized. Use `!mapveto create`, `!mapveto start`, etc.")
 
-    @commands.group(name='mapveto', invoke_without_command=True)
-    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-    async def mapveto(self, ctx):
-        """Affiche les options de gestion des templates de veto."""
-        await ctx.send_help(ctx.command)
+@mapveto.command(name="create")
+async def mapveto_create(ctx, name: str):
+    if veto_config.create_veto(name):
+        await ctx.send(f"Veto {name} créé.")
+    else:
+        await ctx.send(f"Veto {name} existe déjà.")
 
-    @mapveto.command(name='create')
-    @checks.has_permissions(PermissionLevel.MODERATOR)
-    async def mapveto_create(self, ctx, name: str):
-        """Crée un template de veto avec le nom donné."""
-        if veto_config.create_veto(name):
-            await ctx.send(f"Template de veto '{name}' créé avec succès.")
-        else:
-            await ctx.send(f"Un template de veto avec le nom '{name}' existe déjà.")
+@mapveto.command(name="add_maps")
+async def mapveto_add_maps(ctx, name: str, *maps):
+    if veto_config.add_maps(name, maps):
+        await ctx.send(f"Maps ajoutées au veto {name}.")
+    else:
+        await ctx.send(f"Veto {name} non trouvé.")
 
-    @mapveto.command(name='add')
-    @checks.has_permissions(PermissionLevel.MODERATOR)
-    async def mapveto_add(self, ctx, name: str, *, maps: str):
-        """Ajoute plusieurs maps au template de veto spécifié."""
-        map_names = maps.split()
-        if veto_config.add_maps(name, map_names):
-            await ctx.send(f"Maps ajoutées au template de veto '{name}' : {', '.join(map_names)}.")
-        else:
-            await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
+@mapveto.command(name="set_rules")
+async def mapveto_set_rules(ctx, name: str, *, rules: str):
+    if veto_config.set_rules(name, rules):
+        await ctx.send(f"Règles définies pour le veto {name}.")
+    else:
+        await ctx.send(f"Veto {name} non trouvé.")
 
-    @mapveto.command(name='rules')
-    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-    async def mapveto_rules(self, ctx, name: str, *, rules: str):
-        """Définit les règles pour le template de veto spécifié."""
-        valid_rules = {"Pick", "Ban", "Continue", "Side"}
-        rules_list = rules.split()
-        if all(rule in valid_rules for rule in rules_list):
-            if veto_config.set_rules(name, rules):
-                await ctx.send(f"Règles définies pour le template de veto '{name}' : {rules}.")
-            else:
-                await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
-        else:
-            await ctx.send(f"Règles invalides. Les règles valides sont : {', '.join(valid_rules)}.")
+@mapveto.command(name="delete")
+async def mapveto_delete(ctx, name: str):
+    if veto_config.delete_veto(name):
+        await ctx.send(f"Veto {name} supprimé.")
+    else:
+        await ctx.send(f"Veto {name} non trouvé.")
 
-    @mapveto.command(name='delete')
-    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-    async def mapveto_delete(self, ctx, name: str):
-        """Supprime le template de veto spécifié."""
-        if veto_config.delete_veto(name):
-            await ctx.send(f"Template de veto '{name}' supprimé avec succès.")
-        else:
-            await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
-
-    @mapveto.command(name='list')
-    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-    async def mapveto_list(self, ctx):
-        """Liste tous les templates de veto disponibles."""
-        if veto_config.vetos:
-            await ctx.send(f"Templates de veto disponibles : {', '.join(veto_config.vetos.keys())}")
-        else:
-            await ctx.send("Aucun template de veto disponible.")
-            
-    @commands.command()
-    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-    async def start_mapveto(self, ctx, name: str, team_a_id: int, team_a_name: str, team_b_id: int, team_b_name: str):
-        """Démarre un veto et envoie des messages en DM aux équipes spécifiées."""
-        if name not in veto_config.vetos:
-            await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
-            return
-    
-        veto = MapVeto(name, veto_config.vetos[name]["maps"], team_a_id, team_a_name, team_b_id, team_b_name, veto_config.vetos[name]["rules"], ctx.channel, self.bot)
+@mapveto.command()
+async def mapveto_start(ctx, name: str, team_a_id: int, team_a_name: str, team_b_id: int, team_b_name: str):
+    veto_data = veto_config.get_veto(name)
+    if veto_data:
+        veto = MapVeto(
+            name=name,
+            maps=veto_data["maps"],
+            team_a_id=team_a_id,
+            team_a_name=team_a_name,
+            team_b_id=team_b_id,
+            team_b_name=team_b_name,
+            rules=veto_data["rules"],
+            channel=ctx.channel,
+            bot=ctx.bot
+        )
         vetos[name] = veto
-    
-        await send_ticket_message(self.bot, veto, ctx.channel)
-
-    @commands.command()
-    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-    async def start_mapveto(self, ctx, name: str, team_a_id: int, team_a_name: str, team_b_id: int, team_b_name: str):
-        """Démarre un veto et envoie des messages en DM aux équipes spécifiées."""
-        if name not in veto_config.vetos:
-            await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
-            return
-    
-        # Créez l'instance de MapVeto en passant les arguments corrects
-        veto = MapVeto(name, veto_config.vetos[name]["maps"], team_a_id, team_a_name, team_b_id, team_b_name, veto_config.vetos[name]["rules"], ctx.channel, self.bot)
-        vetos[name] = veto
-    
-        await send_ticket_message(self.bot, veto, ctx.channel)
+        await ctx.send(f"Le veto {name} a commencé. Les équipes {team_a_name} et {team_b_name} sont en jeu.")
+        await send_ticket_message(ctx.bot, veto, ctx.channel)
+    else:
+        await ctx.send(f"Veto {name} non trouvé.")
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
