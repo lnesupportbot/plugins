@@ -67,7 +67,7 @@ class MapButton(discord.ui.Button):
         self.channel = channel
 
     async def callback(self, interaction: discord.Interaction):
-        veto = vetos.get(self.veto_name)
+        veto = self.view.bot.vetos.get(self.veto_name)
         if not veto:
             await interaction.response.send_message("Veto non trouvé.", ephemeral=True)
             return
@@ -229,10 +229,12 @@ class MapVetoCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.veto_config = MapVetoConfig(bot)
+        self.vetos = {}  # Initialize the `vetos` dictionary here
 
     @commands.Cog.listener()
     async def on_ready(self):
         await self.veto_config.load_vetos()
+        self.vetos = self.veto_config.vetos  # Load vetos from the configuration
 
     @commands.group(name='mapveto', invoke_without_command=True)
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
@@ -243,7 +245,7 @@ class MapVetoCog(commands.Cog):
     @mapveto.command(name='create')
     @checks.has_permissions(PermissionLevel.MODERATOR)
     async def mapveto_create(self, ctx, name: str):
-        """Crée un template de veto avec le nom donné."""
+        """Crée un nouveau template de veto avec le nom spécifié."""
         if await self.veto_config.create_veto(name):
             await ctx.send(f"Template de veto '{name}' créé avec succès.")
         else:
@@ -301,7 +303,7 @@ class MapVetoCog(commands.Cog):
             return
 
         veto = MapVeto(name, veto_data["maps"], team_a_id, team_b_id, veto_data["rules"])
-        vetos[name] = veto
+        self.vetos[name] = veto
 
         await send_ticket_message(self.bot, veto, ctx.channel)
 
@@ -309,11 +311,11 @@ class MapVetoCog(commands.Cog):
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def pause_mapveto(self, ctx, name: str):
         """Met en pause le veto spécifié."""
-        if name not in vetos:
+        if name not in self.vetos:
             await ctx.send(f"Aucun veto en cours avec le nom '{name}'.")
             return
 
-        veto = vetos[name]
+        veto = self.vetos[name]
         veto.pause()
         await ctx.send(f"Le veto '{name}' a été mis en pause.")
 
@@ -321,11 +323,11 @@ class MapVetoCog(commands.Cog):
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def resume_mapveto(self, ctx, name: str):
         """Reprend le veto spécifié."""
-        if name not in vetos:
+        if name not in self.vetos:
             await ctx.send(f"Aucun veto en cours avec le nom '{name}'.")
             return
 
-        veto = vetos[name]
+        veto = self.vetos[name]
         veto.resume()
         await ctx.send(f"Le veto '{name}' a repris.")
 
@@ -333,13 +335,13 @@ class MapVetoCog(commands.Cog):
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def stop_mapveto(self, ctx, name: str):
         """Arrête complètement le veto spécifié et le supprime des enregistrements."""
-        if name not in vetos:
+        if name not in self.vetos:
             await ctx.send(f"Aucun veto en cours avec le nom '{name}'.")
             return
 
-        veto = vetos[name]
+        veto = self.vetos[name]
         veto.stop()
-        del vetos[name]
+        del self.vetos[name]
         await ctx.send(f"Le veto '{name}' a été arrêté et supprimé.")
 
     @commands.command()
