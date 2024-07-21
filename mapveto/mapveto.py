@@ -203,7 +203,7 @@ class MapVeto:
                 return
             elif current_rule == "Fin":
                 # Handle the end of the veto
-                # self.end_veto()  # Call the method to end the veto
+                self.end_veto()  # Call the method to end the veto
                 return
             else:
                 if current_rule in {"Ban", "Pick", "Side"}:
@@ -267,7 +267,7 @@ class MapVeto:
         summary_embed = self.create_summary_embed()  # Create the summary embed
         # Send the summary embed to the channel or perform any other final actions
         # For example, you might need to use bot context or channel to send the message
-        return summary_embed
+        return stop_mapveto
 
     def stop(self):
         self.stopped = True
