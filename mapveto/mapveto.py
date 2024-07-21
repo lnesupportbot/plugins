@@ -184,10 +184,14 @@ class MapVeto:
         for map_name in self.picked_maps:
             if "choisi" in map_name:
                 side = map_name.split(" ")[0]  # Extract the side (e.g., "Attaque")
-                picked_maps_str.append(f"{last_map} / Side {side} choisi par {self.team_a_name if self.current_turn == self.team_a_id else self.team_b_name}")
-                last_map = None
+                if last_map:
+                    picked_maps_str.append(f"{last_map} / Side {side} choisi par {self.team_a_name if self.current_turn == self.team_a_id else self.team_b_name}")
+                    last_map = None
+                else:
+                    picked_maps_str.append(f"Side {side} choisi par {self.team_a_name if self.current_turn == self.team_a_id else self.team_b_name}")
             else:
                 last_map = map_name
+        
         if last_map:
             picked_maps_str.append(f"{last_map} par DECIDER / Side {self.picked_maps[-1].split(' ')[0]} choisi par {self.team_a_name if self.current_turn == self.team_a_id else self.team_b_name}")
     
