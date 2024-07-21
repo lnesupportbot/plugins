@@ -266,9 +266,7 @@ class MapVeto():
     def stop(self):
         self.stopped = True
         self.paused = False
-        #self.current_action = len(self.rules)  # Réinitialiser l'action courante
-
-map_veto = MapVeto()    
+        #self.current_action = len(self.rules)  # Réinitialiser l'action couranted 
 
 class MapVetoCog(commands.Cog):
     def __init__(self, bot):
@@ -376,9 +374,12 @@ class MapVetoCog(commands.Cog):
             await ctx.send(f"Aucun veto en cours avec le nom '{name}'.")
             return
 
-        map_veto = vetos[name]
-        map_veto.stop()  # Call stop to end the veto
-        embed = map_veto.create_summary_embed()  # Get the summary embed
+        veto = vetos[name]
+        veto.stop()  # Call stop to end the veto
+        embed = veto.create_summary_embed()  # Get the summary embed
+        veto.current_action = 0
+        veto.picked_maps = []
+        veto.banned_maps = []
         del vetos[name]  # Remove the veto from memory
         await ctx.send(embed=embed)  # Send the summary embed
 
