@@ -194,6 +194,10 @@ class MapVeto:
             if current_rule == "Continue":
                 # Allow the same team to play again
                 return
+            elif current_rule == "Fin":
+                # End the veto and create the summary
+                self.stop()
+                return self.create_summary_embed()
             else:
                 # Normal action, switch turn
                 self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
@@ -354,6 +358,9 @@ class MapVetoCog(commands.Cog):
 
         veto = vetos[name]
         veto.stop()  # Call stop to end the veto
+        embed = veto.create_summary_embed()  # Create the summary embed
+        await ctx.send(embed=embed)  # Send the summary embed
+        del vetos[name]  # Optionally remove the veto from the active list
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
