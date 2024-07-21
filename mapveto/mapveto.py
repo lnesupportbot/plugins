@@ -190,44 +190,46 @@ class MapVeto:
     def get_current_turn(self):
         return self.current_turn
 
-    def next_turn(self):
-        if self.stopped or self.paused:
+def next_turn(self):
+    if self.stopped or self.paused:
+        return
+
+    # Check if there are more rules to process
+    if self.current_action < len(self.rules):
+        current_rule = self.rules[self.current_action]
+        print(f"Processing rule: {current_rule}")
+
+        # Process the current rule
+        if current_rule in {"Ban", "Pick", "Side"}:
+            # Switch turn between teams
+            self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
+            # Move to the next action
+            self.current_action += 1
+
+        # Handle consecutive "Continue" rules
+        while self.current_action < len(self.rules) and self.rules[self.current_action] == "Continue":
+            self.current_action += 1
+            if self.current_action < len(self.rules) and self.rules[self.current_action] != "Continue":
+                # Switch turn after exiting consecutive "Continue"
+                self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
+
+        # Check if we need to stop the veto
+        if self.current_action >= len(self.rules):
+            print("No more actions, stopping the veto")
+            self.end_veto()  # Call the method to end the veto
             return
 
-        if self.current_action < len(self.rules):
-            current_rule = self.rules[self.current_action]
-            print(f"Processing rule: {current_rule}")
+        # If current_action is the last action, ensure we don't go out of bounds
+        if self.current_action == len(self.rules) - 1:
+            print("Last action reached, stopping after current action")
+            self.end_veto()  # Call the method to end the veto after this action
+            return
 
-            if current_rule == "Continue":
-                # Allow the same team to play again
-                return
-            elif current_rule == "Fin":
-                # Handle the end of the veto
-                self.end_veto()  # Call the method to end the veto
-                return
-            else:
-                if current_rule in {"Ban", "Pick", "Side"}:
-                    self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
-                    self.current_action += 1
-
-                # Handle consecutive "Continue" rules
-                while self.current_action < len(self.rules) and self.rules[self.current_action] == "Continue":
-                    self.current_action += 1
-                    if self.current_action < len(self.rules) and self.rules[self.current_action] != "Continue":
-                        # Switch turn after exiting consecutive "Continue"
-                        self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
-
-                # If there are no more actions, stop the veto
-                if self.current_action >= len(self.rules):
-                    print("No more rules, stopping the veto")
-                    self.end_veto()  # Call the method to end the veto
-                    return
-
-        #else:
-            # No more actions, end the veto
-         #   print("No more actions, stopping the veto")
-          #  self.end_veto()  # Call the method to end the veto
-           # return
+    else:
+        # No more actions, end the veto
+        print("No more actions, stopping the veto")
+        self.end_veto()  # Call the method to end the veto
+        return
 
     def create_summary_embed(self):
         embed = discord.Embed(title=f"Map Veto {self.team_a_name} - {self.team_b_name} terminé!", color=discord.Color.green())
