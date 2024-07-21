@@ -293,7 +293,9 @@ class MapVeto:
         self.stopped = True
         self.paused = False
         self.current_turn = None
-        self.current_action = len(self.rules)  # Réinitialiser l'action courante
+        self.current_action = 0  # Réinitialiser l'action courante
+        self.picked_maps = []    # Réinitialiser les maps choisies
+        self.banned_maps = []    # Réinitialiser les maps bannies
 
 class MapVetoCog(commands.Cog):
     def __init__(self, bot):
