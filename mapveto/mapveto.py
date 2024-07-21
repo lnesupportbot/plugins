@@ -259,14 +259,14 @@ class MapVeto:
     async def end_veto(self):
         # Créez l'embed de résumé
         summary_embed = self.create_summary_embed()
-    
-        # Vérifiez si le canal est défini et envoyer l'embed dans ce canal
+        
+        # Envoyer l'embed dans le canal où le veto a été démarré
         if hasattr(self, 'channel') and self.channel:
             try:
                 await self.channel.send(embed=summary_embed)
             except discord.Forbidden:
                 print("Impossible d'envoyer le résumé dans le canal.")
-        
+    
         # Envoyer l'embed aux équipes en DM si nécessaire
         team_a_user = self.bot.get_user(self.team_a_id)
         if team_a_user:
@@ -283,7 +283,10 @@ class MapVeto:
                 print(f"Impossible d'envoyer le résumé à l'équipe B ({self.team_b_id}).")
     
         # Marquer le veto comme terminé
-        self.stop()
+        self.stopped = True
+        self.paused = False
+        self.current_turn = None
+        self.current_action = len(self.rules)  # Réinitialiser l'action courante
 
 
     def stop(self):
