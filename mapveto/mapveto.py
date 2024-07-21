@@ -60,11 +60,12 @@ veto_config = MapVetoConfig()
 vetos = {}
 
 class MapButton(discord.ui.Button):
-    def __init__(self, label, veto_name, action_type, channel):
+    def __init__(self, label, veto_name, action_type, channel, ctx):
         super().__init__(label=label, style=discord.ButtonStyle.primary, custom_id=f"{veto_name}_{label}_{action_type}")
         self.veto_name = veto_name
         self.action_type = action_type
         self.channel = channel
+        self.ctx = ctx
 
     async def callback(self, interaction: discord.Interaction):
         veto = vetos.get(self.veto_name)
@@ -97,9 +98,10 @@ class MapButton(discord.ui.Button):
         if opponent_user:
             await opponent_user.send(message)
 
-        veto.next_turn()
+        await veto.next_turn(self.ctx)  # Await the next turn call
+
         if veto.current_turn is not None:
-            await send_ticket_message(interaction.client, veto, self.channel)
+            await send_ticket_message(interaction.client, veto, self.channel, self.ctx)
         else:
             await self.channel.send("Le veto est terminé!")
             embed = veto.create_summary_embed()
@@ -114,7 +116,7 @@ class MapButton(discord.ui.Button):
         # Update the message with the modified view
         await interaction.message.edit(view=view)
 
-async def send_ticket_message(bot, veto, channel):
+async def send_ticket_message(bot, veto, channel, ctx):
     action = veto.current_action_type()
     if action is None:
         return
@@ -125,12 +127,12 @@ async def send_ticket_message(bot, veto, channel):
 
     components = []
     if action == "Side":
-        components.append(MapButton(label="Attaque", veto_name=veto.name, action_type="side", channel=channel))
-        components.append(MapButton(label="Défense", veto_name=veto.name, action_type="side", channel=channel))
+        components.append(MapButton(label="Attaque", veto_name=veto.name, action_type="side", channel=channel, ctx=ctx))
+        components.append(MapButton(label="Défense", veto_name=veto.name, action_type="side", channel=channel, ctx=ctx))
     else:
         for map_name in veto.maps:
             # Disable buttons for banned or picked maps
-            button = MapButton(label=map_name, veto_name=veto.name, action_type=action.lower(), channel=channel)
+            button = MapButton(label=map_name, veto_name=veto.name, action_type=action.lower(), channel=channel, ctx=ctx)
             if map_name in veto.banned_maps or map_name in veto.picked_maps:
                 button.disabled = True
             components.append(button)
@@ -148,33 +150,23 @@ async def send_ticket_message(bot, veto, channel):
     async def timeout():
         await view.wait()
         if not view.is_finished():
-            random_map = random.choice(veto.maps)
-            if action == "ban":
-                veto.ban_map(random_map)
-                await current_user.send(f"Map {random_map} bannie automatiquement.")
-            elif action == "pick":
-                veto.pick_map(random_map)
-                await current_user.send(f"Map {random_map} choisie automatiquement.")
-            veto.next_turn()
-            if veto.current_turn is not None:
-                await send_ticket_message(bot, veto, channel)
-            else:
-                # Finalize the veto
-                summary_embed = veto.end_veto()
-                await channel.send(embed=summary_embed)
+            random_button = random.choice(view.children)
+            if isinstance(random_button, discord.ui.Button):
+                await random_button.callback(None)
 
     bot.loop.create_task(timeout())
 
-
-class MapVeto():
+class MapVeto:
     def __init__(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules):
         self.name = name
         self.maps = maps
+        self.initial_maps = maps.copy()  # Save initial maps
         self.team_a_id = team_a_id
         self.team_a_name = team_a_name
         self.team_b_id = team_b_id
         self.team_b_name = team_b_name
         self.rules = rules
+        self.initial_rules = rules.copy()  # Save initial rules
         self.current_turn = team_a_id
         self.current_action = 0
         self.picked_maps = []
@@ -216,13 +208,11 @@ class MapVeto():
             # Check if we need to stop the veto
             if self.current_action >= len(self.rules):
                 print("No more actions, stopping the veto")
-                self.end_veto()  # Call the method to end the veto
-                return    
+                return self.end_veto()  # Call the method to end the veto
         else:
             # No more actions, end the veto
             print("No more actions, stopping the veto")
-            self.end_veto()  # Call the method to end the veto
-            return
+            return self.end_veto()  # Call the method to end the veto
 
     def create_summary_embed(self):
         embed = discord.Embed(title=f"Map Veto {self.team_a_name} - {self.team_b_name} terminé!", color=discord.Color.green())
@@ -256,20 +246,20 @@ class MapVeto():
     def resume(self):
         self.paused = False
 
-    async def end_veto(self):
-        veto = vetos[name]
-        veto.stop()  # Call stop to end the veto
-        embed = veto.create_summary_embed()  # Get the summary embed
-        del vetos[name]  # Remove the veto from memory
-        await ctx.send(embed=embed)  # Send the summary embed
-
     def stop(self):
         self.current_action = 0
         self.picked_maps = []
         self.banned_maps = []
         self.stopped = True
         self.paused = False
-        #self.current_action = len(self.rules)  # Réinitialiser l'action couranted 
+        self.maps = self.initial_maps.copy()  # Restore initial maps
+        self.rules = self.initial_rules.copy()  # Restore initial rules
+        self.current_turn = self.team_a_id  # Reset to the initial team turn
+
+    async def end_veto(self, ctx):
+        self.stop()  # Call stop to end the veto
+        embed = self.create_summary_embed()  # Get the summary embed
+        await ctx.send(embed=embed)  # Send the summary embed
 
 class MapVetoCog(commands.Cog):
     def __init__(self, bot):
