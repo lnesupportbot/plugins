@@ -56,8 +56,8 @@ class MapVetoConfig:
     def get_veto(self, name):
         return self.vetos.get(name, None)
 
-veto_config = MapVetoConfig()
-vetos = {}
+    veto_config = MapVetoConfig()
+    vetos = {}
 
 class MapButton(discord.ui.Button):
     def __init__(self, label, veto_name, action_type, channel):
