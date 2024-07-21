@@ -67,56 +67,70 @@ class MapButton(discord.ui.Button):
         self.channel = channel
 
     async def callback(self, interaction: discord.Interaction):
-        veto = vetos.get(self.veto_name)
-        if not veto:
-            await interaction.response.send_message("Veto non trouvé.", ephemeral=True)
-            return
-        
-        if veto.paused or veto.stopped:
-            await interaction.response.send_message("Le veto est actuellement en pause ou a été arrêté.", ephemeral=True)
-            return
-        
-        if interaction.user.id != veto.get_current_turn():
-            await interaction.response.send_message("Ce n'est pas votre tour.", ephemeral=True)
-            return
+    veto = vetos.get(self.veto_name)
+    if not veto:
+        await interaction.response.send_message("Veto non trouvé.", ephemeral=True)
+        return
 
-        if self.action_type == "ban":
-            veto.ban_map(self.label)
-            message = f"Map {self.label} bannie par {interaction.user.mention} (Équipe {veto.team_a_name if interaction.user.id == veto.team_a_id else veto.team_b_name})."
-        elif self.action_type == "pick":
-            veto.pick_map(self.label)
-            message = f"**Map {self.label} choisie par {interaction.user.mention} (Équipe {veto.team_a_name if interaction.user.id == veto.team_a_id else veto.team_b_name}).**"
-        elif self.action_type == "side":
-            veto.pick_side(self.label)
-            message = f"*Side {self.label} choisi par {interaction.user.mention} (Équipe {veto.team_a_name if interaction.user.id == veto.team_a_id else veto.team_b_name}).*"
+    if veto.paused or veto.stopped:
+        await interaction.response.send_message("Le veto est actuellement en pause ou a été arrêté.", ephemeral=True)
+        return
 
-        await interaction.response.send_message(message)
-        await self.channel.send(message)
+    if interaction.user.id != veto.get_current_turn():
+        await interaction.response.send_message("Ce n'est pas votre tour.", ephemeral=True)
+        return
 
-        opponent_user = interaction.client.get_user(veto.team_b_id if interaction.user.id == veto.team_a_id else veto.team_b_id)
-        if opponent_user:
-            await opponent_user.send(message)
+    if self.action_type == "ban":
+        veto.ban_map(self.label)
+        message = f"Map {self.label} bannie par {interaction.user.mention} (Équipe {veto.team_a_name if interaction.user.id == veto.team_a_id else veto.team_b_name})."
+    elif self.action_type == "pick":
+        veto.pick_map(self.label)
+        message = f"**Map {self.label} choisie par {interaction.user.mention} (Équipe {veto.team_a_name if interaction.user.id == veto.team_a_id else veto.team_b_name}).**"
+    elif self.action_type == "side":
+        veto.pick_side(self.label)
+        message = f"*Side {self.label} choisi par {interaction.user.mention} (Équipe {veto.team_a_name if interaction.user.id == veto.team_a_id else veto.team_b_name}).*"
 
-        veto.next_turn()
-        if veto.current_turn is not None:
-            await send_ticket_message(interaction.client, veto, self.channel)
-        else:
-            await self.channel.send("Le veto est terminé!")
-            embed = veto.create_summary_embed()
-            await self.channel.send(embed=embed)
-            await send_summary_to_players(interaction.client, veto, embed)
+    await interaction.response.send_message(message)
+    await self.channel.send(message)
 
-            # Disable all buttons
-            view = interaction.message.view
-            for item in view.children:
-                if isinstance(item, discord.ui.Button):
-                    item.disabled = True
-            await interaction.message.edit(view=view)
+    opponent_user = interaction.client.get_user(veto.team_b_id if interaction.user.id == veto.team_a_id else veto.team_a_id)
+    if opponent_user:
+        await opponent_user.send(message)
 
-            # Send an ephemeral message to indicate the veto has ended
-            await interaction.response.send_message("Ce mapveto est fini, vous ne pouvez plus interagir avec ces boutons!", ephemeral=True)
+    veto.next_turn()
+    if veto.current_turn is not None:
+        await send_ticket_message(interaction.client, veto, self.channel)
+    else:
+        await self.channel.send("Le veto est terminé!")
+        embed = veto.create_summary_embed()
+        await self.channel.send(embed=embed)
+        await send_summary_to_players(interaction.client, veto, embed)  # Envoie du résumé aux joueurs
 
-async def send_ticket_message(bot, veto, channel):
+    # Disable the button and update the message
+    view = interaction.message.view
+    for item in view.children:
+        if isinstance(item, discord.ui.Button):
+            item.disabled = True
+    await interaction.message.edit(view=view)
+
+
+    veto.next_turn()
+    if veto.current_turn is not None:
+        await send_ticket_message(interaction.client, veto, self.channel)
+    else:
+        await self.channel.send("Le veto est terminé!")
+        embed = veto.create_summary_embed()
+        await self.channel.send(embed=embed)
+        await send_summary_to_players(interaction.client, veto, embed)  # Envoie du résumé aux joueurs
+
+    # Disable the button and update the message
+    view = interaction.message.view
+    for item in view.children:
+        if isinstance(item, discord.ui.Button):
+            item.disabled = True
+    await interaction.message.edit(view=view)
+
+    async def send_ticket_message(bot, veto, channel):
     action = veto.current_action_type()
     if action is None:
         return
@@ -161,6 +175,7 @@ async def send_ticket_message(bot, veto, channel):
                 await channel.send("Le veto est terminé!")
                 embed = veto.create_summary_embed()
                 await channel.send(embed=embed)
+                await send_summary_to_players(bot, veto, embed)  # Envoie du résumé aux joueurs
 
     bot.loop.create_task(timeout())
 
@@ -314,15 +329,15 @@ class MapVetoCog(commands.Cog):
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def start_mapveto(self, ctx, name: str, team_a_id: int, team_a_name: str, team_b_id: int, team_b_name: str):
-        """Démarre un veto et envoie des messages en DM aux équipes spécifiées."""
-        if name not in veto_config.vetos:
-            await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
-            return
+    """Démarre un veto et envoie des messages en DM aux équipes spécifiées."""
+    if name not in veto_config.vetos:
+        await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
+        return
 
-        veto = MapVeto(name, veto_config.vetos[name]["maps"], team_a_id, team_a_name, team_b_id, team_b_name, veto_config.vetos[name]["rules"])
-        vetos[name] = veto
+    veto = MapVeto(name, veto_config.vetos[name]["maps"], team_a_id, team_a_name, team_b_id, team_b_name, veto_config.vetos[name]["rules"])
+    vetos[name] = veto
 
-        await send_ticket_message(self.bot, veto, ctx.channel)
+    await send_ticket_message(self.bot, veto, ctx.channel)
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
@@ -418,14 +433,29 @@ class MapVetoCog(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    async def send_summary_to_players(self, veto, embed):
-        """Envoie le résumé du veto aux joueurs impliqués."""
-        team_a_user = self.bot.get_user(veto.team_a_id)
-        team_b_user = self.bot.get_user(veto.team_b_id)
-        if team_a_user:
+    async def send_summary_to_players(bot, veto, embed):
+    """Envoie le résumé du veto aux joueurs impliqués."""
+    # Envoi dans le canal de texte où le veto a été démarré
+    channel = bot.get_channel(veto.channel_id)
+    if channel:
+        await channel.send(embed=embed)
+
+    # Envoi des DMs aux joueurs
+    team_a_user = bot.get_user(veto.team_a_id)
+    team_b_user = bot.get_user(veto.team_b_id)
+    
+    if team_a_user:
+        try:
             await team_a_user.send(embed=embed)
-        if team_b_user:
+        except discord.Forbidden:
+            print(f"Cannot DM user {team_a_user.id}")
+    
+    if team_b_user:
+        try:
             await team_b_user.send(embed=embed)
+        except discord.Forbidden:
+            print(f"Cannot DM user {team_b_user.id}")
+
 
 async def setup(bot):
     await bot.add_cog(MapVetoCog(bot))
