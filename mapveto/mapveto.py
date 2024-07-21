@@ -129,6 +129,7 @@ class MapButton(discord.ui.Button):
             components.append(MapButton(label="Défense", veto_name=veto.name, action_type="side", channel=channel))
         else:
             for map_name in veto.maps:
+                # Disable buttons for banned or picked maps
                 button = MapButton(label=map_name, veto_name=veto.name, action_type=action.lower(), channel=channel)
                 if map_name in veto.banned_maps or map_name in veto.picked_maps:
                     button.disabled = True
@@ -158,7 +159,8 @@ class MapButton(discord.ui.Button):
                 if veto.current_turn is not None:
                     await send_ticket_message(bot, veto, channel)
                 else:
-                    summary_embed = veto.create_summary_embed()
+                    # Finalize the veto
+                    summary_embed = veto.end_veto()
                     await channel.send(embed=summary_embed)
     
         bot.loop.create_task(timeout())
