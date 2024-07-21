@@ -219,7 +219,7 @@ class MapVeto:
                 return
 
             if current_rule == "Continue":
-                # Allow the same team to play again
+                # Allow the same team to play again without advancing the turn
                 return
 
             # Normal action
@@ -343,7 +343,7 @@ class MapVetoCog(commands.Cog):
             return
 
         veto = vetos[name]
-        veto.pause()
+        veto.paused = True
         await ctx.send(f"Le veto '{name}' a été mis en pause.")
 
     @commands.command()
@@ -355,7 +355,7 @@ class MapVetoCog(commands.Cog):
             return
 
         veto = vetos[name]
-        veto.resume()
+        veto.paused = False
         await ctx.send(f"Le veto '{name}' a repris.")
 
     @commands.command()
@@ -371,7 +371,6 @@ class MapVetoCog(commands.Cog):
         embed = veto.create_summary_embed()  # Get the summary embed
         del vetos[name]  # Remove the veto from memory
         await ctx.send(embed=embed)  # Send the summary embed
-
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
