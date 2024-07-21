@@ -1,26 +1,13 @@
 import discord
 from discord.ext import commands
 import random
-import json
-import os
 
 from core import checks
 from core.models import PermissionLevel
 
 class MapVetoConfig:
-    def __init__(self, filename="vetos.json"):
-        self.filename = filename
-        self.vetos = self.load_vetos()
-
-    def load_vetos(self):
-        if os.path.exists(self.filename):
-            with open(self.filename, "r") as file:
-                return json.load(file)
-        return {}
-
-    def save_vetos(self):
-        with open(self.filename, "w") as file:
-            json.dump(self.vetos, file, indent=4)
+    def __init__(self):
+        self.vetos = {}
 
     def create_veto(self, name):
         if name not in self.vetos:
@@ -28,28 +15,24 @@ class MapVetoConfig:
                 "maps": [],
                 "rules": [],
             }
-            self.save_vetos()
             return True
         return False
 
     def add_maps(self, name, map_names):
         if name in self.vetos:
             self.vetos[name]["maps"].extend(map_names)
-            self.save_vetos()
             return True
         return False
 
     def set_rules(self, name, rules):
         if name in self.vetos:
             self.vetos[name]["rules"] = rules.split()
-            self.save_vetos()
             return True
         return False
 
     def delete_veto(self, name):
         if name in self.vetos:
             del self.vetos[name]
-            self.save_vetos()
             return True
         return False
 
@@ -82,13 +65,13 @@ class MapButton(discord.ui.Button):
 
         if self.action_type == "ban":
             veto.ban_map(self.label)
-            message = f"Map {self.label} bannie par {interaction.user.mention}."
+            message = f"Map {self.label} bannie par {interaction.user.mention} ({veto.team_a_name if veto.get_current_turn() == veto.team_a_id else veto.team_b_name})."
         elif self.action_type == "pick":
             veto.pick_map(self.label)
-            message = f"**Map {self.label} choisie par {interaction.user.mention}.**"
+            message = f"**Map {self.label} choisie par {interaction.user.mention} ({veto.team_a_name if veto.get_current_turn() == veto.team_a_id else veto.team_b_name}).**"
         elif self.action_type == "side":
             veto.pick_side(self.label)
-            message = f"*Side {self.label} choisi par {interaction.user.mention}.*"
+            message = f"*Side {self.label} choisi par {interaction.user.mention} ({veto.team_a_name if veto.get_current_turn() == veto.team_a_id else veto.team_b_name}).*"
 
         await interaction.response.send_message(message)
         await self.channel.send(message)
@@ -101,8 +84,8 @@ class MapButton(discord.ui.Button):
         if veto.current_turn is not None:
             await send_ticket_message(interaction.client, veto, self.channel)
         else:
-            await interaction.user.send("Le veto est terminé!")
-            await self.channel.send("Le veto est terminé!")
+            await interaction.user.send(f"Le veto est terminé pour {veto.team_a_name} et {veto.team_b_name}!")
+            await self.channel.send(f"Le veto est terminé pour {veto.team_a_name} et {veto.team_b_name}!")
 
         # Disable the button and update the message
         view = interaction.message.view
@@ -132,8 +115,10 @@ async def send_ticket_message(bot, veto, channel):
     for component in components:
         view.add_item(component)
 
+    team_name = veto.team_a_name if veto.get_current_turn() == veto.team_a_id else veto.team_b_name
+
     try:
-        await current_user.send(f"{current_user.mention}, c'est votre tour de {action} une map.", view=view)
+        await current_user.send(f"{current_user.mention} ({team_name}), c'est votre tour de {action} une map.", view=view)
     except discord.Forbidden:
         print(f"Cannot DM user {current_user.id}")
 
@@ -151,17 +136,19 @@ async def send_ticket_message(bot, veto, channel):
             if veto.current_turn is not None:
                 await send_ticket_message(bot, veto, channel)
             else:
-                await current_user.send("Le veto est terminé!")
-                await channel.send("Le veto est terminé!")
+                await current_user.send(f"Le veto est terminé pour {veto.team_a_name} et {veto.team_b_name}!")
+                await channel.send(f"Le veto est terminé pour {veto.team_a_name} et {veto.team_b_name}!")
 
     bot.loop.create_task(timeout())
 
 class MapVeto:
-    def __init__(self, name, maps, team_a_id, team_b_id, rules):
+    def __init__(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules):
         self.name = name
         self.maps = maps
         self.team_a_id = team_a_id
+        self.team_a_name = team_a_name
         self.team_b_id = team_b_id
+        self.team_b_name = team_b_name
         self.rules = rules
         self.current_turn = team_a_id
         self.current_action = 0
@@ -253,24 +240,19 @@ class MapVetoCog(commands.Cog):
         else:
             await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
 
-    @mapveto.command(name='rules')
+    @mapveto.command(name='setrules')
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-    async def mapveto_rules(self, ctx, name: str, *, rules: str):
-        """Définit les règles pour le template de veto spécifié."""
-        valid_rules = {"Ban", "Pick", "Side", "Continue"}
-        rules_list = rules.split()
-        if all(rule in valid_rules for rule in rules_list):
-            if veto_config.set_rules(name, rules):
-                await ctx.send(f"Règles définies pour le template de veto '{name}' : {rules}.")
-            else:
-                await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
+    async def set_rules(self, ctx, name: str, *, rules: str):
+        """Définit les règles du veto pour le template spécifié."""
+        if veto_config.set_rules(name, rules):
+            await ctx.send(f"Règles définies pour le template de veto '{name}' : {rules}.")
         else:
-            await ctx.send(f"Règles invalides. Les règles valides sont : {', '.join(valid_rules)}.")
+            await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
 
     @mapveto.command(name='delete')
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def mapveto_delete(self, ctx, name: str):
-        """Supprime le template de veto spécifié."""
+        """Supprime le template de veto avec le nom donné."""
         if veto_config.delete_veto(name):
             await ctx.send(f"Template de veto '{name}' supprimé avec succès.")
         else:
@@ -287,13 +269,13 @@ class MapVetoCog(commands.Cog):
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-    async def start_mapveto(self, ctx, name: str, team_a_id: int, team_b_id: int):
-        """Démarre un veto et envoie des messages en DM aux équipes spécifiées."""
+    async def start_mapveto(self, ctx, name: str, team_a_id: int, team_a_name: str, team_b_id: int, team_b_name: str):
+        """Démarre un veto avec les noms des équipes et envoie des messages en DM aux joueurs spécifiés."""
         if name not in veto_config.vetos:
             await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
             return
 
-        veto = MapVeto(name, veto_config.vetos[name]["maps"], team_a_id, team_b_id, veto_config.vetos[name]["rules"])
+        veto = MapVeto(name, veto_config.vetos[name]["maps"], team_a_id, team_a_name, team_b_id, team_b_name, veto_config.vetos[name]["rules"])
         vetos[name] = veto
 
         await send_ticket_message(self.bot, veto, ctx.channel)
@@ -333,7 +315,6 @@ class MapVetoCog(commands.Cog):
         veto = vetos[name]
         veto.stop()
         del vetos[name]
-        veto_config.delete_veto(name)  # Ensure to remove from file as well
         await ctx.send(f"Le veto '{name}' a été arrêté et supprimé.")
 
     @commands.command()
@@ -353,8 +334,8 @@ class MapVetoCog(commands.Cog):
             inline=False
         )
         embed.add_field(
-            name="mapveto rules <name> <rules>",
-            value="Définit les règles pour le template de veto spécifié.",
+            name="mapveto setrules <name> <rules>",
+            value="Définit les règles du veto pour le template spécifié.",
             inline=False
         )
         embed.add_field(
@@ -368,8 +349,8 @@ class MapVetoCog(commands.Cog):
             inline=False
         )
         embed.add_field(
-            name="start_mapveto <name> <team_a_id> <team_b_id>",
-            value="Démarre un veto et envoie des messages en DM aux équipes spécifiées.",
+            name="start_mapveto <name> <team_a_id> <team_a_name> <team_b_id> <team_b_name>",
+            value="Démarre un veto avec les noms des équipes et envoie des messages en DM aux joueurs spécifiés.",
             inline=False
         )
         embed.add_field(
