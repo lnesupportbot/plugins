@@ -131,32 +131,32 @@ class MapButton(discord.ui.Button):
         await interaction.message.edit(view=view)
 
     async def send_ticket_message(bot, veto, channel):
-    action = veto.current_action_type()
-    if action is None:
-        return
-
-    current_user = bot.get_user(veto.get_current_turn())
-    if not current_user:
-        return
-
-    components = []
-    if action == "Side":
-        components.append(MapButton(label="Attaque", veto_name=veto.name, action_type="side", channel=channel))
-        components.append(MapButton(label="Défense", veto_name=veto.name, action_type="side", channel=channel))
-    else:
-        for map_name in veto.maps:
-            components.append(MapButton(label=map_name, veto_name=veto.name, action_type=action.lower(), channel=channel))
-
-    view = discord.ui.View(timeout=60)
-    for component in components:
-        view.add_item(component)
-
-    team_name = veto.team_a_name if veto.get_current_turn() == veto.team_a_id else veto.team_b_name
-
-    try:
-        await current_user.send(f"{current_user.mention}, c'est votre tour de {action} une map.", view=view)
-    except discord.Forbidden:
-        print(f"Cannot DM user {current_user.id}")
+        action = veto.current_action_type()
+        if action is None:
+            return
+    
+        current_user = bot.get_user(veto.get_current_turn())
+        if not current_user:
+            return
+    
+        components = []
+        if action == "Side":
+            components.append(MapButton(label="Attaque", veto_name=veto.name, action_type="side", channel=channel))
+            components.append(MapButton(label="Défense", veto_name=veto.name, action_type="side", channel=channel))
+        else:
+            for map_name in veto.maps:
+                components.append(MapButton(label=map_name, veto_name=veto.name, action_type=action.lower(), channel=channel))
+    
+        view = discord.ui.View(timeout=60)
+        for component in components:
+            view.add_item(component)
+    
+        team_name = veto.team_a_name if veto.get_current_turn() == veto.team_a_id else veto.team_b_name
+    
+        try:
+            await current_user.send(f"{current_user.mention}, c'est votre tour de {action} une map.", view=view)
+        except discord.Forbidden:
+            print(f"Cannot DM user {current_user.id}")
 
     async def timeout():
         await view.wait()
