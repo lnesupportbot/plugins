@@ -60,11 +60,12 @@ veto_config = MapVetoConfig()
 vetos = {}
 
 class MapButton(discord.ui.Button):
-    def __init__(self, label, veto_name, action_type, channel):
+    def __init__(self, label, veto_name, action_type, channel, bot):
         super().__init__(label=label, style=discord.ButtonStyle.primary, custom_id=f"{veto_name}_{label}_{action_type}")
         self.veto_name = veto_name
         self.action_type = action_type
         self.channel = channel
+        self.bot = bot
 
     async def callback(self, interaction: discord.Interaction):
         veto = vetos.get(self.veto_name)
@@ -99,7 +100,7 @@ class MapButton(discord.ui.Button):
 
         veto.next_turn()
         if veto.current_turn is not None:
-            await send_ticket_message(interaction.client, veto, self.channel)
+            await send_ticket_message(self.bot, veto, self.channel)
         else:
             await self.channel.send("Le veto est terminé!")
             embed = veto.create_summary_embed()
@@ -114,33 +115,53 @@ class MapButton(discord.ui.Button):
         # Update the message with the modified view
         await interaction.message.edit(view=view)
 
-    async def send_ticket_message(bot, veto, channel):
-        action = veto.current_action_type()
-        if action is None:
-            return
-    
-        components = []
-        if action == "Side":
-            components.append(MapButton(label="Attaque", veto_name=veto.name, action_type="side", channel=channel))
-            components.append(MapButton(label="Défense", veto_name=veto.name, action_type="side", channel=channel))
-        else:
-            for map_name in veto.maps:
-                # Disable buttons for banned or picked maps
-                button = MapButton(label=map_name, veto_name=veto.name, action_type=action.lower(), channel=channel)
-                if map_name in veto.banned_maps or map_name in veto.picked_maps:
-                    button.disabled = True
-                components.append(button)
-    
-        view = discord.ui.View(timeout=60)
-        for component in components:
-            view.add_item(component)
-    
-        team_name = veto.team_a_name if veto.get_current_turn() == veto.team_a_id else veto.team_b_name
-    
-        try:
-            await bot.get_user(veto.get_current_turn()).send(f"{bot.get_user(veto.get_current_turn()).mention}, c'est votre tour de {action} une map.", view=view)
-        except discord.Forbidden:
-            print(f"Cannot DM user {veto.get_current_turn()}")
+        async def timeout():
+            await view.wait()
+            if not view.is_finished():
+                random_map = random.choice(veto.maps)
+                if self.action_type == "ban":
+                    veto.ban_map(random_map)
+                    await self.bot.get_user(veto.get_current_turn()).send(f"Map {random_map} bannie automatiquement.")
+                elif self.action_type == "pick":
+                    veto.pick_map(random_map)
+                    await self.bot.get_user(veto.get_current_turn()).send(f"Map {random_map} choisie automatiquement.")
+                veto.next_turn()
+                if veto.current_turn is not None:
+                    await send_ticket_message(self.bot, veto, self.channel)
+                else:
+                    await self.channel.send("Le veto est terminé!")
+                    embed = veto.create_summary_embed()
+                    await self.channel.send(embed=embed)
+
+        self.bot.loop.create_task(timeout())
+
+async def send_ticket_message(bot, veto, channel):
+    action = veto.current_action_type()
+    if action is None:
+        return
+
+    components = []
+    if action == "Side":
+        components.append(MapButton(label="Attaque", veto_name=veto.name, action_type="side", channel=channel, bot=bot))
+        components.append(MapButton(label="Défense", veto_name=veto.name, action_type="side", channel=channel, bot=bot))
+    else:
+        for map_name in veto.maps:
+            # Disable buttons for banned or picked maps
+            button = MapButton(label=map_name, veto_name=veto.name, action_type=action.lower(), channel=channel, bot=bot)
+            if map_name in veto.banned_maps or map_name in veto.picked_maps:
+                button.disabled = True
+            components.append(button)
+
+    view = discord.ui.View(timeout=60)
+    for component in components:
+        view.add_item(component)
+
+    team_name = veto.team_a_name if veto.get_current_turn() == veto.team_a_id else veto.team_b_name
+
+    try:
+        await bot.get_user(veto.get_current_turn()).send(f"{bot.get_user(veto.get_current_turn()).mention}, c'est votre tour de {action} une map.", view=view)
+    except discord.Forbidden:
+        print(f"Cannot DM user {veto.get_current_turn()}")
 
     async def timeout():
         await view.wait()
@@ -189,7 +210,7 @@ class MapVeto:
     def next_turn(self):
         if self.stopped or self.paused:
             return
-    
+
         if self.current_action < len(self.rules):
             current_rule = self.rules[self.current_action]
             if current_rule == "Continue":
@@ -197,13 +218,13 @@ class MapVeto:
                 return
             elif current_rule == "Fin":
                 # End the veto and send summary
-                self.stop()  # Call stop to end the veto
-                return  # Prevent further actions
+                self.stop()
+                return
             else:
                 # Normal action, switch turn
                 self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
                 self.current_action += 1
-    
+
                 # Handle consecutive "Continue" rules
                 while self.current_action < len(self.rules) and self.rules[self.current_action] == "Continue":
                     self.current_action += 1
@@ -212,42 +233,31 @@ class MapVeto:
                         self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
         else:
             # No more actions, end the veto
-            self.stop()  # Call stop to end the veto
-            return  # Prevent further actions
+            self.stop()
 
     def create_summary_embed(self):
         embed = discord.Embed(title=f"Map Veto {self.team_a_name} - {self.team_b_name} terminé!", color=discord.Color.green())
         for i, map_name in enumerate(self.picked_maps):
             side = "Non défini"
-            if i < len(self.picked_maps):
-                side = self.picked_maps[i].split(" ")[0] if " choisi" in self.picked_maps[i] else "Non défini"
-            embed.add_field(
-                name=f"Map {i + 1}",
-                value=f"**Map :** {map_name} choisie par {self.team_a_name if i % 2 == 0 else self.team_b_name} ({side})",
-                inline=False
-            )
+            embed.add_field(name=f"Map {i+1}", value=f"{map_name} - {side}", inline=False)
         return embed
 
     def ban_map(self, map_name):
-        if map_name in self.maps and map_name not in self.banned_maps:
+        if map_name not in self.banned_maps:
             self.banned_maps.append(map_name)
-
+            if map_name in self.picked_maps:
+                self.picked_maps.remove(map_name)
+    
     def pick_map(self, map_name):
-        if map_name in self.maps and map_name not in self.picked_maps:
+        if map_name not in self.picked_maps and map_name not in self.banned_maps:
             self.picked_maps.append(map_name)
-
+    
     def pick_side(self, side):
-        self.picked_maps.append(f"{side} choisi")
-
-    def pause(self):
-        self.paused = True
-
-    def resume(self):
-        self.paused = False
+        pass  # Implement side picking logic
 
     def stop(self):
         self.stopped = True
-        self.paused = False
+        self.current_turn = None  # No more turns
 
 class MapVetoCog(commands.Cog):
     def __init__(self, bot):
