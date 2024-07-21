@@ -466,28 +466,28 @@ class MapVetoCog(commands.Cog):
         await ctx.send(embed=embed)
 
     async def send_summary_to_players(bot, veto, embed):
-    """Envoie le résumé du veto aux joueurs impliqués."""
-    # Envoi dans le canal de texte où le veto a été démarré
-    channel = bot.get_channel(veto.channel_id)
-    if channel:
-        await channel.send(embed=embed)
-
-    # Envoi des DMs aux joueurs
-    team_a_user = bot.get_user(veto.team_a_id)
-    team_b_user = bot.get_user(veto.team_b_id)
+        """Envoie le résumé du veto aux joueurs impliqués."""
+        # Envoi dans le canal de texte où le veto a été démarré
+        channel = bot.get_channel(veto.channel_id)
+        if channel:
+            await channel.send(embed=embed)
     
-    if team_a_user:
-        try:
-            await team_a_user.send(embed=embed)
-        except discord.Forbidden:
-            print(f"Cannot DM user {team_a_user.id}")
+        # Envoi des DMs aux joueurs
+        team_a_user = bot.get_user(veto.team_a_id)
+        team_b_user = bot.get_user(veto.team_b_id)
+        
+        if team_a_user:
+            try:
+                await team_a_user.send(embed=embed)
+            except discord.Forbidden:
+                print(f"Cannot DM user {team_a_user.id}")
+        
+        if team_b_user:
+            try:
+                await team_b_user.send(embed=embed)
+            except discord.Forbidden:
+                print(f"Cannot DM user {team_b_user.id}")
     
-    if team_b_user:
-        try:
-            await team_b_user.send(embed=embed)
-        except discord.Forbidden:
-            print(f"Cannot DM user {team_b_user.id}")
-
-
-async def setup(bot):
-    await bot.add_cog(MapVetoCog(bot))
+    
+    async def setup(bot):
+        await bot.add_cog(MapVetoCog(bot))
