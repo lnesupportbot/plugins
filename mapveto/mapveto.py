@@ -188,25 +188,34 @@ class MapVeto:
     def next_turn(self):
         if self.stopped or self.paused:
             return
-
+    
+        # Log the current action and rule
+        print(f"Current action: {self.current_action}, Rules: {self.rules}")
+    
         if self.current_action < len(self.rules):
             current_rule = self.rules[self.current_action]
+            print(f"Processing rule: {current_rule}")
+    
             if current_rule == "Continue":
                 # Allow the same team to play again
                 return
             else:
-                # Normal action, switch turn
-                self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
-                self.current_action += 1
-
-                # Handle consecutive "Continue" rules
+                if current_rule in {"Ban", "Pick", "Side"}:
+                    self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
+                    self.current_action += 1
+    
                 while self.current_action < len(self.rules) and self.rules[self.current_action] == "Continue":
                     self.current_action += 1
                     if self.current_action < len(self.rules) and self.rules[self.current_action] != "Continue":
-                        # Switch turn after exiting consecutive "Continue"
                         self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
+    
+                if self.current_action >= len(self.rules):
+                    print("No more rules, stopping the veto")
+                    self.stop()  # End the veto and create the summary
+                    return
+    
         else:
-            # No more actions, end the veto
+            print("No more actions, stopping the veto")
             self.stop()  # End the veto and create the summary
             return
 
