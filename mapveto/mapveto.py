@@ -154,7 +154,7 @@ async def send_ticket_message(bot, veto, channel):
 
 
 class MapVeto:
-    def __init__(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules):
+    def __init__(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel=None, bot=None):
         self.name = name
         self.maps = maps
         self.team_a_id = team_a_id
@@ -168,7 +168,8 @@ class MapVeto:
         self.banned_maps = []
         self.paused = False
         self.stopped = False
-        self.channel = None  # Vous devrez peut-être définir ce champ
+        self.channel = channel  # Assurez-vous d'utiliser cette variable si nécessaire
+        self.bot = bot  # Assurez-vous d'utiliser cette variable si nécessaire
 
     def current_action_type(self):
         """Retourne le type d'action actuelle (Pick, Ban, Side, etc.) basé sur la règle en cours."""
@@ -381,18 +382,19 @@ class MapVetoCog(commands.Cog):
     
         await send_ticket_message(self.bot, veto, ctx.channel)
 
-
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-    async def pause_mapveto(self, ctx, name: str):
-        """Met en pause le veto spécifié."""
-        if name not in vetos:
-            await ctx.send(f"Aucun veto en cours avec le nom '{name}'.")
+    async def start_mapveto(self, ctx, name: str, team_a_id: int, team_a_name: str, team_b_id: int, team_b_name: str):
+        """Démarre un veto et envoie des messages en DM aux équipes spécifiées."""
+        if name not in veto_config.vetos:
+            await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
             return
-
-        veto = vetos[name]
-        veto.pause()
-        await ctx.send(f"Le veto '{name}' a été mis en pause.")
+    
+        # Créez l'instance de MapVeto en passant les arguments corrects
+        veto = MapVeto(name, veto_config.vetos[name]["maps"], team_a_id, team_a_name, team_b_id, team_b_name, veto_config.vetos[name]["rules"], ctx.channel, self.bot)
+        vetos[name] = veto
+    
+        await send_ticket_message(self.bot, veto, ctx.channel)
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
