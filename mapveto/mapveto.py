@@ -217,14 +217,7 @@ class MapVeto:
             if self.current_action >= len(self.rules):
                 print("No more actions, stopping the veto")
                 self.end_veto()  # Call the method to end the veto
-                return
-    
-            # If current_action is the last action, ensure we don't go out of bounds
-            # if self.current_action == len(self.rules):
-               # print("Last action reached, stopping after current action")
-               # self.end_veto()  # Call the method to end the veto after this action
-               # return
-    
+                return    
         else:
             # No more actions, end the veto
             print("No more actions, stopping the veto")
@@ -267,7 +260,7 @@ class MapVeto:
         """Handle the end of the veto and create the summary."""
         # Send the summary embed to the channel or perform any other final actions
         # For example, you might need to use bot context or channel to send the message
-        return stop_mapveto
+        return self.create_summary_embed()
 
     def stop(self):
         self.stopped = True
