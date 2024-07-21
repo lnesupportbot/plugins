@@ -262,13 +262,11 @@ class MapVeto:
         embed = veto.create_summary_embed()  # Get the summary embed
         del vetos[name]  # Remove the veto from memory
         await ctx.send(embed=embed)  # Send the summary embed
-        return
 
     def stop(self):
         self.stopped = True
         self.paused = False
         self.current_action = len(self.rules)  # Réinitialiser l'action courante
-        return
     
 
 class MapVetoCog(commands.Cog):
