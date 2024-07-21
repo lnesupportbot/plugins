@@ -343,19 +343,21 @@ class MapVetoCog(commands.Cog):
         await ctx.send(f"Le veto '{name}' a repris.")
 
     @commands.command()
-    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-    async def stop_mapveto(self, ctx, name: str):
-        """Arrête complètement le veto spécifié et le supprime des enregistrements."""
-        if name not in vetos:
-            await ctx.send(f"Aucun veto en cours avec le nom '{name}'.")
-            return
+@checks.has_permissions(PermissionLevel.ADMINISTRATOR)
+async def stop_mapveto(self, ctx, name: str):
+    """Arrête complètement le veto spécifié et envoie un résumé."""
+    if name not in vetos:
+        await ctx.send(f"Aucun veto en cours avec le nom '{name}'.")
+        return
 
-        veto = vetos[name]
-        embed = veto.create_summary_embed()  # Call stop to end the veto and get the summary embed
-        del vetos[name]
-        veto_config.delete_veto(name)  # Ensure to remove from file as well
-        await ctx.send(f"Le veto '{name}' a été arrêté et supprimé.")
-        await ctx.send(embed=embed)  # Send the summary embed
+    veto = vetos[name]
+    veto.stop()  # Arrête le veto en cours
+    embed = veto.create_summary_embed()  # Crée le résumé du veto
+    await ctx.send(f"Le veto '{name}' a été arrêté.")
+    await ctx.send(embed=embed)  # Envoie le résumé
+
+    # Optionnel : vous pouvez ajouter un message indiquant que le veto a été arrêté
+    await ctx.send(f"Le veto '{name}' est maintenant terminé et le résumé a été envoyé.")
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
