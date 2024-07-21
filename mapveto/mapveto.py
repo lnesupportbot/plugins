@@ -101,8 +101,9 @@ class MapButton(discord.ui.Button):
         if veto.current_turn is not None:
             await send_ticket_message(interaction.client, veto, self.channel)
         else:
-            await interaction.user.send("Le veto est terminé!")
             await self.channel.send("Le veto est terminé!")
+            embed = veto.create_summary_embed()
+            await self.channel.send(embed=embed)
 
         # Disable the button and update the message
         view = interaction.message.view
@@ -153,8 +154,9 @@ async def send_ticket_message(bot, veto, channel):
             if veto.current_turn is not None:
                 await send_ticket_message(bot, veto, channel)
             else:
-                await current_user.send("Le veto est terminé!")
                 await channel.send("Le veto est terminé!")
+                embed = veto.create_summary_embed()
+                await channel.send(embed=embed)
 
     bot.loop.create_task(timeout())
 
@@ -343,21 +345,19 @@ class MapVetoCog(commands.Cog):
         await ctx.send(f"Le veto '{name}' a repris.")
 
     @commands.command()
-@checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-async def stop_mapveto(self, ctx, name: str):
-    """Arrête complètement le veto spécifié et envoie un résumé."""
-    if name not in vetos:
-        await ctx.send(f"Aucun veto en cours avec le nom '{name}'.")
-        return
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
+    async def stop_mapveto(self, ctx, name: str):
+        """Arrête complètement le veto spécifié mais ne supprime pas le template."""
+        if name not in vetos:
+            await ctx.send(f"Aucun veto en cours avec le nom '{name}'.")
+            return
 
-    veto = vetos[name]
-    veto.stop()  # Arrête le veto en cours
-    embed = veto.create_summary_embed()  # Crée le résumé du veto
-    await ctx.send(f"Le veto '{name}' a été arrêté.")
-    await ctx.send(embed=embed)  # Envoie le résumé
-
-    # Optionnel : vous pouvez ajouter un message indiquant que le veto a été arrêté
-    await ctx.send(f"Le veto '{name}' est maintenant terminé et le résumé a été envoyé.")
+        veto = vetos[name]
+        veto.stop()  # Call stop to end the veto
+        embed = veto.create_summary_embed()  # Get the summary embed
+        del vetos[name]  # Remove the veto from memory
+        await ctx.send(f"Le veto '{name}' a été arrêté.")
+        await ctx.send(embed=embed)  # Send the summary embed
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
