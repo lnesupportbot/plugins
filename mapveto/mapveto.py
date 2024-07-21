@@ -93,7 +93,7 @@ class MapButton(discord.ui.Button):
         await interaction.response.send_message(message)
         await self.channel.send(message)
 
-        opponent_user = interaction.client.get_user(veto.team_b_id if interaction.user.id == veto.team_a_id else veto.team_a_id)
+        opponent_user = interaction.client.get_user(veto.team_b_id if interaction.user.id == veto.team_a_id else veto.team_b_id)
         if opponent_user:
             await opponent_user.send(message)
 
@@ -117,10 +117,6 @@ async def send_ticket_message(bot, veto, channel):
     if action is None:
         return
 
-    current_user = bot.get_user(veto.get_current_turn())
-    if not current_user:
-        return
-
     components = []
     if action == "Side":
         components.append(MapButton(label="Attaque", veto_name=veto.name, action_type="side", channel=channel))
@@ -136,9 +132,9 @@ async def send_ticket_message(bot, veto, channel):
     team_name = veto.team_a_name if veto.get_current_turn() == veto.team_a_id else veto.team_b_name
 
     try:
-        await current_user.send(f"{current_user.mention}, c'est votre tour de {action} une map.", view=view)
+        await bot.get_user(veto.get_current_turn()).send(f"{bot.get_user(veto.get_current_turn()).mention}, c'est votre tour de {action} une map.", view=view)
     except discord.Forbidden:
-        print(f"Cannot DM user {current_user.id}")
+        print(f"Cannot DM user {veto.get_current_turn()}")
 
     async def timeout():
         await view.wait()
@@ -146,10 +142,10 @@ async def send_ticket_message(bot, veto, channel):
             random_map = random.choice(veto.maps)
             if action == "ban":
                 veto.ban_map(random_map)
-                await current_user.send(f"Map {random_map} bannie automatiquement.")
+                await bot.get_user(veto.get_current_turn()).send(f"Map {random_map} bannie automatiquement.")
             elif action == "pick":
                 veto.pick_map(random_map)
-                await current_user.send(f"Map {random_map} choisie automatiquement.")
+                await bot.get_user(veto.get_current_turn()).send(f"Map {random_map} choisie automatiquement.")
             veto.next_turn()
             if veto.current_turn is not None:
                 await send_ticket_message(bot, veto, channel)
@@ -221,20 +217,17 @@ class MapVeto:
                 side = self.picked_maps[i].split(" ")[0] if " choisi" in self.picked_maps[i] else "Non défini"
             embed.add_field(
                 name=f"Map {i + 1}",
-                value=f"**Map :** {map_name} choisie par {self.team_a_name if i % 2 == 0 else self.team_b_name} / "
-                      f"**Side :** {side} choisi par {self.team_b_name if i % 2 == 0 else self.team_a_name}",
+                value=f"**Map :** {map_name} choisie par {self.team_a_name if i % 2 == 0 else self.team_b_name} ({side})",
                 inline=False
             )
         return embed
 
     def ban_map(self, map_name):
-        if map_name in self.maps:
-            self.maps.remove(map_name)
+        if map_name in self.maps and map_name not in self.banned_maps:
             self.banned_maps.append(map_name)
 
     def pick_map(self, map_name):
-        if map_name in self.maps:
-            self.maps.remove(map_name)
+        if map_name in self.maps and map_name not in self.picked_maps:
             self.picked_maps.append(map_name)
 
     def pick_side(self, side):
