@@ -194,10 +194,6 @@ class MapVeto:
             if current_rule == "Continue":
                 # Allow the same team to play again
                 return
-            elif current_rule == "Fin":
-                # End the veto and create the summary
-                self.stop()
-                return  # Ensure we exit without sending more choices
             else:
                 # Normal action, switch turn
                 self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
@@ -211,8 +207,8 @@ class MapVeto:
                         self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
         else:
             # No more actions, end the veto
-            self.stopped = True
-            return self.create_summary_embed()
+            self.stop()  # End the veto and create the summary
+            return
 
     def create_summary_embed(self):
         embed = discord.Embed(title=f"Map Veto {self.team_a_name} - {self.team_b_name} terminé!", color=discord.Color.green())
@@ -249,6 +245,7 @@ class MapVeto:
     def stop(self):
         self.stopped = True
         self.paused = False
+        return self.create_summary_embed()  # Return the summary embed
 
 class MapVetoCog(commands.Cog):
     def __init__(self, bot):
@@ -357,9 +354,8 @@ class MapVetoCog(commands.Cog):
             return
 
         veto = vetos[name]
-        veto.stop()  # Call stop to end the veto
-        embed = veto.create_summary_embed()  # Create the summary embed
-        await ctx.send(embed=embed)  # Send the summary embed
+        summary_embed = veto.stop()  # Call stop to end the veto and get the summary embed
+        await ctx.send(embed=summary_embed)  # Send the summary embed
         del vetos[name]  # Optionally remove the veto from the active list
 
     @commands.command()
