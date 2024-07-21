@@ -257,41 +257,17 @@ class MapVeto:
         self.paused = False
 
     async def end_veto(self):
-        # Créez l'embed de résumé
-        summary_embed = self.create_summary_embed()
-        
-        # Envoyer l'embed dans le canal où le veto a été démarré
-        if hasattr(self, 'channel') and self.channel:
-            try:
-                await self.channel.send(embed=summary_embed)
-            except discord.Forbidden:
-                print("Impossible d'envoyer le résumé dans le canal.")
-    
-        # Envoyer l'embed aux équipes en DM si nécessaire
-        team_a_user = self.bot.get_user(self.team_a_id)
-        if team_a_user:
-            try:
-                await team_a_user.send(embed=summary_embed)
-            except discord.Forbidden:
-                print(f"Impossible d'envoyer le résumé à l'équipe A ({self.team_a_id}).")
-    
-        team_b_user = self.bot.get_user(self.team_b_id)
-        if team_b_user:
-            try:
-                await team_b_user.send(embed=summary_embed)
-            except discord.Forbidden:
-                print(f"Impossible d'envoyer le résumé à l'équipe B ({self.team_b_id}).")
-    
-        # Marquer le veto comme terminé
-        self.stopped = True
-        self.paused = False
-        self.current_turn = None
-        self.current_action = len(self.rules)  # Réinitialiser l'action courante
-
+        veto = vetos[name]
+        veto.stop()  # Call stop to end the veto
+        embed = veto.create_summary_embed()  # Get the summary embed
+        del vetos[name]  # Remove the veto from memory
+        await ctx.send(embed=embed)  # Send the summary embed
+        return
 
     def stop(self):
         self.stopped = True
         self.paused = False
+        self.current_action = len(self.rules)  # Réinitialiser l'action courante
         return
     
 
