@@ -361,15 +361,15 @@ class MapVetoCog(commands.Cog):
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def start_mapveto(self, ctx, name: str, team_a_id: int, team_a_name: str, team_b_id: int, team_b_name: str):
-    """Démarre un veto et envoie des messages en DM aux équipes spécifiées."""
-    if name not in veto_config.vetos:
-        await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
-        return
-
-    veto = MapVeto(name, veto_config.vetos[name]["maps"], team_a_id, team_a_name, team_b_id, team_b_name, veto_config.vetos[name]["rules"])
-    vetos[name] = veto
-
-    await send_ticket_message(self.bot, veto, ctx.channel)
+        """Démarre un veto et envoie des messages en DM aux équipes spécifiées."""
+        if name not in veto_config.vetos:
+            await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
+            return
+    
+        veto = MapVeto(name, veto_config.vetos[name]["maps"], team_a_id, team_a_name, team_b_id, team_b_name, veto_config.vetos[name]["rules"])
+        vetos[name] = veto
+    
+        await send_ticket_message(self.bot, veto, ctx.channel)
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
