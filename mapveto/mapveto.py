@@ -114,33 +114,33 @@ class MapButton(discord.ui.Button):
         # Update the message with the modified view
         await interaction.message.edit(view=view)
 
-async def send_ticket_message(bot, veto, channel):
-    action = veto.current_action_type()
-    if action is None:
-        return
-
-    components = []
-    if action == "Side":
-        components.append(MapButton(label="Attaque", veto_name=veto.name, action_type="side", channel=channel))
-        components.append(MapButton(label="Défense", veto_name=veto.name, action_type="side", channel=channel))
-    else:
-        for map_name in veto.maps:
-            # Disable buttons for banned or picked maps
-            button = MapButton(label=map_name, veto_name=veto.name, action_type=action.lower(), channel=channel)
-            if map_name in veto.banned_maps or map_name in veto.picked_maps:
-                button.disabled = True
-            components.append(button)
-
-    view = discord.ui.View(timeout=60)
-    for component in components:
-        view.add_item(component)
-
-    team_name = veto.team_a_name if veto.get_current_turn() == veto.team_a_id else veto.team_b_name
-
-    try:
-        await bot.get_user(veto.get_current_turn()).send(f"{bot.get_user(veto.get_current_turn()).mention}, c'est votre tour de {action} une map.", view=view)
-    except discord.Forbidden:
-        print(f"Cannot DM user {veto.get_current_turn()}")
+    async def send_ticket_message(bot, veto, channel):
+        action = veto.current_action_type()
+        if action is None:
+            return
+    
+        components = []
+        if action == "Side":
+            components.append(MapButton(label="Attaque", veto_name=veto.name, action_type="side", channel=channel))
+            components.append(MapButton(label="Défense", veto_name=veto.name, action_type="side", channel=channel))
+        else:
+            for map_name in veto.maps:
+                # Disable buttons for banned or picked maps
+                button = MapButton(label=map_name, veto_name=veto.name, action_type=action.lower(), channel=channel)
+                if map_name in veto.banned_maps or map_name in veto.picked_maps:
+                    button.disabled = True
+                components.append(button)
+    
+        view = discord.ui.View(timeout=60)
+        for component in components:
+            view.add_item(component)
+    
+        team_name = veto.team_a_name if veto.get_current_turn() == veto.team_a_id else veto.team_b_name
+    
+        try:
+            await bot.get_user(veto.get_current_turn()).send(f"{bot.get_user(veto.get_current_turn()).mention}, c'est votre tour de {action} une map.", view=view)
+        except discord.Forbidden:
+            print(f"Cannot DM user {veto.get_current_turn()}")
 
     async def timeout():
         await view.wait()
@@ -189,7 +189,7 @@ class MapVeto:
     def next_turn(self):
         if self.stopped or self.paused:
             return
-
+    
         if self.current_action < len(self.rules):
             current_rule = self.rules[self.current_action]
             if current_rule == "Continue":
@@ -203,7 +203,7 @@ class MapVeto:
                 # Normal action, switch turn
                 self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
                 self.current_action += 1
-
+    
                 # Handle consecutive "Continue" rules
                 while self.current_action < len(self.rules) and self.rules[self.current_action] == "Continue":
                     self.current_action += 1
