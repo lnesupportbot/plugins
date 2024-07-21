@@ -157,7 +157,7 @@ async def send_ticket_message(bot, veto, channel):
     bot.loop.create_task(timeout())
 
 class MapVeto:
-    def __init__(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel):
+    def __init__(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel, bot):
         self.name = name
         self.maps = maps
         self.team_a_id = team_a_id
@@ -173,6 +173,7 @@ class MapVeto:
         self.stopped = False
         self.channel = channel  # Le canal de discussion où la commande a été lancée
         self.participants = [team_a_id, team_b_id]  # Ajouter les participants
+        self.bot = bot  # Ajouter une référence au bot
         
     def create_summary_embed(self):
         embed = discord.Embed(title=f"Résumé du veto: {self.name}", color=discord.Color.blue())
@@ -257,14 +258,14 @@ class MapVeto:
         if not self.stopped:
             self.stopped = True
             self.paused = False
-
+    
             # Créer l'embed de résumé
             embed = self.create_summary_embed()
-
+    
             # Envoyer le résumé dans le canal où la commande a été lancée
             if self.channel:
                 self.bot.loop.create_task(self.channel.send(embed=embed))
-
+    
             # Envoyer le résumé aux participants en DM
             for participant_id in self.participants:
                 participant = self.bot.get_user(participant_id)
@@ -343,11 +344,12 @@ class MapVetoCog(commands.Cog):
         if name not in veto_config.vetos:
             await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
             return
-
-        veto = MapVeto(name, veto_config.vetos[name]["maps"], team_a_id, team_a_name, team_b_id, team_b_name, veto_config.vetos[name]["rules"], ctx.channel)
+    
+        veto = MapVeto(name, veto_config.vetos[name]["maps"], team_a_id, team_a_name, team_b_id, team_b_name, veto_config.vetos[name]["rules"], ctx.channel, self.bot)
         vetos[name] = veto
-
+    
         await send_ticket_message(self.bot, veto, ctx.channel)
+
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
