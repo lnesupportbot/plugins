@@ -56,8 +56,8 @@ class MapVetoConfig:
     def get_veto(self, name):
         return self.vetos.get(name, None)
 
-    veto_config = MapVetoConfig()
-    vetos = {}
+veto_config = MapVetoConfig()
+vetos = {}
 
 class MapButton(discord.ui.Button):
     def __init__(self, label, veto_name, action_type, channel):
@@ -67,68 +67,68 @@ class MapButton(discord.ui.Button):
         self.channel = channel
 
     async def callback(self, interaction: discord.Interaction):
-    veto = vetos.get(self.veto_name)
-    if not veto:
-        await interaction.response.send_message("Veto non trouvé.", ephemeral=True)
-        return
-
-    if veto.paused or veto.stopped:
-        await interaction.response.send_message("Le veto est actuellement en pause ou a été arrêté.", ephemeral=True)
-        return
-
-    if interaction.user.id != veto.get_current_turn():
-        await interaction.response.send_message("Ce n'est pas votre tour.", ephemeral=True)
-        return
-
-    if self.action_type == "ban":
-        veto.ban_map(self.label)
-        message = f"Map {self.label} bannie par {interaction.user.mention} (Équipe {veto.team_a_name if interaction.user.id == veto.team_a_id else veto.team_b_name})."
-    elif self.action_type == "pick":
-        veto.pick_map(self.label)
-        message = f"**Map {self.label} choisie par {interaction.user.mention} (Équipe {veto.team_a_name if interaction.user.id == veto.team_a_id else veto.team_b_name}).**"
-    elif self.action_type == "side":
-        veto.pick_side(self.label)
-        message = f"*Side {self.label} choisi par {interaction.user.mention} (Équipe {veto.team_a_name if interaction.user.id == veto.team_a_id else veto.team_b_name}).*"
-
-    await interaction.response.send_message(message)
-    await self.channel.send(message)
-
-    opponent_user = interaction.client.get_user(veto.team_b_id if interaction.user.id == veto.team_a_id else veto.team_a_id)
-    if opponent_user:
-        await opponent_user.send(message)
-
-    veto.next_turn()
-    if veto.current_turn is not None:
-        await send_ticket_message(interaction.client, veto, self.channel)
-    else:
-        await self.channel.send("Le veto est terminé!")
-        embed = veto.create_summary_embed()
-        await self.channel.send(embed=embed)
-        await send_summary_to_players(interaction.client, veto, embed)  # Envoie du résumé aux joueurs
-
-    # Disable the button and update the message
-    view = interaction.message.view
-    for item in view.children:
-        if isinstance(item, discord.ui.Button):
-            item.disabled = True
-    await interaction.message.edit(view=view)
-
-
-    veto.next_turn()
-    if veto.current_turn is not None:
-        await send_ticket_message(interaction.client, veto, self.channel)
-    else:
-        await self.channel.send("Le veto est terminé!")
-        embed = veto.create_summary_embed()
-        await self.channel.send(embed=embed)
-        await send_summary_to_players(interaction.client, veto, embed)  # Envoie du résumé aux joueurs
-
-    # Disable the button and update the message
-    view = interaction.message.view
-    for item in view.children:
-        if isinstance(item, discord.ui.Button):
-            item.disabled = True
-    await interaction.message.edit(view=view)
+        veto = vetos.get(self.veto_name)
+        if not veto:
+            await interaction.response.send_message("Veto non trouvé.", ephemeral=True)
+            return
+    
+        if veto.paused or veto.stopped:
+            await interaction.response.send_message("Le veto est actuellement en pause ou a été arrêté.", ephemeral=True)
+            return
+    
+        if interaction.user.id != veto.get_current_turn():
+            await interaction.response.send_message("Ce n'est pas votre tour.", ephemeral=True)
+            return
+    
+        if self.action_type == "ban":
+            veto.ban_map(self.label)
+            message = f"Map {self.label} bannie par {interaction.user.mention} (Équipe {veto.team_a_name if interaction.user.id == veto.team_a_id else veto.team_b_name})."
+        elif self.action_type == "pick":
+            veto.pick_map(self.label)
+            message = f"**Map {self.label} choisie par {interaction.user.mention} (Équipe {veto.team_a_name if interaction.user.id == veto.team_a_id else veto.team_b_name}).**"
+        elif self.action_type == "side":
+            veto.pick_side(self.label)
+            message = f"*Side {self.label} choisi par {interaction.user.mention} (Équipe {veto.team_a_name if interaction.user.id == veto.team_a_id else veto.team_b_name}).*"
+    
+        await interaction.response.send_message(message)
+        await self.channel.send(message)
+    
+        opponent_user = interaction.client.get_user(veto.team_b_id if interaction.user.id == veto.team_a_id else veto.team_a_id)
+        if opponent_user:
+            await opponent_user.send(message)
+    
+        veto.next_turn()
+        if veto.current_turn is not None:
+            await send_ticket_message(interaction.client, veto, self.channel)
+        else:
+            await self.channel.send("Le veto est terminé!")
+            embed = veto.create_summary_embed()
+            await self.channel.send(embed=embed)
+            await send_summary_to_players(interaction.client, veto, embed)  # Envoie du résumé aux joueurs
+    
+        # Disable the button and update the message
+        view = interaction.message.view
+        for item in view.children:
+            if isinstance(item, discord.ui.Button):
+                item.disabled = True
+        await interaction.message.edit(view=view)
+    
+    
+        veto.next_turn()
+        if veto.current_turn is not None:
+            await send_ticket_message(interaction.client, veto, self.channel)
+        else:
+            await self.channel.send("Le veto est terminé!")
+            embed = veto.create_summary_embed()
+            await self.channel.send(embed=embed)
+            await send_summary_to_players(interaction.client, veto, embed)  # Envoie du résumé aux joueurs
+    
+        # Disable the button and update the message
+        view = interaction.message.view
+        for item in view.children:
+            if isinstance(item, discord.ui.Button):
+                item.disabled = True
+        await interaction.message.edit(view=view)
 
     async def send_ticket_message(bot, veto, channel):
     action = veto.current_action_type()
