@@ -192,13 +192,13 @@ class MapVeto:
     
         if self.current_action < len(self.rules):
             current_rule = self.rules[self.current_action]
-            if current_rule == "Fin":
-                # End the veto and send summary
-                self.stopped = True
-                return self.create_summary_embed()
-            elif current_rule == "Continue":
+            if current_rule == "Continue":
                 # Allow the same team to play again
                 return
+            elif current_rule == "Fin":
+                # Call the stop_mapveto command to end the veto and send summary
+                self.stop()
+                return self.create_summary_embed()
             else:
                 # Normal action, switch turn
                 self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
@@ -212,8 +212,12 @@ class MapVeto:
                         self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
         else:
             # No more actions, end the veto
-            self.stopped = True
+            self.stop()
             return self.create_summary_embed()
+
+    def stop(self):
+        self.stopped = True
+        self.paused = False
 
     def create_summary_embed(self):
         embed = discord.Embed(title=f"Map Veto {self.team_a_name} - {self.team_b_name} terminé!", color=discord.Color.green())
@@ -349,18 +353,19 @@ class MapVetoCog(commands.Cog):
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-    async def stop_mapveto(self, ctx, name: str):
+    async def stop_mapveto(ctx, name: str):
         """Arrête complètement le veto spécifié mais ne supprime pas le template."""
         if name not in vetos:
             await ctx.send(f"Aucun veto en cours avec le nom '{name}'.")
             return
-
+    
         veto = vetos[name]
         veto.stop()  # Call stop to end the veto
         embed = veto.create_summary_embed()  # Get the summary embed
         del vetos[name]  # Remove the veto from memory
         await ctx.send(f"Le veto '{name}' a été arrêté.")
         await ctx.send(embed=embed)  # Send the summary embed
+
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
