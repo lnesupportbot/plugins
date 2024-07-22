@@ -94,7 +94,7 @@ class MapButton(discord.ui.Button):
         await interaction.response.send_message(message)
         await self.channel.send(message)
     
-        opponent_user = interaction.client.get_user(veto.team_b_id if interaction.user.id == veto.team_a_id else veto.team_a_id)
+        opponent_user = interaction.client.get_user(veto.team_b_id if interaction.user.id == veto.team_a_id else veto.team_b_id)
         if opponent_user:
             await opponent_user.send(message)
     
@@ -162,6 +162,9 @@ async def send_ticket_message(bot, veto, channel):
             veto.next_turn()
             if veto.current_turn is not None:
                 await send_ticket_message(bot, veto, channel)
+            else:
+                # Optionally handle the end of veto in timeout
+                pass
 
     bot.loop.create_task(timeout())
 
