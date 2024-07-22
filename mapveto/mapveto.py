@@ -66,56 +66,60 @@ class MapButton(discord.ui.Button):
         self.action_type = action_type
         self.channel = channel
 
-    async def callback(self, interaction: discord.Interaction):
-        veto = vetos.get(self.veto_name)
-        if not veto:
-            await interaction.response.send_message("Veto non trouvé.", ephemeral=True)
-            return
-        
-        if veto.paused or veto.stopped:
-            await interaction.response.send_message("Le veto est actuellement en pause ou a été arrêté.", ephemeral=True)
-            return
-        
-        if interaction.user.id != veto.get_current_turn():
-            await interaction.response.send_message("Ce n'est pas votre tour.", ephemeral=True)
-            return
+async def callback(self, interaction: discord.Interaction):
+    veto = vetos.get(self.veto_name)
+    if not veto:
+        await interaction.response.send_message("Veto non trouvé.", ephemeral=True)
+        return
     
-        if self.action_type == "ban":
-            veto.ban_map(self.label)
-            message = f"Map {self.label} bannie par {interaction.user.mention} (Équipe {veto.team_a_name if interaction.user.id == veto.team_a_id else veto.team_b_name})."
-        elif self.action_type == "pick":
-            veto.pick_map(self.label, interaction.user.mention)
-            message = f"**Map {self.label} choisie par {interaction.user.mention} (Équipe {veto.team_a_name if interaction.user.id == veto.team_a_id else veto.team_b_name}).**"
-        elif self.action_type == "side":
-            veto.pick_side(self.label, interaction.user.mention)
-            message = f"*Side {self.label} choisi par {interaction.user.mention} (Équipe {veto.team_a_name if interaction.user.id == veto.team_a_id else veto.team_b_name}).*"
+    if veto.paused or veto.stopped:
+        await interaction.response.send_message("Le veto est actuellement en pause ou a été arrêté.", ephemeral=True)
+        return
     
-        await interaction.response.send_message(message)
-        await self.channel.send(message)
-    
-        opponent_user = interaction.client.get_user(veto.team_b_id if interaction.user.id == veto.team_a_id else veto.team_a_id)
-        if opponent_user:
-            await opponent_user.send(message)
-    
-        veto.next_turn()
-        if veto.current_turn is not None:
-            await send_ticket_message(interaction.client, veto, self.channel)
-        else:
-            if len(veto.maps) == 1:
-                last_map = veto.maps[0]
-                veto.pick_map(last_map, "DECIDER")
-                message = f"**Map {last_map} choisie par DECIDER.**"
-                await self.channel.send(message)
-            await self.channel.send("Le veto est terminé!")
-            embed = veto.create_summary_embed()
-            await self.channel.send(embed=embed)
-    
-        # Disable the button and update the message
-        view = interaction.message.view
-        for item in view.children:
-            if isinstance(item, discord.ui.Button) and item.custom_id == self.custom_id:
-                item.disabled = True
-        await interaction.message.edit(view=view)
+    if interaction.user.id != veto.get_current_turn():
+        await interaction.response.send_message("Ce n'est pas votre tour.", ephemeral=True)
+        return
+
+    team_name = veto.team_a_name if interaction.user.id == veto.team_a_id else veto.team_b_name
+    if self.action_type == "ban":
+        veto.ban_map(self.label)
+        message = f"Map {self.label} bannie par {interaction.user.mention} ({team_name})."
+    elif self.action_type == "pick":
+        veto.pick_map(self.label, f"{interaction.user.mention} ({team_name})")
+        message = f"**Map {self.label} choisie par {interaction.user.mention} ({team_name}).**"
+    elif self.action_type == "side":
+        veto.pick_side(self.label, f"{interaction.user.mention} ({team_name})")
+        message = f"*Side {self.label} choisi par {interaction.user.mention} ({team_name}).*"
+
+    await interaction.response.send_message(message)
+    await self.channel.send(message)
+
+    opponent_user = interaction.client.get_user(veto.team_b_id if interaction.user.id == veto.team_a_id else veto.team_a_id)
+    if opponent_user:
+        await opponent_user.send(message)
+
+    veto.next_turn()
+    if veto.current_turn is not None:
+        await send_ticket_message(interaction.client, veto, self.channel)
+    else:
+        if len(veto.maps) == 1:
+            last_map = veto.maps[0]
+            veto.pick_map(last_map, "DECIDER")
+            message = f"**Map {last_map} choisie par DECIDER.**"
+            await self.channel.send(message)
+            last_side_chooser = f"{veto.team_a_name if veto.current_turn == veto.team_a_id else veto.team_b_name}"
+            message = f"Side Attaque choisi par {last_side_chooser}"
+            await self.channel.send(message)
+        await self.channel.send("Le veto est terminé!")
+        embed = veto.create_summary_embed()
+        await self.channel.send(embed=embed)
+
+    # Disable the button and update the message
+    view = interaction.message.view
+    for item in view.children:
+        if isinstance(item, discord.ui.Button) and item.custom_id == self.custom_id:
+            item.disabled = True
+    await interaction.message.edit(view=view)
 
 async def send_ticket_message(bot, veto, channel):
     action = veto.current_action_type()
@@ -161,7 +165,6 @@ async def send_ticket_message(bot, veto, channel):
 
     bot.loop.create_task(timeout())
 
-
 class MapVeto:
     def __init__(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel, bot):
         self.name = name
@@ -177,12 +180,12 @@ class MapVeto:
         self.banned_maps = []
         self.paused = False
         self.stopped = False
-        self.channel = channel  # Le canal de discussion où la commande a été lancée
-        self.participants = [team_a_id, team_b_id]  # Ajouter les participants
-        self.bot = bot  # Ajouter une référence au bot
-        
+        self.channel = channel
+        self.participants = [team_a_id, team_b_id]
+        self.bot = bot
+
     def create_summary_embed(self):
-        embed = discord.Embed(title=f"Résumé du veto: {self.name}", color=discord.Color.blue())
+        embed = discord.Embed(title="Résumé du Veto", color=discord.Color.blue())
 
         # Maps choisies
         picked_maps_str = []
@@ -211,7 +214,7 @@ class MapVeto:
         # Ajouter la dernière carte par défaut si elle reste non choisie
         if len(self.maps) == 1:
             last_map = self.maps[0]
-            picked_maps_str.append(f"{last_map} choisi par DECIDER")
+            picked_maps_str.append(f"{last_map} choisi par DECIDER / Side Attaque choisi par {self.team_a_name if self.current_turn == self.team_a_id else self.team_b_name}")
 
         if picked_maps_str:
             embed.add_field(name="Maps choisies", value="\n".join(picked_maps_str), inline=False)
