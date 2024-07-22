@@ -114,14 +114,18 @@ class MapButton(discord.ui.Button):
             embed = veto.create_summary_embed()
             await self.channel.send(embed=embed)
     
-        # Disable the button and update the message
+        # Ensure the message has a view and modify it
         view = interaction.message.view
-        for item in view.children:
-            if isinstance(item, discord.ui.Button) and item.custom_id == self.custom_id:
-                item.disabled = True
+        if view:
+            for item in view.children:
+                if isinstance(item, discord.ui.Button) and item.custom_id == self.custom_id:
+                    item.disabled = True
 
-        # Edit the message to update the view with disabled buttons
-        await interaction.message.edit(view=view)
+            # Edit the message to update the view with disabled buttons
+            await interaction.message.edit(view=view)
+        else:
+            print("Message does not have an attached view.")
+
 
 async def send_ticket_message(bot, veto, channel):
     action = veto.current_action_type()
