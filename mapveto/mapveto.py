@@ -119,6 +119,8 @@ class MapButton(discord.ui.Button):
         for item in view.children:
             if isinstance(item, discord.ui.Button) and item.custom_id == self.custom_id:
                 item.disabled = True
+
+        # Edit the message to update the view with disabled buttons
         await interaction.message.edit(view=view)
 
 async def send_ticket_message(bot, veto, channel):
@@ -164,7 +166,6 @@ async def send_ticket_message(bot, veto, channel):
                 await send_ticket_message(bot, veto, channel)
 
     bot.loop.create_task(timeout())
-
 
 class MapVeto:
     def __init__(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel, bot):
