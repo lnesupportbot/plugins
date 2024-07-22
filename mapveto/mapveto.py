@@ -66,13 +66,6 @@ class MapButton(discord.ui.Button):
         self.action_type = action_type
         self.channel = channel
 
-class MapButton(discord.ui.Button):
-    def __init__(self, label, veto_name, action_type, channel):
-        super().__init__(label=label, style=discord.ButtonStyle.primary, custom_id=f"{veto_name}_{label}_{action_type}")
-        self.veto_name = veto_name
-        self.action_type = action_type
-        self.channel = channel
-
     async def callback(self, interaction: discord.Interaction):
         veto = vetos.get(self.veto_name)
         if not veto:
@@ -101,7 +94,7 @@ class MapButton(discord.ui.Button):
         await interaction.response.send_message(message)
         await self.channel.send(message)
     
-        opponent_user = interaction.client.get_user(veto.team_b_id if interaction.user.id == veto.team_a_id else veto.team_b_id)
+        opponent_user = interaction.client.get_user(veto.team_b_id if interaction.user.id == veto.team_a_id else veto.team_a_id)
         if opponent_user:
             await opponent_user.send(message)
     
@@ -120,16 +113,13 @@ class MapButton(discord.ui.Button):
             await self.channel.send("Le veto est terminé!")
             embed = veto.create_summary_embed()
             await self.channel.send(embed=embed)
-
-        # Check if the view is still attached to the message
-        if interaction.message.view:
-            view = interaction.message.view
-            for item in view.children:
-                if isinstance(item, discord.ui.Button) and item.custom_id == self.custom_id:
-                    item.disabled = True
-            await interaction.message.edit(view=view)
-        else:
-            print("Le message ne contient pas de vue.")
+    
+        # Disable the button and update the message
+        view = interaction.message.view
+        for item in view.children:
+            if isinstance(item, discord.ui.Button) and item.custom_id == self.custom_id:
+                item.disabled = True
+        await interaction.message.edit(view=view)
 
 async def send_ticket_message(bot, veto, channel):
     action = veto.current_action_type()
@@ -146,7 +136,10 @@ async def send_ticket_message(bot, veto, channel):
         components.append(MapButton(label="Défense", veto_name=veto.name, action_type="side", channel=channel))
     else:
         for map_name in veto.maps:
-            components.append(MapButton(label=map_name, veto_name=veto.name, action_type=action.lower(), channel=channel))
+            button = MapButton(label=map_name, veto_name=veto.name, action_type=action.lower(), channel=channel)
+            if map_name in veto.banned_maps or map_name in veto.picked_maps:
+                button.disabled = True
+            components.append(button)
 
     view = discord.ui.View(timeout=60)
     for component in components:
@@ -174,6 +167,7 @@ async def send_ticket_message(bot, veto, channel):
                 await send_ticket_message(bot, veto, channel)
 
     bot.loop.create_task(timeout())
+
 
 class MapVeto:
     def __init__(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel, bot):
