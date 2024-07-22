@@ -66,6 +66,13 @@ class MapButton(discord.ui.Button):
         self.action_type = action_type
         self.channel = channel
 
+class MapButton(discord.ui.Button):
+    def __init__(self, label, veto_name, action_type, channel):
+        super().__init__(label=label, style=discord.ButtonStyle.primary, custom_id=f"{veto_name}_{label}_{action_type}")
+        self.veto_name = veto_name
+        self.action_type = action_type
+        self.channel = channel
+
     async def callback(self, interaction: discord.Interaction):
         veto = vetos.get(self.veto_name)
         if not veto:
@@ -113,15 +120,14 @@ class MapButton(discord.ui.Button):
             await self.channel.send("Le veto est terminé!")
             embed = veto.create_summary_embed()
             await self.channel.send(embed=embed)
-    
-        # Attempt to retrieve and modify the view
-        message = interaction.message
-        if hasattr(message, 'view') and message.view:
-            view = message.view
+
+        # Check if the view is still attached to the message
+        if interaction.message.view:
+            view = interaction.message.view
             for item in view.children:
                 if isinstance(item, discord.ui.Button) and item.custom_id == self.custom_id:
                     item.disabled = True
-            await message.edit(view=view)
+            await interaction.message.edit(view=view)
         else:
             print("Le message ne contient pas de vue.")
 
