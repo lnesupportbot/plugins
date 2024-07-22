@@ -94,7 +94,7 @@ class MapButton(discord.ui.Button):
         await interaction.response.send_message(message)
         await self.channel.send(message)
     
-        opponent_user = interaction.client.get_user(veto.team_b_id if interaction.user.id == veto.team_a_id else veto.team_a_id)
+        opponent_user = interaction.client.get_user(veto.team_b_id if interaction.user.id == veto.team_a_id else veto.team_b_id)
         if opponent_user:
             await opponent_user.send(message)
     
@@ -120,7 +120,6 @@ class MapButton(discord.ui.Button):
             if isinstance(item, discord.ui.Button) and item.custom_id == self.custom_id:
                 item.disabled = True
         await interaction.message.edit(view=view)
-
 
 async def send_ticket_message(bot, veto, channel):
     action = veto.current_action_type()
@@ -165,6 +164,7 @@ async def send_ticket_message(bot, veto, channel):
                 await send_ticket_message(bot, veto, channel)
 
     bot.loop.create_task(timeout())
+
 
 class MapVeto:
     def __init__(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel, bot):
