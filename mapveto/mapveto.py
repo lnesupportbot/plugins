@@ -207,8 +207,6 @@ class MapVeto:
                     picked_maps_str.append(f"{last_map} choisi par {last_chooser} / Side {side} choisi par {chooser}")
                     last_map = None
                     last_chooser = None
-                else:
-                    picked_maps_str.append(f"Side {side} choisi par {chooser}")
                 last_side_chooser = chooser
 
         if last_map:
