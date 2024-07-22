@@ -181,23 +181,25 @@ class MapVeto:
         # Maps choisies
         picked_maps_str = []
         last_map = None
+        last_map_chooser = None
         for entry in self.picked_maps:
             if "side" in entry:
                 side = entry["side"]
                 if last_map:
-                    choosing_team = entry["chooser"]
-                    picked_maps_str.append(f"{last_map} choisi par {last_map_chooser} / Side {side} choisi par {choosing_team}")
+                    picked_maps_str.append(f"{last_map} choisi par {last_map_chooser} / Side {side} choisi par {entry['chooser']}")
                     last_map = None
+                    last_map_chooser = None
                 else:
                     picked_maps_str.append(f"Side {side} choisi par {entry['chooser']}")
             else:
+                if last_map:
+                    picked_maps_str.append(f"{last_map} choisi par {last_map_chooser}")
                 last_map = entry["map"]
                 last_map_chooser = entry["chooser"]
     
         # Handle the case where the last map is chosen as the default
         if last_map:
-            choosing_team = self.team_a_name if (len(self.picked_maps) % 2 == 0) else self.team_b_name
-            picked_maps_str.append(f"{last_map} choisi par DECIDER / Side {self.picked_maps[-1]['side']} choisi par {choosing_team}")
+            picked_maps_str.append(f"{last_map} choisi par {last_map_chooser}")
     
         if picked_maps_str:
             embed.add_field(name="Maps choisies", value="\n".join(picked_maps_str), inline=False)
