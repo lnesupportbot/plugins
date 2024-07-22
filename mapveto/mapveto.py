@@ -181,25 +181,23 @@ class MapVeto:
         # Maps choisies
         picked_maps_str = []
         last_map = None
-        for i, map_name in enumerate(self.picked_maps):
-            if "choisi" in map_name:
-                side = map_name.split(" ")[0]  # Extract the side (e.g., "Attaque")
+        for entry in self.picked_maps:
+            if "side" in entry:
+                side = entry["side"]
                 if last_map:
-                    # Determine which team made the choice based on the current turn
-                    choosing_team = self.team_a_name if (i % 2 == 0) else self.team_b_name
-                    picked_maps_str.append(f"{last_map} choisi par {choosing_team} / Side {side} choisi par {choosing_team}")
+                    choosing_team = entry["chooser"]
+                    picked_maps_str.append(f"{last_map} choisi par {last_map_chooser} / Side {side} choisi par {choosing_team}")
                     last_map = None
                 else:
-                    # Handle the case where only a side is chosen without a map
-                    choosing_team = self.team_a_name if (i % 2 == 0) else self.team_b_name
-                    picked_maps_str.append(f"Side {side} choisi par {choosing_team}")
+                    picked_maps_str.append(f"Side {side} choisi par {entry['chooser']}")
             else:
-                last_map = map_name
+                last_map = entry["map"]
+                last_map_chooser = entry["chooser"]
     
         # Handle the case where the last map is chosen as the default
         if last_map:
             choosing_team = self.team_a_name if (len(self.picked_maps) % 2 == 0) else self.team_b_name
-            picked_maps_str.append(f"{last_map} choisi par DECIDER / Side {self.picked_maps[-1].split(' ')[0]} choisi par {choosing_team}")
+            picked_maps_str.append(f"{last_map} choisi par DECIDER / Side {self.picked_maps[-1]['side']} choisi par {choosing_team}")
     
         if picked_maps_str:
             embed.add_field(name="Maps choisies", value="\n".join(picked_maps_str), inline=False)
@@ -268,10 +266,12 @@ class MapVeto:
     def pick_map(self, map_name):
         if map_name in self.maps:
             self.maps.remove(map_name)
-            self.picked_maps.append(map_name)
-
+            chooser = self.team_a_name if self.current_turn == self.team_a_id else self.team_b_name
+            self.picked_maps.append({"map": map_name, "chooser": chooser})
+    
     def pick_side(self, side):
-        self.picked_maps.append(f"{side} choisi")
+        chooser = self.team_a_name if self.current_turn == self.team_a_id else self.team_b_name
+        self.picked_maps.append({"side": side, "chooser": chooser})
 
     def pause(self):
         self.paused = True
