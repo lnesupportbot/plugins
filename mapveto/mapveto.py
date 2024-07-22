@@ -71,11 +71,11 @@ class MapButton(discord.ui.Button):
         if not veto:
             await interaction.response.send_message("Veto non trouvé.", ephemeral=True)
             return
-        
+    
         if veto.paused or veto.stopped:
             await interaction.response.send_message("Le veto est actuellement en pause ou a été arrêté.", ephemeral=True)
             return
-        
+    
         if interaction.user.id != veto.get_current_turn():
             await interaction.response.send_message("Ce n'est pas votre tour.", ephemeral=True)
             return
@@ -164,7 +164,6 @@ async def send_ticket_message(bot, veto, channel):
                 await send_ticket_message(bot, veto, channel)
 
     bot.loop.create_task(timeout())
-
 
 class MapVeto:
     def __init__(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel, bot):
