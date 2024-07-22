@@ -79,32 +79,37 @@ class MapButton(discord.ui.Button):
         if interaction.user.id != veto.get_current_turn():
             await interaction.response.send_message("Ce n'est pas votre tour.", ephemeral=True)
             return
-
+    
         if self.action_type == "ban":
             veto.ban_map(self.label)
             message = f"Map {self.label} bannie par {interaction.user.mention} (Équipe {veto.team_a_name if interaction.user.id == veto.team_a_id else veto.team_b_name})."
         elif self.action_type == "pick":
-            veto.pick_map(self.label)
+            veto.pick_map(self.label, interaction.user.mention)
             message = f"**Map {self.label} choisie par {interaction.user.mention} (Équipe {veto.team_a_name if interaction.user.id == veto.team_a_id else veto.team_b_name}).**"
         elif self.action_type == "side":
-            veto.pick_side(self.label)
+            veto.pick_side(self.label, interaction.user.mention)
             message = f"*Side {self.label} choisi par {interaction.user.mention} (Équipe {veto.team_a_name if interaction.user.id == veto.team_a_id else veto.team_b_name}).*"
-
+    
         await interaction.response.send_message(message)
         await self.channel.send(message)
-
+    
         opponent_user = interaction.client.get_user(veto.team_b_id if interaction.user.id == veto.team_a_id else veto.team_a_id)
         if opponent_user:
             await opponent_user.send(message)
-
+    
         veto.next_turn()
         if veto.current_turn is not None:
             await send_ticket_message(interaction.client, veto, self.channel)
         else:
+            if len(veto.maps) == 1:
+                last_map = veto.maps[0]
+                veto.pick_map(last_map, "DECIDER")
+                message = f"**Map {last_map} choisie par DECIDER.**"
+                await self.channel.send(message)
             await self.channel.send("Le veto est terminé!")
             embed = veto.create_summary_embed()
             await self.channel.send(embed=embed)
-
+    
         # Disable the button and update the message
         view = interaction.message.view
         for item in view.children:
@@ -148,13 +153,14 @@ async def send_ticket_message(bot, veto, channel):
                 veto.ban_map(random_map)
                 await current_user.send(f"Map {random_map} bannie automatiquement.")
             elif action == "pick":
-                veto.pick_map(random_map)
+                veto.pick_map(random_map, "Automatique")
                 await current_user.send(f"Map {random_map} choisie automatiquement.")
             veto.next_turn()
             if veto.current_turn is not None:
                 await send_ticket_message(bot, veto, channel)
 
     bot.loop.create_task(timeout())
+
 
 class MapVeto:
     def __init__(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel, bot):
@@ -177,45 +183,53 @@ class MapVeto:
         
     def create_summary_embed(self):
         embed = discord.Embed(title=f"Résumé du veto: {self.name}", color=discord.Color.blue())
-    
+
         # Maps choisies
         picked_maps_str = []
         last_map = None
-        last_map_chooser = None
+        last_chooser = None
+
         for entry in self.picked_maps:
-            if "side" in entry:
-                side = entry["side"]
+            if "map" in entry:
                 if last_map:
-                    picked_maps_str.append(f"{last_map} choisi par {last_map_chooser} / Side {side} choisi par {entry['chooser']}")
-                    last_map = None
-                    last_map_chooser = None
-                else:
-                    picked_maps_str.append(f"Side {side} choisi par {entry['chooser']}")
-            else:
-                if last_map:
-                    picked_maps_str.append(f"{last_map} choisi par {last_map_chooser}")
+                    picked_maps_str.append(f"{last_map} choisi par {last_chooser}")
                 last_map = entry["map"]
-                last_map_chooser = entry["chooser"]
-    
-        # Handle the case where the last map is chosen as the default
+                last_chooser = entry["chooser"]
+            elif "side" in entry:
+                side = entry["side"]
+                chooser = entry["chooser"]
+                if last_map:
+                    picked_maps_str.append(f"{last_map} choisi par {last_chooser} / Side {side} choisi par {chooser}")
+                    last_map = None
+                    last_chooser = None
+                else:
+                    picked_maps_str.append(f"Side {side} choisi par {chooser}")
+
         if last_map:
-            picked_maps_str.append(f"{last_map} choisi par {last_map_chooser}")
-    
+            picked_maps_str.append(f"{last_map} choisi par {last_chooser}")
+
+        # Ajouter la dernière carte par défaut si elle reste non choisie
+        if len(self.maps) == 1:
+            last_map = self.maps[0]
+            picked_maps_str.append(f"{last_map} choisi par DECIDER")
+
         if picked_maps_str:
             embed.add_field(name="Maps choisies", value="\n".join(picked_maps_str), inline=False)
         else:
             embed.add_field(name="Maps choisies", value="Aucune", inline=False)
-    
+
         # Maps bannies
         banned_maps_str = ", ".join(self.banned_maps) if self.banned_maps else "Aucune"
         embed.add_field(name="Maps bannies", value=banned_maps_str, inline=False)
-    
+
         return embed
 
     def current_action_type(self):
         if self.current_action < len(self.rules):
             return self.rules[self.current_action]
         return None
+
+        pass
 
     def get_current_turn(self):
         return self.current_turn
@@ -260,19 +274,19 @@ class MapVeto:
             self.end_veto()  # Call the method to end the veto
             return
 
+        pass
+
     def ban_map(self, map_name):
         if map_name in self.maps:
             self.maps.remove(map_name)
             self.banned_maps.append(map_name)
 
-    def pick_map(self, map_name):
+    def pick_map(self, map_name, chooser):
         if map_name in self.maps:
             self.maps.remove(map_name)
-            chooser = self.team_a_name if self.current_turn == self.team_a_id else self.team_b_name
             self.picked_maps.append({"map": map_name, "chooser": chooser})
-    
-    def pick_side(self, side):
-        chooser = self.team_a_name if self.current_turn == self.team_a_id else self.team_b_name
+
+    def pick_side(self, side, chooser):
         self.picked_maps.append({"side": side, "chooser": chooser})
 
     def pause(self):
