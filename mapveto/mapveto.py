@@ -186,7 +186,7 @@ class MapVeto:
         self.bot = bot
 
     def create_summary_embed(self):
-        embed = discord.Embed(title="Résumé du Veto", color=discord.Color.blue())
+        embed = discord.Embed(title="__**Résumé du Veto**__", color=discord.Color.blue())
 
         # Maps choisies
         picked_maps_str = []
@@ -197,34 +197,34 @@ class MapVeto:
         for entry in self.picked_maps:
             if "map" in entry:
                 if last_map:
-                    picked_maps_str.append(f"{last_map} choisi par {last_chooser}")
+                    picked_maps_str.append(f"**{last_map}** choisi par {last_chooser}")
                 last_map = entry["map"]
                 last_chooser = entry["chooser"]
             elif "side" in entry:
                 side = entry["side"]
                 chooser = entry["chooser"]
                 if last_map:
-                    picked_maps_str.append(f"{last_map} choisi par {last_chooser} / Side {side} choisi par {chooser}")
+                    picked_maps_str.append(f"**{last_map}** choisi par {last_chooser} / Side {side} choisi par {chooser}")
                     last_map = None
                     last_chooser = None
                 last_side_chooser = chooser
 
         if last_map:
-            picked_maps_str.append(f"{last_map} choisi par {last_chooser}")
+            picked_maps_str.append(f"**{last_map}** choisi par {last_chooser}")
 
         # Ajouter la dernière carte par défaut si elle reste non choisie
         if len(self.maps) == 1:
             last_map = self.maps[0]
-            picked_maps_str.append(f"{last_map} choisi par DECIDER / Side Attaque choisi par {last_side_chooser}")
+            picked_maps_str.append(f"**{last_map}** choisi par DECIDER / Side Attaque choisi par {last_side_chooser}")
 
         if picked_maps_str:
-            embed.add_field(name="Maps choisies", value="\n".join(picked_maps_str), inline=False)
+            embed.add_field(name="__**Maps choisies**__", value="\n".join(picked_maps_str), inline=False)
         else:
-            embed.add_field(name="Maps choisies", value="Aucune", inline=False)
+            embed.add_field(name="__**Maps choisies**__", value="Aucune", inline=False)
 
         # Maps bannies
         banned_maps_str = ", ".join(self.banned_maps) if self.banned_maps else "Aucune"
-        embed.add_field(name="Maps bannies", value=banned_maps_str, inline=False)
+        embed.add_field(name="__**Maps bannies**__", value=banned_maps_str, inline=False)
 
         return embed
 
