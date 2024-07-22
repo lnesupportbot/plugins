@@ -119,6 +119,7 @@ class MapButton(discord.ui.Button):
         for item in view.children:
             if isinstance(item, discord.ui.Button) and item.custom_id == self.custom_id:
                 item.disabled = True
+                
         await interaction.message.edit(view=view)
 
 
@@ -137,7 +138,11 @@ async def send_ticket_message(bot, veto, channel):
         components.append(MapButton(label="Défense", veto_name=veto.name, action_type="side", channel=channel))
     else:
         for map_name in veto.maps:
-            components.append(MapButton(label=map_name, veto_name=veto.name, action_type=action.lower(), channel=channel))
+            # Disable buttons for banned or picked maps
+            button = MapButton(label=map_name, veto_name=veto.name, action_type=action.lower(), channel=channel)
+            if map_name in veto.banned_maps or map_name in veto.picked_maps:
+                button.disabled = True
+            components.append(button)
 
     view = discord.ui.View()
     for component in components:
