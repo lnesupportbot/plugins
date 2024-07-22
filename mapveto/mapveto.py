@@ -192,6 +192,7 @@ class MapVeto:
         picked_maps_str = []
         last_map = None
         last_chooser = None
+        last_side_chooser = None
 
         for entry in self.picked_maps:
             if "map" in entry:
@@ -208,6 +209,7 @@ class MapVeto:
                     last_chooser = None
                 else:
                     picked_maps_str.append(f"Side {side} choisi par {chooser}")
+                last_side_chooser = chooser
 
         if last_map:
             picked_maps_str.append(f"{last_map} choisi par {last_chooser}")
@@ -215,7 +217,6 @@ class MapVeto:
         # Ajouter la dernière carte par défaut si elle reste non choisie
         if len(self.maps) == 1:
             last_map = self.maps[0]
-            last_side_chooser = f"{self.team_a_name} ({self.team_a_id})" if self.current_turn == self.team_a_id else f"{self.team_b_name} ({self.team_b_id})"
             picked_maps_str.append(f"{last_map} choisi par DECIDER / Side Attaque choisi par {last_side_chooser}")
 
         if picked_maps_str:
@@ -272,6 +273,13 @@ class MapVeto:
                         self.bot.loop.create_task(participant.send(embed=embed))
                     except discord.Forbidden:
                         print(f"Cannot DM user {participant_id}")
+    def current_action_type(self):
+        if self.current_action < len(self.rules):
+            return self.rules[self.current_action]
+        return None
+
+    def get_current_turn(self):
+        return self.current_turn
 
 
 class MapVetoCog(commands.Cog):
