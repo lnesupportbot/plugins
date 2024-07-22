@@ -114,18 +114,16 @@ class MapButton(discord.ui.Button):
             embed = veto.create_summary_embed()
             await self.channel.send(embed=embed)
     
-        # Ensure the message has a view and modify it
-        view = interaction.message.view
-        if view:
+        # Attempt to retrieve and modify the view
+        message = interaction.message
+        if hasattr(message, 'view') and message.view:
+            view = message.view
             for item in view.children:
                 if isinstance(item, discord.ui.Button) and item.custom_id == self.custom_id:
                     item.disabled = True
-
-            # Edit the message to update the view with disabled buttons
-            await interaction.message.edit(view=view)
+            await message.edit(view=view)
         else:
-            print("Message does not have an attached view.")
-
+            print("Le message ne contient pas de vue.")
 
 async def send_ticket_message(bot, veto, channel):
     action = veto.current_action_type()
@@ -170,6 +168,7 @@ async def send_ticket_message(bot, veto, channel):
                 await send_ticket_message(bot, veto, channel)
 
     bot.loop.create_task(timeout())
+
 
 class MapVeto:
     def __init__(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel, bot):
