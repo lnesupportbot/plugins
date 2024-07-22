@@ -121,6 +121,7 @@ class MapButton(discord.ui.Button):
                 item.disabled = True
         await interaction.message.edit(view=view)
 
+
 async def send_ticket_message(bot, veto, channel):
     action = veto.current_action_type()
     if action is None:
