@@ -107,8 +107,8 @@ class MapButton(discord.ui.Button):
                 veto.pick_map(last_map, "DECIDER")
                 message = f"**Map {last_map} choisie par DECIDER.**"
                 await self.channel.send(message)
-                last_side_chooser = f"{veto.team_a_name if veto.current_turn == veto.team_a_id else veto.team_b_name}"
-                message = f"Side Attaque choisi par {last_side_chooser}"
+                last_side_chooser = f"{interaction.user.mention} ({team_name})"
+                message = f"*Side Attaque choisi par {last_side_chooser}*"
                 await self.channel.send(message)
             await self.channel.send("Le veto est terminé!")
             embed = veto.create_summary_embed()
@@ -165,6 +165,7 @@ async def send_ticket_message(bot, veto, channel):
 
     bot.loop.create_task(timeout())
 
+
 class MapVeto:
     def __init__(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel, bot):
         self.name = name
@@ -214,7 +215,8 @@ class MapVeto:
         # Ajouter la dernière carte par défaut si elle reste non choisie
         if len(self.maps) == 1:
             last_map = self.maps[0]
-            picked_maps_str.append(f"{last_map} choisi par DECIDER / Side Attaque choisi par {self.team_a_name if self.current_turn == self.team_a_id else self.team_b_name}")
+            last_side_chooser = f"{self.team_a_name} ({self.team_a_id})" if self.current_turn == self.team_a_id else f"{self.team_b_name} ({self.team_b_id})"
+            picked_maps_str.append(f"{last_map} choisi par DECIDER / Side Attaque choisi par {last_side_chooser}")
 
         if picked_maps_str:
             embed.add_field(name="Maps choisies", value="\n".join(picked_maps_str), inline=False)
@@ -226,58 +228,6 @@ class MapVeto:
         embed.add_field(name="Maps bannies", value=banned_maps_str, inline=False)
 
         return embed
-
-    def current_action_type(self):
-        if self.current_action < len(self.rules):
-            return self.rules[self.current_action]
-        return None
-
-        pass
-
-    def get_current_turn(self):
-        return self.current_turn
-
-    def next_turn(self):
-        if self.stopped or self.paused:
-            return
-
-        if self.current_action < len(self.rules):
-            current_rule = self.rules[self.current_action]
-            print(f"Processing rule: {current_rule}")
-
-            if current_rule == "Continue":
-                # Allow the same team to play again
-                return
-            elif current_rule == "Fin":
-                # Handle the end of the veto
-                print("End of veto detected, stopping the veto.")
-                self.end_veto()  # Call the method to end the veto
-                return
-            else:
-                if current_rule in {"Ban", "Pick", "Side"}:
-                    self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
-                    self.current_action += 1
-
-                # Handle consecutive "Continue" rules
-                while self.current_action < len(self.rules) and self.rules[self.current_action] == "Continue":
-                    self.current_action += 1
-                    if self.current_action < len(self.rules) and self.rules[self.current_action] != "Continue":
-                        # Switch turn after exiting consecutive "Continue"
-                        self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
-
-                # If there are no more actions, stop the veto
-                if self.current_action >= len(self.rules):
-                    print("No more rules, stopping the veto")
-                    self.end_veto()  # Call the method to end the veto
-                    return
-
-        else:
-            # No more actions, end the veto
-            print("No more actions, stopping the veto")
-            self.end_veto()  # Call the method to end the veto
-            return
-
-        pass
 
     def ban_map(self, map_name):
         if map_name in self.maps:
