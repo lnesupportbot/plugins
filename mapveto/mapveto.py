@@ -34,16 +34,22 @@ class MapVetoConfig:
 
     def add_maps(self, name, map_names):
         if name in self.vetos:
-            self.vetos[name]["maps"].extend(map_names)
-            self.save_vetos()
-            return True
+            existing_maps = set(self.vetos[name]["maps"])
+            new_maps = [map_name for map_name in map_names if map_name not in existing_maps]
+            if new_maps:
+                self.vetos[name]["maps"].extend(new_maps)
+                self.save_vetos()
+                return True
         return False
 
     def set_rules(self, name, rules):
         if name in self.vetos:
-            self.vetos[name]["rules"] = rules.split()
-            self.save_vetos()
-            return True
+            valid_rules = {"Pick", "Ban", "Continue", "Side", "Fin"}
+            rules_list = rules.split()
+            if all(rule in valid_rules for rule in rules_list):
+                self.vetos[name]["rules"] = rules_list
+                self.save_vetos()
+                return True
         return False
 
     def delete_veto(self, name):
@@ -282,15 +288,10 @@ class MapVetoCog(commands.Cog):
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def mapveto_rules(self, ctx, name: str, *, rules: str):
         """Définit les règles pour le template de veto spécifié."""
-        valid_rules = {"Pick", "Ban", "Continue", "Side", "Fin"}
-        rules_list = rules.split()
-        if all(rule in valid_rules for rule in rules_list):
-            if veto_config.set_rules(name, rules):
-                await ctx.send(f"Règles définies pour le template de veto '{name}' : {rules}.")
-            else:
-                await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
+        if veto_config.set_rules(name, rules):
+            await ctx.send(f"Règles définies pour le template de veto '{name}' : {rules}.")
         else:
-            await ctx.send(f"Règles invalides. Les règles valides sont : {', '.join(valid_rules)}.")
+            await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}' ou règles invalides.")
 
     @mapveto.command(name='delete')
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
@@ -309,7 +310,7 @@ class MapVetoCog(commands.Cog):
             await ctx.send(f"Templates de veto disponibles : {', '.join(veto_config.vetos.keys())}")
         else:
             await ctx.send("Aucun template de veto disponible.")
-            
+
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def start_mapveto(self, ctx, name: str, team_a_id: int, team_a_name: str, team_b_id: int, team_b_name: str):
