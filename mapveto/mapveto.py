@@ -230,6 +230,56 @@ class MapVeto:
 
         return embed
 
+    def current_action_type(self):
+        if self.current_action < len(self.rules):
+            return self.rules[self.current_action]
+        return None
+        pass
+
+    def get_current_turn(self):
+        return self.current_turn
+
+    def next_turn(self):
+        if self.stopped or self.paused:
+            return
+
+        if self.current_action < len(self.rules):
+            current_rule = self.rules[self.current_action]
+            print(f"Processing rule: {current_rule}")
+
+            if current_rule == "Continue":
+                # Allow the same team to play again
+                return
+            elif current_rule == "Fin":
+                # Handle the end of the veto
+                print("End of veto detected, stopping the veto.")
+                self.end_veto()  # Call the method to end the veto
+                return
+            else:
+                if current_rule in {"Ban", "Pick", "Side"}:
+                    self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
+                    self.current_action += 1
+
+                # Handle consecutive "Continue" rules
+                while self.current_action < len(self.rules) and self.rules[self.current_action] == "Continue":
+                    self.current_action += 1
+                    if self.current_action < len(self.rules) and self.rules[self.current_action] != "Continue":
+                        # Switch turn after exiting consecutive "Continue"
+                        self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
+
+                # If there are no more actions, stop the veto
+                if self.current_action >= len(self.rules):
+                    print("No more rules, stopping the veto")
+                    self.end_veto()  # Call the method to end the veto
+                    return
+
+        else:
+            # No more actions, end the veto
+            print("No more actions, stopping the veto")
+            self.end_veto()  # Call the method to end the veto
+            return
+        pass
+
     def ban_map(self, map_name):
         if map_name in self.maps:
             self.maps.remove(map_name)
@@ -273,14 +323,6 @@ class MapVeto:
                         self.bot.loop.create_task(participant.send(embed=embed))
                     except discord.Forbidden:
                         print(f"Cannot DM user {participant_id}")
-    def current_action_type(self):
-        if self.current_action < len(self.rules):
-            return self.rules[self.current_action]
-        return None
-
-    def get_current_turn(self):
-        return self.current_turn
-
 
 class MapVetoCog(commands.Cog):
     def __init__(self, bot):
