@@ -134,9 +134,11 @@ async def send_ticket_message(bot, veto, channel):
         components.append(MapButton(label="Attaque", veto_name=veto.name, action_type="side", channel=channel))
         components.append(MapButton(label="Défense", veto_name=veto.name, action_type="side", channel=channel))
     else:
-        for map_name in veto.maps:
-            components.append(MapButton(label=map_name, veto_name=veto.name, action_type=action.lower(), channel=channel))
-
+        for map_name in veto.listmaps:
+            button = MapButton(label=map_name, veto_name=veto.name, action_type=action.lower(), channel=channel)
+            if map_name in veto.banned_maps or map_name in veto.picked_maps:
+                button.disabled = True
+            components.append(button)
     view = discord.ui.View(timeout=60)
     for component in components:
         view.add_item(component)
@@ -166,9 +168,10 @@ async def send_ticket_message(bot, veto, channel):
 
 
 class MapVeto:
-    def __init__(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel, bot):
+    def __init__(self, name, maps, listmaps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel, bot):
         self.name = name
         self.maps = maps
+        self.maps = listmaps
         self.team_a_id = team_a_id
         self.team_a_name = team_a_name
         self.team_b_id = team_b_id
