@@ -388,7 +388,7 @@ class MapVetoCog(commands.Cog):
             await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
             return
     
-        veto = MapVeto(name, veto_config.vetos[name]["maps"], team_a_id, team_a_name, team_b_id, team_b_name, veto_config.vetos[name]["rules"], ctx.channel, self.bot)
+        veto = MapVeto(name, veto_config.vetos[name]["maps"]["maps"], team_a_id, team_a_name, team_b_id, team_b_name, veto_config.vetos[name]["rules"], ctx.channel, self.bot)
         vetos[name] = veto
     
         await send_ticket_message(self.bot, veto, ctx.channel)
