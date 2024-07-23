@@ -140,7 +140,7 @@ async def send_ticket_message(bot, veto, channel):
                 button.disabled = True
             components.append(button)
 
-    view = discord.ui.View(timeout=60)
+    view = discord.ui.View()
     for component in components:
         view.add_item(component)
 
@@ -150,23 +150,6 @@ async def send_ticket_message(bot, veto, channel):
         await current_user.send(f"{current_user.mention}, c'est votre tour de {action} une map.", view=view)
     except discord.Forbidden:
         print(f"Cannot DM user {current_user.id}")
-
-    async def timeout():
-        await view.wait()
-        if not view.is_finished():
-            random_map = random.choice(veto.maps)
-            if action == "ban":
-                veto.ban_map(random_map)
-                await current_user.send(f"Map {random_map} bannie automatiquement.")
-            elif action == "pick":
-                veto.pick_map(random_map, "Automatique")
-                await current_user.send(f"Map {random_map} choisie automatiquement.")
-            veto.next_turn()
-            if veto.current_turn is not None:
-                await send_ticket_message(bot, veto, channel)
-
-    bot.loop.create_task(timeout())
-
 
 class MapVeto:
     def __init__(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel, bot):
