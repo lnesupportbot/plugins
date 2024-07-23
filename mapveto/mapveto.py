@@ -127,7 +127,6 @@ async def send_ticket_message(bot, veto, channel):
 
     current_user = bot.get_user(veto.get_current_turn())
     if not current_user:
-        print(f"You're in!")
         return
 
     components = []
@@ -136,11 +135,7 @@ async def send_ticket_message(bot, veto, channel):
         components.append(MapButton(label="Défense", veto_name=veto.name, action_type="side", channel=channel))
     else:
         for map_name in veto.maps:
-            button = MapButton(label=map_name, veto_name=veto.name, action_type=action.lower(), channel=channel)
-            if map_name in veto.banned_maps or map_name in veto.picked_maps:
-                button.disabled = True
-            components.append(button)
-            #components.append(MapButton(label=map_name, veto_name=veto.name, action_type=action.lower(), channel=channel))
+            components.append(MapButton(label=map_name, veto_name=veto.name, action_type=action.lower(), channel=channel))
 
     view = discord.ui.View(timeout=60)
     for component in components:
@@ -279,12 +274,12 @@ class MapVeto:
 
     def ban_map(self, map_name):
         if map_name in self.maps:
-            #self.maps.remove(map_name)
+            self.maps.remove(map_name)
             self.banned_maps.append(map_name)
 
     def pick_map(self, map_name, chooser):
         if map_name in self.maps:
-            #self.maps.remove(map_name)
+            self.maps.remove(map_name)
             self.picked_maps.append({"map": map_name, "chooser": chooser})
 
     def pick_side(self, side, chooser):
