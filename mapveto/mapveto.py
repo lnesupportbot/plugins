@@ -148,8 +148,8 @@ async def send_ticket_message(bot, veto, channel):
     team_name = veto.team_a_name if veto.get_current_turn() == veto.team_a_id else veto.team_b_name
 
     if action == "Side":
-        if len(self.maps) == 1:
-            last_picked_map = self.maps[0]
+        if len(self.maps) == 2:
+            last_picked_map = veto.banned_maps[-1]
             message = f"{current_user.mention}, vous devez choisir votre Side sur **{last_picked_map}**."
         else:
             # Include the last picked map in the message
