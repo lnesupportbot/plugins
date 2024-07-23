@@ -297,7 +297,6 @@ class MapVeto:
                 return True
         for map_name in self.banned_maps:
                 return True
-        return False
 
     def pause(self):
         self.paused = True
