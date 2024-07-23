@@ -168,10 +168,10 @@ async def send_ticket_message(bot, veto, channel):
 
 
 class MapVeto:
-    def __init__(self, name, maps, listmaps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel, bot):
+    def __init__(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel, bot):
         self.name = name
-        self.maps = maps
-        self.maps = listmaps
+        self.maps = maps[:]
+        self.listmaps = maps[:]
         self.team_a_id = team_a_id
         self.team_a_name = team_a_name
         self.team_b_id = team_b_id
