@@ -252,11 +252,6 @@ class MapVeto:
             if current_rule == "Continue":
                 # Allow the same team to play again
                 return
-            elif current_rule == "Fin":
-                # Handle the end of the veto
-                print("End of veto detected, stopping the veto.")
-                self.end_veto()  # Call the method to end the veto
-                return
             else:
                 if current_rule in {"Ban", "Pick", "Side"}:
                     self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
