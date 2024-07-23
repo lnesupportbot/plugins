@@ -137,7 +137,6 @@ async def send_ticket_message(bot, veto, channel):
         for map_name in veto.listmaps:
             button = MapButton(label=map_name, veto_name=veto.name, action_type=action.lower(), channel=channel)
             if map_name in veto.banned_maps or map_name in veto.picked_maps:
-                print(f"Tu passes par la!")
                 button.disabled = True
             components.append(button)
 
@@ -256,6 +255,8 @@ class MapVeto:
                 if current_rule in {"Ban", "Pick", "Side"}:
                     self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
                     self.current_action += 1
+                    print(self.banned_maps)
+                    print(self.picked_maps)
 
                 # Handle consecutive "Continue" rules
                 while self.current_action < len(self.rules) and self.rules[self.current_action] == "Continue":
