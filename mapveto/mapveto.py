@@ -137,8 +137,10 @@ async def send_ticket_message(bot, veto, channel):
         for map_name in veto.listmaps:
             button = MapButton(label=map_name, veto_name=veto.name, action_type=action.lower(), channel=channel)
             if map_name in veto.banned_maps or map_name in veto.picked_maps:
+                print(f"Tu passes par la!")
                 button.disabled = True
             components.append(button)
+
     view = discord.ui.View(timeout=60)
     for component in components:
         view.add_item(component)
