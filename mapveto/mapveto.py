@@ -66,7 +66,7 @@ class MapButton(discord.ui.Button):
         self.action_type = action_type
         self.channel = channel
 
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: discord.Interaction, view):
         veto = vetos.get(self.veto_name)
         if not veto:
             await interaction.response.send_message("Veto non trouvé.", ephemeral=True)
