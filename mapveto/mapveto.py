@@ -79,7 +79,7 @@ class MapButton(discord.ui.Button):
         if interaction.user.id != veto.get_current_turn():
             await interaction.response.send_message("Ce n'est pas votre tour.", ephemeral=True)
             return
-    
+         
         team_name = veto.team_a_name if interaction.user.id == veto.team_a_id else veto.team_b_name
         if self.action_type == "ban":
             veto.ban_map(self.label)
@@ -92,8 +92,7 @@ class MapButton(discord.ui.Button):
             message = f"*Side {self.label} choisi par {interaction.user.mention} ({team_name}).*"
     
         await interaction.response.send_message(message)
-        await self.channel.send(message)
-    
+        await self.channel.send(message)    
         opponent_user = interaction.client.get_user(veto.team_b_id if interaction.user.id == veto.team_a_id else veto.team_a_id)
         if opponent_user:
             await opponent_user.send(message)
@@ -128,6 +127,7 @@ async def send_ticket_message(bot, veto, channel):
 
     current_user = bot.get_user(veto.get_current_turn())
     if not current_user:
+        print(f"You're in!")
         return
 
     components = []
@@ -136,9 +136,11 @@ async def send_ticket_message(bot, veto, channel):
         components.append(MapButton(label="Défense", veto_name=veto.name, action_type="side", channel=channel))
     else:
         for map_name in veto.maps:
+            button = MapButton(label=map_name, veto_name=veto.name, action_type=action.lower(), channel=channel)
             if map_name in veto.banned_maps or map_name in veto.picked_maps:
                 button.disabled = True
-            components.append(MapButton(label=map_name, veto_name=veto.name, action_type=action.lower(), channel=channel))
+            components.append(button)
+            #components.append(MapButton(label=map_name, veto_name=veto.name, action_type=action.lower(), channel=channel))
 
     view = discord.ui.View(timeout=60)
     for component in components:
