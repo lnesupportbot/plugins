@@ -134,9 +134,9 @@ async def send_ticket_message(bot, veto, channel):
         components.append(MapButton(label="Attaque", veto_name=veto.name, action_type="side", channel=channel))
         components.append(MapButton(label="Défense", veto_name=veto.name, action_type="side", channel=channel))
     else:
-        for map_name in veto.maps:
+        for map_name in veto.listmaps:
             button = MapButton(label=map_name, veto_name=veto.name, action_type=action.lower(), channel=channel)
-            if map_name in veto.banned_maps or map_name in veto.picked_maps:
+            if veto.is_map_in_picked_or_banned(map_name):
                 button.disabled = True
             components.append(button)
 
@@ -280,16 +280,24 @@ class MapVeto:
 
     def ban_map(self, map_name):
         if map_name in self.maps:
-            #self.maps.remove(map_name)
+            self.maps.remove(map_name)
             self.banned_maps.append(map_name)
 
     def pick_map(self, map_name, chooser):
         if map_name in self.maps:
-            #self.maps.remove(map_name)
+            self.maps.remove(map_name)
             self.picked_maps.append({"map": map_name, "chooser": chooser})
 
     def pick_side(self, side, chooser):
         self.picked_maps.append({"side": side, "chooser": chooser})
+
+    def is_map_in_picked_or_banned(self, map_name):
+        for entry in self.picked_maps:
+            if entry["map"] == map_name:
+                return True
+        for map_name in self.banned_maps:
+                return True
+        return False
 
     def pause(self):
         self.paused = True
