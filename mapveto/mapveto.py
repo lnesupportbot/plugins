@@ -136,7 +136,7 @@ async def send_ticket_message(bot, veto, channel):
     else:
         for map_name in veto.listmaps:
             button = MapButton(label=map_name, veto_name=veto.name, action_type=action.lower(), channel=channel)
-            if map_name in veto.banned_maps or map_name in veto.picked_maps:
+            if map_name in veto.banned_maps or map_name in veto.picked_maps_only:
                 button.disabled = True
             components.append(button)
 
@@ -181,6 +181,7 @@ class MapVeto:
         self.current_turn = team_a_id
         self.current_action = 0
         self.picked_maps = []
+        self.picked_maps_only = []
         self.banned_maps = []
         self.paused = False
         self.stopped = False
@@ -255,8 +256,6 @@ class MapVeto:
                 if current_rule in {"Ban", "Pick", "Side"}:
                     self.current_turn = self.team_a_id if self.current_turn == self.team_b_id else self.team_b_id
                     self.current_action += 1
-                    print(self.banned_maps)
-                    print(self.picked_maps)
 
                 # Handle consecutive "Continue" rules
                 while self.current_action < len(self.rules) and self.rules[self.current_action] == "Continue":
@@ -286,17 +285,11 @@ class MapVeto:
     def pick_map(self, map_name, chooser):
         if map_name in self.maps:
             self.maps.remove(map_name)
+            self.picked_maps_only.append(map_name)
             self.picked_maps.append({"map": map_name, "chooser": chooser})
 
     def pick_side(self, side, chooser):
         self.picked_maps.append({"side": side, "chooser": chooser})
-
-    def is_map_in_picked_or_banned(self, map_name):
-        for entry in self.picked_maps:
-            if entry["map"] == map_name:
-                return True
-        for map_name in self.banned_maps:
-                return True
 
     def pause(self):
         self.paused = True
