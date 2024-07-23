@@ -149,7 +149,7 @@ async def send_ticket_message(bot, veto, channel):
 
     if action == "Side":
         # Include the last picked map in the message
-        last_picked_map = veto.picked_maps[-1]["map"] if veto.picked_maps_only else "Unknown"
+        last_picked_map = veto.picked_maps[-1]["map"] if veto.picked_maps else "Unknown"
         message = f"{current_user.mention}, vous devez choisir votre Side sur **{last_picked_map}**."
     else:
         message = f"{current_user.mention}, c'est votre tour de {action} une map."
