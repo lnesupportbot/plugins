@@ -66,20 +66,27 @@ class MapButton(discord.ui.Button):
         self.action_type = action_type
         self.channel = channel
 
+class MapButton(discord.ui.Button):
+    def __init__(self, label, veto_name, action_type, channel):
+        super().__init__(label=label, style=discord.ButtonStyle.primary, custom_id=f"{veto_name}_{label}_{action_type}")
+        self.veto_name = veto_name
+        self.action_type = action_type
+        self.channel = channel
+
     async def callback(self, interaction: discord.Interaction):
         veto = vetos.get(self.veto_name)
         if not veto:
             await interaction.response.send_message("Veto non trouvé.", ephemeral=True)
             return
-        
+
         if veto.paused or veto.stopped:
             await interaction.response.send_message("Le veto est actuellement en pause ou a été arrêté.", ephemeral=True)
             return
-        
+
         if interaction.user.id != veto.get_current_turn():
             await interaction.response.send_message("Ce n'est pas votre tour.", ephemeral=True)
             return
-        
+
         team_name = veto.team_a_name if interaction.user.id == veto.team_a_id else veto.team_b_name
         if self.action_type == "ban":
             veto.ban_map(self.label)
@@ -90,13 +97,13 @@ class MapButton(discord.ui.Button):
         elif self.action_type == "side":
             veto.pick_side(self.label, f"{interaction.user.mention} ({team_name})")
             message = f"*Side {self.label} choisi par {interaction.user.mention} ({team_name}).*"
-    
+
         await interaction.response.send_message(message)
-        await self.channel.send(message)    
+        await self.channel.send(message)
         opponent_user = interaction.client.get_user(veto.team_b_id if interaction.user.id == veto.team_a_id else veto.team_a_id)
         if opponent_user:
             await opponent_user.send(message)
-        
+
         veto.next_turn()
         if veto.current_turn is not None:
             await send_ticket_message(interaction.client, veto, self.channel)
@@ -112,9 +119,9 @@ class MapButton(discord.ui.Button):
             await self.channel.send("Le veto est terminé!")
             embed = veto.create_summary_embed()
             await self.channel.send(embed=embed)
-        
-        # Disable all buttons in the current view
-        view = interaction.message.view
+
+        # Disable the button and update the message
+        view = interaction.message.components[0]
         for item in view.children:
             if isinstance(item, discord.ui.Button):
                 item.disabled = True
