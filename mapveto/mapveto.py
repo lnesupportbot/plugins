@@ -136,7 +136,7 @@ async def send_ticket_message(bot, veto, channel):
     else:
         for map_name in veto.listmaps:
             button = MapButton(label=map_name, veto_name=veto.name, action_type=action.lower(), channel=channel)
-            if veto.is_map_in_picked_or_banned(map_name):
+            if map_name in veto.banned_maps or map_name in veto.picked_maps:
                 button.disabled = True
             components.append(button)
 
