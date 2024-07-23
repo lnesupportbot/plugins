@@ -147,8 +147,15 @@ async def send_ticket_message(bot, veto, channel):
 
     team_name = veto.team_a_name if veto.get_current_turn() == veto.team_a_id else veto.team_b_name
 
+    if action == "Side":
+        # Include the last picked map in the message
+        last_picked_map = veto.picked_maps[-1]["map"] if veto.picked_maps_only else "Unknown"
+        message = f"{current_user.mention}, vous devez choisir votre Side sur **{last_picked_map}**."
+    else:
+        message = f"{current_user.mention}, c'est votre tour de {action} une map."
+
     try:
-        await current_user.send(f"{current_user.mention}, c'est votre tour de {action} une map.", view=view)
+        await current_user.send(message, view=view)
     except discord.Forbidden:
         print(f"Cannot DM user {current_user.id}")
 
