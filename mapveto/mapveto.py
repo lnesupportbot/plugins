@@ -477,6 +477,23 @@ class MapVetoCog(commands.Cog):
             await ctx.send("Aucun template de veto à supprimer.")
             return
 
+        class VetoDeleteSelect(Select):
+            def __init__(self, options):
+                super().__init__(placeholder="Choisissez un template à supprimer...", options=options)
+        
+            async def callback(self, interaction: discord.Interaction):
+                selected_template = self.values[0]
+                
+                # Demander une confirmation pour la suppression
+                confirm_view = View()
+                confirm_view.add_item(ConfirmDeleteButton(selected_template))
+                
+                await interaction.response.send_message(
+                    f"Êtes-vous sûr de vouloir supprimer le template '{selected_template}' ?",
+                    view=confirm_view,
+                    ephemeral=True
+                )
+
         class DeleteButton(Button):
             def __init__(self):
                 super().__init__(label="Supprimer un template", style=discord.ButtonStyle.danger)
@@ -500,23 +517,6 @@ class MapVetoCog(commands.Cog):
                     view=view,
                     ephemeral=True
                 )
-
-            class VetoDeleteSelect(Select):
-                def __init__(self, options):
-                    super().__init__(placeholder="Choisissez un template à supprimer...", options=options)
-            
-                async def callback(self, interaction: discord.Interaction):
-                    selected_template = self.values[0]
-                    
-                    # Demander une confirmation pour la suppression
-                    confirm_view = View()
-                    confirm_view.add_item(ConfirmDeleteButton(selected_template))
-                    
-                    await interaction.response.send_message(
-                        f"Êtes-vous sûr de vouloir supprimer le template '{selected_template}' ?",
-                        view=confirm_view,
-                        ephemeral=True
-                    )
 
             class ConfirmDeleteButton(Button):
                 def __init__(self, template_name):
