@@ -512,13 +512,9 @@ class MapVetoCog(commands.Cog):
                         ephemeral=True
                     )
                 
-                await asyncio.sleep(1)
-        
-                try:
-                    # Supposons que vous essayez de supprimer le message de confirmation
+                # Supprimer le message de confirmation
+                if interaction.message:
                     await interaction.message.delete()
-                except NotFound:
-                    print("Le message à supprimer est introuvable.")
 
         class DeleteButton(Button):
             def __init__(self):
