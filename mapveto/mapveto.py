@@ -80,31 +80,40 @@ class VetoCreateModal(Modal):
         else:
             await interaction.response.send_message(f"Un template de veto avec le nom '{name}' existe déjà.", ephemeral=True)
 
-class VetoEditModal(Modal):
-    def __init__(self, name, maps, rules):
-        super().__init__(title="Modifier un Template de Veto")
+class VetoEditModal(discord.ui.Modal):
+    def __init__(self, template_name, veto):
+        super().__init__(title=f"Modifier le template '{template_name}'")
+        self.template_name = template_name
+        self.veto = veto
 
-        self.name = TextInput(label="Nom du Template", placeholder="Entrez le nom du template", default=name)
-        self.maps = TextInput(label="Noms des Maps", placeholder="Entrez les noms des maps séparés par des espaces", default=" ".join(maps))
-        self.rules = TextInput(
-            label="Règles",
-            placeholder="Ban, Pick, Side, Continue (Respectez les majuscules, séparées par des espaces)",
-            default=" ".join(rules)
-        )
+        # Champs pour le nom, les maps et les règles
+        self.add_item(discord.ui.InputText(label="Nom du template", value=template_name, required=True))
+        self.add_item(discord.ui.InputText(label="Maps (séparées par des espaces)", value=" ".join(veto["maps"]), required=True))
+        self.add_item(discord.ui.InputText(label="Règles (séparées par des espaces, respectez les majuscules)", value=" ".join(veto["rules"]), required=True))
 
-        self.add_item(self.name)
-        self.add_item(self.maps)
-        self.add_item(self.rules)
+    async def callback(self, interaction: discord.Interaction):
+        # Récupérer les données du formulaire
+        new_name = self.children[0].value.strip()
+        maps = self.children[1].value.strip().split()
+        rules = self.children[2].value.strip().split()
+        
+        if not new_name:
+            await interaction.response.send_message("Le nom ne peut pas être vide.", ephemeral=True)
+            return
+        
+        if new_name != self.template_name:
+            if veto_config.get_veto(new_name):
+                await interaction.response.send_message(f"Un template avec le nom '{new_name}' existe déjà.", ephemeral=True)
+                return
+            else:
+                veto_config.vetos[new_name] = veto_config.vetos.pop(self.template_name)
+                self.template_name = new_name
 
-    async def on_submit(self, interaction: discord.Interaction):
-        name = self.name.value
-        maps = self.maps.value.split()
-        rules = self.rules.value.split()
-
-        if veto_config.update_veto(name, maps, rules):
-            await interaction.response.send_message(f"Template de veto '{name}' mis à jour avec succès.", ephemeral=True)
-        else:
-            await interaction.response.send_message(f"Erreur : le template de veto '{name}' n'existe pas.", ephemeral=True)
+        veto_config.vetos[self.template_name]["maps"] = maps
+        veto_config.vetos[self.template_name]["rules"] = rules
+        veto_config.save_vetos()
+        
+        await interaction.response.send_message(f"Template de veto '{self.template_name}' mis à jour avec succès.", ephemeral=True)
 
 class MapButton(discord.ui.Button):
     def __init__(self, label, veto_name, action_type, channel):
@@ -401,36 +410,45 @@ class MapVetoCog(commands.Cog):
             await ctx.send("Aucun template de veto à modifier.")
             return
 
-        class VetoSelect(Select):
+        class VetoEditSelect(Select):
             def __init__(self, options):
-                super().__init__(placeholder="Choisissez un template de veto à modifier", options=options)
-
+                super().__init__(placeholder="Choisissez un template à éditer...", options=options)
+        
             async def callback(self, interaction: discord.Interaction):
-                veto_name = self.values[0]
-                veto_data = veto_config.get_veto(veto_name)
-
-                if veto_data:
-                    modal = VetoEditModal(name=veto_name, maps=veto_data['maps'], rules=veto_data['rules'])
-                    await interaction.response.send_modal(modal)
-                else:
-                    await interaction.response.send_message("Erreur : le template de veto sélectionné n'existe pas.", ephemeral=True)
+                selected_template = self.values[0]
+                veto = veto_config.get_veto(selected_template)
+                
+                if not veto:
+                    await interaction.response.send_message("Template de veto introuvable.", ephemeral=True)
+                    return
+        
+                # Créer et afficher le formulaire de modification avec les informations actuelles
+                edit_modal = VetoEditModal(selected_template, veto)
+                await interaction.response.send_modal(edit_modal)
 
         class EditButton(Button):
             def __init__(self):
-                super().__init__(label="Éditer un template", style=discord.ButtonStyle.secondary)
-
+                super().__init__(label="Éditer un template", style=discord.ButtonStyle.primary)
+        
             async def callback(self, interaction: discord.Interaction):
+                # Obtenir la liste des templates de veto
                 veto_names = list(veto_config.vetos.keys())
-                select = VetoSelect([discord.SelectOption(label=name, value=name) for name in veto_names])
+        
+                if not veto_names:
+                    await interaction.response.send_message("Aucun template de veto disponible pour la modification.", ephemeral=True)
+                    return
+                
+                # Créer un select menu avec les templates disponibles
+                select = VetoEditSelect([discord.SelectOption(label=name, value=name) for name in veto_names])
                 view = View()
                 view.add_item(select)
                 
-                # Delete the old message if it exists
-                if interaction.message:
-                    await interaction.message.delete()
-
-                # Send a new message with the updated list
-                await interaction.response.send_message("Sélectionnez un template de veto à modifier :", view=view, ephemeral=True)
+                # Envoyer un message avec le select menu
+                await interaction.response.send_message(
+                    "Sélectionnez un template de veto à éditer :",
+                    view=view,
+                    ephemeral=True
+                )
 
         view = View()
         view.add_item(EditButton())
