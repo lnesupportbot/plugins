@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from discord.ui import Modal, TextInput
+from discord.ui import Modal, TextInput, View
 import json
 import os
 
@@ -340,7 +340,7 @@ class MapVetoCog(commands.Cog):
     async def mapveto_create(self, ctx):
         """Ouvre une fenêtre pour créer un template de veto."""
         modal = VetoCreateModal()
-        await ctx.send_modal(modal)
+        await ctx.send("Veuillez remplir les informations suivantes:", view=View().add_item(modal))
 
     @mapveto.command(name='delete')
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
