@@ -400,31 +400,38 @@ class MapVetoCog(commands.Cog):
         if not veto_names:
             await ctx.send("Aucun template de veto à modifier.")
             return
-        
+
         class VetoSelect(Select):
             def __init__(self, options):
                 super().__init__(placeholder="Choisissez un template de veto à modifier", options=options)
-        
+
             async def callback(self, interaction: discord.Interaction):
                 veto_name = self.values[0]
                 veto_data = veto_config.get_veto(veto_name)
-        
+
                 if veto_data:
                     modal = VetoEditModal(name=veto_name, maps=veto_data['maps'], rules=veto_data['rules'])
                     await interaction.response.send_modal(modal)
                 else:
                     await interaction.response.send_message("Erreur : le template de veto sélectionné n'existe pas.", ephemeral=True)
-        
+
         class EditButton(Button):
             def __init__(self):
-                super().__init__(label="Éditer un template", style=discord.ButtonStyle.primary)
-        
+                super().__init__(label="Éditer un template", style=discord.ButtonStyle.secondary)
+
             async def callback(self, interaction: discord.Interaction):
+                veto_names = list(veto_config.vetos.keys())
                 select = VetoSelect([discord.SelectOption(label=name, value=name) for name in veto_names])
                 view = View()
                 view.add_item(select)
+                
+                # Delete the old message if it exists
+                if interaction.message:
+                    await interaction.message.delete()
+
+                # Send a new message with the updated list
                 await interaction.response.send_message("Sélectionnez un template de veto à modifier :", view=view, ephemeral=True)
-        
+
         view = View()
         view.add_item(EditButton())
         await ctx.send("Cliquez sur le bouton ci-dessous pour éditer un template de veto :", view=view)
@@ -452,12 +459,12 @@ class MapVetoCog(commands.Cog):
                     async def callback(self, interaction: discord.Interaction):
                         if veto_config.delete_veto(veto_name):
                             await interaction.response.send_message(f"Template de veto '{veto_name}' supprimé avec succès.", ephemeral=True)
+
+                            # Update the lists
+                            await ctx.invoke(self.bot.get_command("mapveto edit"))
+                            await ctx.invoke(self.bot.get_command("mapveto delete"))
                         else:
                             await interaction.response.send_message(f"Erreur : le template de veto '{veto_name}' n'existe pas.", ephemeral=True)
-
-                        # Met à jour la liste des templates disponibles
-                        await ctx.invoke(self.mapveto_edit)
-                        await ctx.invoke(self.mapveto_delete)
 
                 view = View()
                 view.add_item(ConfirmButton())
@@ -472,6 +479,12 @@ class MapVetoCog(commands.Cog):
                 select = VetoDeleteSelect([discord.SelectOption(label=name, value=name) for name in veto_names])
                 view = View()
                 view.add_item(select)
+                
+                # Delete the old message if it exists
+                if interaction.message:
+                    await interaction.message.delete()
+
+                # Send a new message with the updated list
                 await interaction.response.send_message("Sélectionnez un template de veto à supprimer :", view=view, ephemeral=True)
 
         view = View()
