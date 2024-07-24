@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from discord.ui import Modal, TextInput, View, Button, Select
+from discord.ui import Modal, TextInput, View, Button, Select, InputText
 import json
 import os
 
