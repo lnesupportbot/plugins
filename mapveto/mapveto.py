@@ -50,10 +50,10 @@ class VetoCreateModal(Modal):
         super().__init__(title="Créer un template de veto")
 
         self.name = TextInput(label="Nom du Template", placeholder="Entrez le nom du template")
-        self.maps = TextInput(label="Noms des Maps", placeholder="Entrez les noms des maps séparés par des espaces")
+        self.maps = TextInput(label="Noms des Maps (séparés par des espaces)", placeholder="Entrez les noms des maps séparés par des espaces")
         self.rules = TextInput(
-            label="Règles",
-            placeholder="Ban, Pick, Side, Continue (Respectez les majuscules, séparées par des espaces)"
+            label="Règles (séparées par des espaces)",
+            placeholder="Ban, Pick, Side, Continue (Respectez les majuscules)"
         )
 
         self.add_item(self.name)
