@@ -455,6 +455,10 @@ class MapVetoCog(commands.Cog):
                         else:
                             await interaction.response.send_message(f"Erreur : le template de veto '{veto_name}' n'existe pas.", ephemeral=True)
 
+                        # Met à jour la liste des templates disponibles
+                        await ctx.invoke(self.mapveto_edit)
+                        await ctx.invoke(self.mapveto_delete)
+
                 view = View()
                 view.add_item(ConfirmButton())
                 await interaction.response.send_message(f"Êtes-vous sûr de vouloir supprimer le template de veto '{veto_name}' ?", view=view, ephemeral=True)
@@ -464,6 +468,7 @@ class MapVetoCog(commands.Cog):
                 super().__init__(label="Supprimer un template", style=discord.ButtonStyle.danger)
 
             async def callback(self, interaction: discord.Interaction):
+                veto_names = list(veto_config.vetos.keys())
                 select = VetoDeleteSelect([discord.SelectOption(label=name, value=name) for name in veto_names])
                 view = View()
                 view.add_item(select)
