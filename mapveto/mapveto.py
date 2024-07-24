@@ -3,6 +3,7 @@ from discord.ext import commands
 from discord.ui import Modal, TextInput, View, Button, Select
 import json
 import os
+import asyncio
 
 from core import checks
 from core.models import PermissionLevel
@@ -510,9 +511,13 @@ class MapVetoCog(commands.Cog):
                         ephemeral=True
                     )
                 
-                # Supprimer le message de confirmation
-                if interaction.message:
+                await asyncio.sleep(1)
+        
+                try:
+                    # Supposons que vous essayez de supprimer le message de confirmation
                     await interaction.message.delete()
+                except NotFound:
+                    print("Le message à supprimer est introuvable.")
 
         class DeleteButton(Button):
             def __init__(self):
