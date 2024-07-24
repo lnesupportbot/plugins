@@ -342,15 +342,16 @@ class MapVetoCog(commands.Cog):
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def mapveto_create(self, ctx):
         """Ouvre un modal pour créer un template de veto."""
-        # Créer une interaction pour ouvrir le modal
-        class CreateButton(discord.ui.Button):
+        class CreateButton(Button):
             def __init__(self):
                 super().__init__(label="Créer un template", style=discord.ButtonStyle.primary)
 
             async def callback(self, interaction: discord.Interaction):
                 modal = VetoCreateModal()
                 await interaction.response.send_modal(modal)
-                
+                # Ne pas désactiver le bouton
+                await interaction.message.edit(view=view)
+
         view = View()
         view.add_item(CreateButton())
         await ctx.send("Cliquez sur le bouton ci-dessous pour créer un template de veto:", view=view)
