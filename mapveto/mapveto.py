@@ -465,45 +465,66 @@ class MapVetoCog(commands.Cog):
 
         class VetoDeleteSelect(Select):
             def __init__(self, options):
-                super().__init__(placeholder="Choisissez un template de veto à supprimer", options=options)
-
+                super().__init__(placeholder="Choisissez un template à supprimer...", options=options)
+        
             async def callback(self, interaction: discord.Interaction):
-                veto_name = self.values[0]
+                selected_template = self.values[0]
+                
+                # Demander une confirmation pour la suppression
+                confirm_view = View()
+                confirm_view.add_item(ConfirmDeleteButton(selected_template))
+                
+                await interaction.response.send_message(
+                    f"Êtes-vous sûr de vouloir supprimer le template '{selected_template}' ?",
+                    view=confirm_view,
+                    ephemeral=True
+                )
 
-                class ConfirmButton(Button):
-                    def __init__(self):
-                        super().__init__(label=f"Confirmer la suppression de '{veto_name}'", style=discord.ButtonStyle.danger)
-
-                    async def callback(self, interaction: discord.Interaction):
-                        if veto_config.delete_veto(veto_name):
-                            await interaction.response.send_message(f"Template de veto '{veto_name}' supprimé avec succès.", ephemeral=True)
-
-                            # Update the lists
-                            await ctx.invoke(self.bot.get_command("mapveto edit"))
-                            await ctx.invoke(self.bot.get_command("mapveto delete"))
-                        else:
-                            await interaction.response.send_message(f"Erreur : le template de veto '{veto_name}' n'existe pas.", ephemeral=True)
-
-                view = View()
-                view.add_item(ConfirmButton())
-                await interaction.response.send_message(f"Êtes-vous sûr de vouloir supprimer le template de veto '{veto_name}' ?", view=view, ephemeral=True)
+        class ConfirmDeleteButton(Button):
+            def __init__(self, template_name):
+                super().__init__(label=f"Confirmer la suppression de {template_name}", style=discord.ButtonStyle.danger)
+                self.template_name = template_name
+        
+            async def callback(self, interaction: discord.Interaction):
+                # Supprimer le template sélectionné
+                if veto_config.delete_veto(self.template_name):
+                    await interaction.response.send_message(
+                        f"Le template '{self.template_name}' a été supprimé avec succès.",
+                        ephemeral=True
+                    )
+                else:
+                    await interaction.response.send_message(
+                        f"Erreur lors de la suppression du template '{self.template_name}'.",
+                        ephemeral=True
+                    )
+                
+                # Supprimer le message de confirmation
+                if interaction.message:
+                    await interaction.message.delete()
 
         class DeleteButton(Button):
             def __init__(self):
                 super().__init__(label="Supprimer un template", style=discord.ButtonStyle.danger)
-
+        
             async def callback(self, interaction: discord.Interaction):
+                # Obtenir la liste des templates de veto
                 veto_names = list(veto_config.vetos.keys())
+        
+                if not veto_names:
+                    await interaction.response.send_message("Aucun template de veto disponible pour la suppression.", ephemeral=True)
+                    return
+                
+                # Créer un select menu avec les templates disponibles
                 select = VetoDeleteSelect([discord.SelectOption(label=name, value=name) for name in veto_names])
                 view = View()
                 view.add_item(select)
                 
-                # Delete the old message if it exists
-                if interaction.message:
-                    await interaction.message.delete()
-
-                # Send a new message with the updated list
-                await interaction.response.send_message("Sélectionnez un template de veto à supprimer :", view=view, ephemeral=True)
+                # Envoyer un message avec le select menu
+                await interaction.response.send_message(
+                    "Sélectionnez un template de veto à supprimer :",
+                    view=view,
+                    ephemeral=True
+                )
 
         view = View()
         view.add_item(DeleteButton())
