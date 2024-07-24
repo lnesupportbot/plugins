@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-import random
+from discord.ui import Modal, TextInput
 import json
 import os
 
@@ -22,26 +22,12 @@ class MapVetoConfig:
         with open(self.filename, "w") as file:
             json.dump(self.vetos, file, indent=4)
 
-    def create_veto(self, name):
+    def create_veto(self, name, maps, rules):
         if name not in self.vetos:
             self.vetos[name] = {
-                "maps": [],
-                "rules": [],
+                "maps": maps,
+                "rules": rules,
             }
-            self.save_vetos()
-            return True
-        return False
-
-    def add_maps(self, name, map_names):
-        if name in self.vetos:
-            self.vetos[name]["maps"].extend(map_names)
-            self.save_vetos()
-            return True
-        return False
-
-    def set_rules(self, name, rules):
-        if name in self.vetos:
-            self.vetos[name]["rules"] = rules.split()
             self.save_vetos()
             return True
         return False
@@ -58,6 +44,28 @@ class MapVetoConfig:
 
 veto_config = MapVetoConfig()
 vetos = {}
+
+class VetoCreateModal(Modal):
+    def __init__(self):
+        super().__init__(title="Créer un template de veto")
+
+        self.name = TextInput(label="Nom du Template")
+        self.maps = TextInput(label="Noms des Maps (séparés par des espaces)")
+        self.rules = TextInput(label="Règles (séparées par des espaces)")
+
+        self.add_item(self.name)
+        self.add_item(self.maps)
+        self.add_item(self.rules)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        name = self.name.value
+        maps = self.maps.value.split()
+        rules = self.rules.value.split()
+
+        if veto_config.create_veto(name, maps, rules):
+            await interaction.response.send_message(f"Template de veto '{name}' créé avec succès.", ephemeral=True)
+        else:
+            await interaction.response.send_message(f"Un template de veto avec le nom '{name}' existe déjà.", ephemeral=True)
 
 class MapButton(discord.ui.Button):
     def __init__(self, label, veto_name, action_type, channel):
@@ -149,7 +157,6 @@ async def send_ticket_message(bot, veto, channel):
 
     if action == "Side":
         if len(veto.maps) == 1:
-            print(f"C'est la derniere map!")
             last_picked_map = veto.maps[0]
             message = f"{current_user.mention}, vous devez choisir votre Side sur **{last_picked_map}**."
         else:
@@ -326,40 +333,14 @@ class MapVetoCog(commands.Cog):
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def mapveto(self, ctx):
         """Affiche les options de gestion des templates de veto."""
-        await ctx.send_help(ctx.command)
+        await ctx.send("Utilisez les sous-commandes pour gérer les templates de veto. Ex: `?mapveto create`.")
 
     @mapveto.command(name='create')
-    @checks.has_permissions(PermissionLevel.MODERATOR)
-    async def mapveto_create(self, ctx, name: str):
-        """Crée un template de veto avec le nom donné."""
-        if veto_config.create_veto(name):
-            await ctx.send(f"Template de veto '{name}' créé avec succès.")
-        else:
-            await ctx.send(f"Un template de veto avec le nom '{name}' existe déjà.")
-
-    @mapveto.command(name='add')
-    @checks.has_permissions(PermissionLevel.MODERATOR)
-    async def mapveto_add(self, ctx, name: str, *, maps: str):
-        """Ajoute plusieurs maps au template de veto spécifié."""
-        map_names = maps.split()
-        if veto_config.add_maps(name, map_names):
-            await ctx.send(f"Maps ajoutées au template de veto '{name}' : {', '.join(map_names)}.")
-        else:
-            await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
-
-    @mapveto.command(name='rules')
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-    async def mapveto_rules(self, ctx, name: str, *, rules: str):
-        """Définit les règles pour le template de veto spécifié."""
-        valid_rules = {"Pick", "Ban", "Continue", "Side"}
-        rules_list = rules.split()
-        if all(rule in valid_rules for rule in rules_list):
-            if veto_config.set_rules(name, rules):
-                await ctx.send(f"Règles définies pour le template de veto '{name}' : {rules}.")
-            else:
-                await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
-        else:
-            await ctx.send(f"Règles invalides. Les règles valides sont : {', '.join(valid_rules)}.")
+    async def mapveto_create(self, ctx):
+        """Ouvre une fenêtre pour créer un template de veto."""
+        modal = VetoCreateModal()
+        await ctx.send_modal(modal)
 
     @mapveto.command(name='delete')
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
@@ -378,7 +359,7 @@ class MapVetoCog(commands.Cog):
             await ctx.send(f"Templates de veto disponibles : {', '.join(veto_config.vetos.keys())}")
         else:
             await ctx.send("Aucun template de veto disponible.")
-            
+
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def start_mapveto(self, ctx, name: str, team_a_id: int, team_a_name: str, team_b_id: int, team_b_name: str):
@@ -386,12 +367,11 @@ class MapVetoCog(commands.Cog):
         if name not in veto_config.vetos:
             await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
             return
-    
+
         veto = MapVeto(name, veto_config.vetos[name]["maps"], team_a_id, team_a_name, team_b_id, team_b_name, veto_config.vetos[name]["rules"], ctx.channel, self.bot)
         vetos[name] = veto
     
         await send_ticket_message(self.bot, veto, ctx.channel)
-
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
