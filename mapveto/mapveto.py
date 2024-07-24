@@ -51,7 +51,10 @@ class VetoCreateModal(Modal):
 
         self.name = TextInput(label="Nom du Template")
         self.maps = TextInput(label="Noms des Maps (séparés par des espaces)")
-        self.rules = TextInput(label="Règles : Ban, Pick, Side, Continue (Respectez les majuscules) (séparées par des espaces et respectés les majuscules)")
+        self.rules = TextInput(
+            label="Règles : Ban, Pick, Side, Continue (Respectez les majuscules) (séparées par des espaces)",
+            placeholder="Entrez les règles séparées par des espaces et respectez les majuscules"
+        )
 
         self.add_item(self.name)
         self.add_item(self.maps)
