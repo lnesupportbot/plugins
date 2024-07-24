@@ -1,4 +1,5 @@
 import discord
+from discord.errors import NotFound
 from discord.ext import commands
 from discord.ui import Modal, TextInput, View, Button, Select
 import json
