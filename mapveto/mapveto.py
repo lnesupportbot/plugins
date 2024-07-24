@@ -338,10 +338,20 @@ class MapVetoCog(commands.Cog):
     @mapveto.command(name='create')
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def mapveto_create(self, ctx):
-        """Ouvre une fenêtre pour créer un template de veto."""
-        modal = VetoCreateModal()
-        await ctx.send("Veuillez remplir les informations suivantes:", view=View().add_item(modal))
+        """Ouvre un modal pour créer un template de veto."""
+        # Créer une interaction pour ouvrir le modal
+        class CreateButton(discord.ui.Button):
+            def __init__(self):
+                super().__init__(label="Créer un template", style=discord.ButtonStyle.primary)
 
+            async def callback(self, interaction: discord.Interaction):
+                modal = VetoCreateModal()
+                await interaction.response.send_modal(modal)
+                
+        view = View()
+        view.add_item(CreateButton())
+        await ctx.send("Cliquez sur le bouton ci-dessous pour créer un template de veto:", view=view)
+        
     @mapveto.command(name='delete')
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def mapveto_delete(self, ctx, name: str):
