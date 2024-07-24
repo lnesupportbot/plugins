@@ -53,7 +53,7 @@ class MapVetoConfig:
         return False
 
 veto_config = MapVetoConfig()
-vetos={}
+vetos = {}
 
 class VetoCreateModal(Modal):
     def __init__(self):
