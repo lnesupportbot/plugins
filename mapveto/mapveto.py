@@ -80,30 +80,42 @@ class VetoCreateModal(Modal):
         else:
             await interaction.response.send_message(f"Un template de veto avec le nom '{name}' existe déjà.", ephemeral=True)
 
-class VetoEditModal(discord.ui.Modal):
+class VetoEditModal(Modal):
     def __init__(self, template_name, veto):
         super().__init__(title=f"Modifier le template '{template_name}'")
         self.template_name = template_name
         self.veto = veto
 
         # Champs pour le nom, les maps et les règles
-        self.name = TextInput(label="Nom du Template", placeholder="Entrez le nom du template")
-        self.maps = TextInput(label="Noms des Maps", placeholder="Entrez les noms des maps séparés par des espaces")
+        self.name = TextInput(
+            label="Nom du Template",
+            default=template_name,
+            placeholder="Entrez le nom du template"
+        )
+        self.maps = TextInput(
+            label="Noms des Maps",
+            default=" ".join(veto["maps"]),
+            placeholder="Entrez les noms des maps séparés par des espaces"
+        )
         self.rules = TextInput(
             label="Règles",
+            default=" ".join(veto["rules"]),
             placeholder="Ban, Pick, Side, Continue (Respectez les majuscules, séparées par des espaces)"
         )
 
-    async def callback(self, interaction: discord.Interaction):
-        # Récupérer les données du formulaire
-        new_name = self.children[0].value.strip()
-        maps = self.children[1].value.strip().split()
-        rules = self.children[2].value.strip().split()
-        
+        self.add_item(self.name)
+        self.add_item(self.maps)
+        self.add_item(self.rules)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        new_name = self.name.value.strip()
+        maps = self.maps.value.strip().split()
+        rules = self.rules.value.strip().split()
+
         if not new_name:
             await interaction.response.send_message("Le nom ne peut pas être vide.", ephemeral=True)
             return
-        
+
         if new_name != self.template_name:
             if veto_config.get_veto(new_name):
                 await interaction.response.send_message(f"Un template avec le nom '{new_name}' existe déjà.", ephemeral=True)
@@ -112,10 +124,7 @@ class VetoEditModal(discord.ui.Modal):
                 veto_config.vetos[new_name] = veto_config.vetos.pop(self.template_name)
                 self.template_name = new_name
 
-        veto_config.vetos[self.template_name]["maps"] = maps
-        veto_config.vetos[self.template_name]["rules"] = rules
-        veto_config.save_vetos()
-        
+        veto_config.update_veto(self.template_name, maps, rules)
         await interaction.response.send_message(f"Template de veto '{self.template_name}' mis à jour avec succès.", ephemeral=True)
 
 class MapButton(discord.ui.Button):
