@@ -417,7 +417,7 @@ class MapVetoCog(commands.Cog):
         
         class EditButton(Button):
             def __init__(self):
-                super().__init__(label="Éditer un template", style=discord.ButtonStyle.secondary)
+                super().__init__(label="Éditer un template", style=discord.ButtonStyle.primary)
         
             async def callback(self, interaction: discord.Interaction):
                 select = VetoSelect([discord.SelectOption(label=name, value=name) for name in veto_names])
