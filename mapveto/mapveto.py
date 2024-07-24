@@ -511,10 +511,6 @@ class MapVetoCog(commands.Cog):
                         f"Erreur lors de la suppression du template '{self.template_name}'.",
                         ephemeral=True
                     )
-                
-                # Supprimer le message de confirmation
-                if interaction.message:
-                    await interaction.message.delete()
 
         class DeleteButton(Button):
             def __init__(self):
