@@ -477,49 +477,6 @@ class MapVetoCog(commands.Cog):
             await ctx.send("Aucun template de veto à supprimer.")
             return
 
-        class VetoDeleteSelect(Select):
-            def __init__(self, options):
-                super().__init__(placeholder="Choisissez un template à supprimer...", options=options)
-        
-            async def callback(self, interaction: discord.Interaction):
-                selected_template = self.values[0]
-                
-                # Demander une confirmation pour la suppression
-                confirm_view = View()
-                confirm_view.add_item(ConfirmDeleteButton(selected_template))
-                
-                await interaction.response.send_message(
-                    f"Êtes-vous sûr de vouloir supprimer le template '{selected_template}' ?",
-                    view=confirm_view,
-                    ephemeral=True
-                )
-
-        class ConfirmDeleteButton(Button):
-            def __init__(self, template_name):
-                super().__init__(label=f"Confirmer la suppression de {template_name}", style=discord.ButtonStyle.danger)
-                self.template_name = template_name
-        
-            async def callback(self, interaction: discord.Interaction):
-                # Supprimer le template sélectionné
-                if veto_config.delete_veto(self.template_name):
-                    await interaction.response.send_message(
-                        f"Le template '{self.template_name}' a été supprimé avec succès.",
-                        ephemeral=True
-                    )
-                else:
-                    await interaction.response.send_message(
-                        f"Erreur lors de la suppression du template '{self.template_name}'.",
-                        ephemeral=True
-                    )
-                
-                await asyncio.sleep(1)
-        
-                try:
-                    # Supposons que vous essayez de supprimer le message de confirmation
-                    await interaction.message.delete()
-                except NotFound:
-                    print("Le message à supprimer est introuvable.")
-
         class DeleteButton(Button):
             def __init__(self):
                 super().__init__(label="Supprimer un template", style=discord.ButtonStyle.danger)
@@ -543,6 +500,49 @@ class MapVetoCog(commands.Cog):
                     view=view,
                     ephemeral=True
                 )
+
+            class VetoDeleteSelect(Select):
+                def __init__(self, options):
+                    super().__init__(placeholder="Choisissez un template à supprimer...", options=options)
+            
+                async def callback(self, interaction: discord.Interaction):
+                    selected_template = self.values[0]
+                    
+                    # Demander une confirmation pour la suppression
+                    confirm_view = View()
+                    confirm_view.add_item(ConfirmDeleteButton(selected_template))
+                    
+                    await interaction.response.send_message(
+                        f"Êtes-vous sûr de vouloir supprimer le template '{selected_template}' ?",
+                        view=confirm_view,
+                        ephemeral=True
+                    )
+
+            class ConfirmDeleteButton(Button):
+                def __init__(self, template_name):
+                    super().__init__(label=f"Confirmer la suppression de {template_name}", style=discord.ButtonStyle.danger)
+                    self.template_name = template_name
+            
+                async def callback(self, interaction: discord.Interaction):
+                    # Supprimer le template sélectionné
+                    if veto_config.delete_veto(self.template_name):
+                        await interaction.response.send_message(
+                            f"Le template '{self.template_name}' a été supprimé avec succès.",
+                            ephemeral=True
+                        )
+                    else:
+                        await interaction.response.send_message(
+                            f"Erreur lors de la suppression du template '{self.template_name}'.",
+                            ephemeral=True
+                        )
+                    
+                    await asyncio.sleep(1)
+            
+                    try:
+                        # Supposons que vous essayez de supprimer le message de confirmation
+                        await interaction.message.delete()
+                    except NotFound:
+                        print("Le message à supprimer est introuvable.")
 
         view = View()
         view.add_item(DeleteButton())
