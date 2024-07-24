@@ -54,6 +54,31 @@ class MapVetoConfig:
 
 veto_config = MapVetoConfig()
 
+class VetoCreateModal(Modal):
+    def __init__(self):
+        super().__init__(title="Créer un template de veto")
+
+        self.name = TextInput(label="Nom du Template", placeholder="Entrez le nom du template")
+        self.maps = TextInput(label="Noms des Maps (séparés par des espaces)", placeholder="Entrez les noms des maps séparés par des espaces")
+        self.rules = TextInput(
+            label="Règles (séparées par des espaces)",
+            placeholder="Ban, Pick, Side, Continue (Respectez les majuscules)"
+        )
+
+        self.add_item(self.name)
+        self.add_item(self.maps)
+        self.add_item(self.rules)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        name = self.name.value
+        maps = self.maps.value.split()
+        rules = self.rules.value.split()
+
+        if veto_config.create_veto(name, maps, rules):
+            await interaction.response.send_message(f"Template de veto '{name}' créé avec succès.", ephemeral=True)
+        else:
+            await interaction.response.send_message(f"Un template de veto avec le nom '{name}' existe déjà.", ephemeral=True)
+
 class VetoEditModal(Modal):
     def __init__(self, name, maps, rules):
         super().__init__(title="Modifier un Template de Veto")
