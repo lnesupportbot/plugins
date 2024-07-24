@@ -392,42 +392,42 @@ class MapVetoCog(commands.Cog):
         view.add_item(CreateButton())
         await ctx.send("Cliquez sur le bouton ci-dessous pour créer un template de veto:", view=view)
 
- @mapveto.command(name='edit')
+    @mapveto.command(name='edit')
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def mapveto_edit(self, ctx):
-        """Ouvre un modal pour éditer un template de veto existant."""
-        veto_names = list(veto_config.vetos.keys())
-        if not veto_names:
-            await ctx.send("Aucun template de veto à modifier.")
-            return
-
-        class VetoSelect(Select):
-            def __init__(self, options):
-                super().__init__(placeholder="Choisissez un template de veto à modifier", options=options)
-
-            async def callback(self, interaction: discord.Interaction):
-                veto_name = self.values[0]
-                veto_data = veto_config.get_veto(veto_name)
-
-                if veto_data:
-                    modal = VetoEditModal(name=veto_name, maps=veto_data['maps'], rules=veto_data['rules'])
-                    await interaction.response.send_modal(modal)
-                else:
-                    await interaction.response.send_message("Erreur : le template de veto sélectionné n'existe pas.", ephemeral=True)
-
-        class EditButton(Button):
-            def __init__(self):
-                super().__init__(label="Éditer un template", style=discord.ButtonStyle.secondary)
-
-            async def callback(self, interaction: discord.Interaction):
-                select = VetoSelect([discord.SelectOption(label=name, value=name) for name in veto_names])
-                view = View()
-                view.add_item(select)
-                await interaction.response.send_message("Sélectionnez un template de veto à modifier :", view=view, ephemeral=True)
-
-        view = View()
-        view.add_item(EditButton())
-        await ctx.send("Cliquez sur le bouton ci-dessous pour éditer un template de veto :", view=view)
+    """Ouvre un modal pour éditer un template de veto existant."""
+    veto_names = list(veto_config.vetos.keys())
+    if not veto_names:
+        await ctx.send("Aucun template de veto à modifier.")
+        return
+    
+    class VetoSelect(Select):
+        def __init__(self, options):
+            super().__init__(placeholder="Choisissez un template de veto à modifier", options=options)
+    
+        async def callback(self, interaction: discord.Interaction):
+            veto_name = self.values[0]
+            veto_data = veto_config.get_veto(veto_name)
+    
+            if veto_data:
+                modal = VetoEditModal(name=veto_name, maps=veto_data['maps'], rules=veto_data['rules'])
+                await interaction.response.send_modal(modal)
+            else:
+                await interaction.response.send_message("Erreur : le template de veto sélectionné n'existe pas.", ephemeral=True)
+    
+    class EditButton(Button):
+        def __init__(self):
+            super().__init__(label="Éditer un template", style=discord.ButtonStyle.secondary)
+    
+        async def callback(self, interaction: discord.Interaction):
+            select = VetoSelect([discord.SelectOption(label=name, value=name) for name in veto_names])
+            view = View()
+            view.add_item(select)
+            await interaction.response.send_message("Sélectionnez un template de veto à modifier :", view=view, ephemeral=True)
+    
+    view = View()
+    view.add_item(EditButton())
+    await ctx.send("Cliquez sur le bouton ci-dessous pour éditer un template de veto :", view=view)
         
     @mapveto.command(name='delete')
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
