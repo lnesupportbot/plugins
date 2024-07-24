@@ -87,9 +87,12 @@ class VetoEditModal(discord.ui.Modal):
         self.veto = veto
 
         # Champs pour le nom, les maps et les règles
-        self.add_item(discord.ui.InputText(label="Nom du template", value=template_name, required=True))
-        self.add_item(discord.ui.InputText(label="Maps (séparées par des espaces)", value=" ".join(veto["maps"]), required=True))
-        self.add_item(discord.ui.InputText(label="Règles (séparées par des espaces, respectez les majuscules)", value=" ".join(veto["rules"]), required=True))
+        self.name = TextInput(label="Nom du Template", placeholder="Entrez le nom du template")
+        self.maps = TextInput(label="Noms des Maps", placeholder="Entrez les noms des maps séparés par des espaces")
+        self.rules = TextInput(
+            label="Règles",
+            placeholder="Ban, Pick, Side, Continue (Respectez les majuscules, séparées par des espaces)"
+        )
 
     async def callback(self, interaction: discord.Interaction):
         # Récupérer les données du formulaire
