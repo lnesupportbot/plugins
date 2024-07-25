@@ -53,6 +53,20 @@ class MapVetoConfig:
             self.save_vetos()
             return True
         return False
+    
+    def create_tournament(self, template_name, tournament_name):
+        tournament_path = os.path.join("plugins", "sous dossier", "sous dossier", f"{tournament_name}.json")
+        if os.path.exists(tournament_path):
+            return False
+        template = self.get_veto(template_name)
+        if template:
+            with open(tournament_path, "w") as file:
+                json.dump({
+                    "name": tournament_name,
+                    "template": template
+                }, file, indent=4)
+            return True
+        return False
 
 veto_config = MapVetoConfig()
 vetos = {}
@@ -78,6 +92,24 @@ class TournamentConfig:
             self.save_tournaments()
             return True
         return False
+
+class TournamentCreateModal(Modal):
+    def __init__(self, template_name):
+        super().__init__(title="Créer un tournoi")
+        self.template_name = template_name
+        self.tournament_name = TextInput(label="Nom du tournoi", placeholder="Entrez le nom du tournoi")
+        self.add_item(self.tournament_name)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        tournament_name = self.tournament_name.value.strip()
+        if not tournament_name:
+            await interaction.response.send_message("Le nom du tournoi ne peut pas être vide.", ephemeral=True)
+            return
+
+        if veto_config.create_tournament(self.template_name, tournament_name):
+            await interaction.response.send_message(f"Tournoi '{tournament_name}' créé avec succès.", ephemeral=True)
+        else:
+            await interaction.response.send_message(f"Erreur lors de la création du tournoi '{tournament_name}'.", ephemeral=True)
 
 class VetoCreateModal(Modal):
     def __init__(self):
@@ -150,55 +182,6 @@ class VetoEditModal(Modal):
 
         veto_config.update_veto(self.template_name, maps, rules)
         await interaction.response.send_message(f"Template de veto '{self.template_name}' mis à jour avec succès.", ephemeral=True)
-
-class TournamentCreateModal(Modal):
-    def __init__(self):
-        super().__init__(title="Créer un tournoi")
-
-        self.tournament_name = TextInput(
-            label="Nom du tournoi",
-            placeholder="Entrez le nom du tournoi",
-            required=True
-        )
-
-        # Obtenir la liste des templates de veto existants
-        veto_names = list(veto_config.vetos.keys())
-        if not veto_names:
-            veto_names = ["Aucun template disponible"]
-
-        self.veto_template = Select(
-            placeholder="Choisissez un template de veto",
-            options=[discord.SelectOption(label=name, value=name) for name in veto_names],
-            min_values=1,
-            max_values=1
-        )
-
-        # Ajout des composants à la modale
-        self.add_item(self.tournament_name)
-        self.add_item(self.veto_template)
-
-    async def on_submit(self, interaction: discord.Interaction):
-        tournament_name = self.tournament_name.value.strip()
-        selected_veto_template = self.veto_template.values[0] if self.veto_template.values else None
-
-        if not tournament_name:
-            await interaction.response.send_message("Le nom du tournoi ne peut pas être vide.", ephemeral=True)
-            return
-
-        tournaments = TournamentConfig()  # Initialise la configuration des tournois
-        if tournaments.create_tournament(tournament_name):
-            # Associer le tournoi au template de veto sélectionné
-            if selected_veto_template:
-                tournaments.tournaments[tournament_name]['veto_template'] = selected_veto_template
-            tournaments.save_tournaments()
-            await interaction.response.send_message(f"Tournoi '{tournament_name}' créé avec succès et associé au template de veto '{selected_veto_template}'.", ephemeral=True)
-        else:
-            await interaction.response.send_message(f"Un tournoi avec le nom '{tournament_name}' existe déjà.", ephemeral=True)
-
-# Utilisation de la modale
-async def open_tournament_modal(interaction: discord.Interaction):
-    modal = TournamentCreateModal()
-    await interaction.response.send_modal(modal)
 
 class MapButton(discord.ui.Button):
     def __init__(self, label, veto_name, action_type, channel):
@@ -471,20 +454,24 @@ class TournamentCog(commands.Cog):
     @tournament.command(name='create')
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def tournament_create(self, ctx):
-        """Ouvre un modal pour créer un tournoi."""
-        class CreateButton(Button):
-            def __init__(self):
-                super().__init__(label="Créer un tournoi", style=discord.ButtonStyle.primary)
+        """Ouvre une fenêtre modale pour créer un tournoi."""
+        veto_names = list(veto_config.vetos.keys())
+        if not veto_names:
+            await ctx.send("Aucun template de veto disponible pour créer un tournoi.")
+            return
+
+        class TournamentSelect(Select):
+            def __init__(self, options):
+                super().__init__(placeholder="Choisissez un template pour le tournoi...", options=options)
 
             async def callback(self, interaction: discord.Interaction):
-                modal = TournamentCreateModal()
+                selected_template = self.values[0]
+                modal = TournamentCreateModal(selected_template)
                 await interaction.response.send_modal(modal)
-                # Ne pas désactiver le bouton
-                await interaction.message.edit(view=view)
 
         view = View()
-        view.add_item(CreateButton())
-        await ctx.send("Cliquez sur le bouton ci-dessous pour créer un tournoi:", view=view)
+        view.add_item(TournamentSelect([discord.SelectOption(label=name, value=name) for name in veto_names]))
+        await ctx.send("Sélectionnez un template pour créer un tournoi :", view=view)
 
 class MapVetoCog(commands.Cog):
     def __init__(self, bot):
@@ -638,8 +625,6 @@ class MapVetoCog(commands.Cog):
         view = View()
         view.add_item(DeleteButton())
         await ctx.send("Cliquez sur le bouton ci-dessous pour supprimer un template de veto :", view=view)
-
-
 
     @mapveto.command(name='list')
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
