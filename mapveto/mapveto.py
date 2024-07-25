@@ -102,10 +102,6 @@ class TournamentCreateModal(Modal):
     def __init__(self, templates):
         super().__init__(title="Créer un Tournoi")
         self.name = TextInput(label="Nom du Tournoi", placeholder="Entrez le nom du tournoi")
-        self.template = Select(
-            placeholder="Choisissez un Template",
-            options=[discord.SelectOption(label=template, value=template) for template in templates]
-        )
         self.add_item(self.name)
         self.add_item(self.template)
 
@@ -830,9 +826,30 @@ class CreateTournamentButton(Button):
         super().__init__(label="Créer un tournoi", style=discord.ButtonStyle.primary, custom_id="create_tournament")
 
     async def callback(self, interaction: discord.Interaction):
-        templates = list(veto_config.vetos.keys())  # Assume that templates are used for tournaments
-        modal = TournamentCreateModal(templates)
-        await interaction.response.send_modal(modal)
+        veto_names = list(veto_config.vetos.keys())
+        if not veto_names:
+            await interaction.response.send_message("Aucun template de veto disponible pour rattachement.", ephemeral=True)
+            return
+
+        class VetoTournamentSelect(Select):
+            def __init__(self, options):
+                super().__init__(placeholder="Choisissez un template à rattacher...", options=options)
+        
+            async def callback(self, interaction: discord.Interaction):
+                selected_template = self.values[0]
+                veto = veto_config.get_veto(selected_template)
+                
+                if not veto:
+                    await interaction.response.send_message("Template de veto introuvable.", ephemeral=True)
+                    return
+                
+                modal = VetoCreateModal()
+                await interaction.response.send_modal(modal)
+
+        select = VetoTournamentSelect([discord.SelectOption(label=name, value=name) for name in veto_names])
+        view = View()
+        view.add_item(select)
+        await interaction.response.send_message("Sélectionnez un template à rattacher au tournoi que vous voulez créer :", view=view, ephemeral=True)
 
 class EditTournamentButton(Button):
     def __init__(self):
