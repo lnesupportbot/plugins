@@ -387,12 +387,6 @@ class MapVeto:
                     except discord.Forbidden:
                         print(f"Cannot DM user {participant_id}")
 
-import discord
-from discord.ext import commands
-from discord.ui import Button, Select, View
-import json
-import os
-
 class MapVetoCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
