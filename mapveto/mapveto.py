@@ -99,18 +99,19 @@ class TournamentConfig:
 tournament_config = TournamentConfig()
 
 class TournamentCreateModal(Modal):
-    def __init__(self, template):
+    def __init__(self, template_name):
         super().__init__(title="Créer un Tournoi")
-        self.template = template
+        self.template = template_name
         self.name = TextInput(label="Nom du Tournoi", placeholder="Entrez le nom du tournoi")
 
         self.add_item(self.name)
 
     async def callback(self, interaction: discord.Interaction):
         tournament_name = self.name.value
+        template_name = self.template.value
         # Enregistrer le tournoi avec le nom et le template sélectionné
-        if tournament_config.create_tournament(tournament_name, self.template):
-            await interaction.response.send_message(f"Tournoi '{tournament_name}' créé avec le template '{self.template}'.", ephemeral=True)
+        if tournament_config.create_tournament(tournament_name, template_name):
+            await interaction.response.send_message(f"Tournoi '{tournament_name}' créé avec le template '{template_name}'.", ephemeral=True)
         else:
             await interaction.response.send_message(f"Un tournoi avec le nom '{tournament_name}' existe déjà.", ephemeral=True)
 
