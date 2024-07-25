@@ -173,6 +173,7 @@ class TournamentCreateModal(Modal):
             max_values=1
         )
 
+        # Ajout des composants à la modale
         self.add_item(self.tournament_name)
         self.add_item(self.veto_template)
 
@@ -193,6 +194,11 @@ class TournamentCreateModal(Modal):
             await interaction.response.send_message(f"Tournoi '{tournament_name}' créé avec succès et associé au template de veto '{selected_veto_template}'.", ephemeral=True)
         else:
             await interaction.response.send_message(f"Un tournoi avec le nom '{tournament_name}' existe déjà.", ephemeral=True)
+
+# Utilisation de la modale
+async def open_tournament_modal(interaction: discord.Interaction):
+    modal = TournamentCreateModal()
+    await interaction.response.send_modal(modal)
 
 class MapButton(discord.ui.Button):
     def __init__(self, label, veto_name, action_type, channel):
