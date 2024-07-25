@@ -86,10 +86,17 @@ class TournamentConfig:
         with open(self.filename, "w") as file:
             json.dump(self.tournaments, file, indent=4)
 
-    def create_tournament(self, name):
-        if name not in self.tournaments:
-            self.tournaments[name] = {}  # Vous pouvez ajouter des informations supplémentaires ici
-            self.save_tournaments()
+    def create_tournament(self, template_name, tournament_name):
+        tournament_path = os.path.join(self.base_path, f"{tournament_name}.json")
+        if os.path.exists(tournament_path):
+            return False
+        template = self.get_veto(template_name)
+        if template:
+            with open(tournament_path, "w") as file:
+                json.dump({
+                    "name": tournament_name,
+                    "template": template
+                }, file, indent=4)
             return True
         return False
 
