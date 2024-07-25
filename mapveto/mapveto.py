@@ -53,7 +53,7 @@ class MapVetoConfig:
             self.save_vetos()
             return True
         return False
-        
+
 veto_config = MapVetoConfig()
 vetos = {}
 
@@ -99,7 +99,7 @@ class TournamentCreateModal(Modal):
             await interaction.response.send_message("Le nom du tournoi ne peut pas être vide.", ephemeral=True)
             return
 
-        if veto_config.create_tournament(self.template_name, tournament_name):
+        if TournamentConfig.create_tournament(self.template_name, tournament_name):
             await interaction.response.send_message(f"Tournoi '{tournament_name}' créé avec succès.", ephemeral=True)
         else:
             await interaction.response.send_message(f"Erreur lors de la création du tournoi '{tournament_name}'.", ephemeral=True)
