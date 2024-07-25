@@ -1,13 +1,13 @@
-import discord
-from discord.errors import NotFound
-from discord.ext import commands
-from discord.ui import Modal, TextInput, View, Button, Select
+import discord # type: ignore
+from discord.errors import NotFound # type: ignore
+from discord.ext import commands # type: ignore
+from discord.ui import Modal, TextInput, View, Button, Select # type: ignore
 import json
 import os
 import asyncio
 
-from core import checks
-from core.models import PermissionLevel
+from core import checks # type: ignore
+from core.models import PermissionLevel # type: ignore
 
 class MapVetoConfig:
     def __init__(self, filename="vetos.json"):
@@ -439,10 +439,16 @@ class MapVetoCog(commands.Cog):
             value="Cliquez sur le bouton pour supprimer un template de veto existant.",
             inline=False
         )
+        embed.add_field(
+            name="Liste des Templates",
+            value="Cliquez sur le bouton pour voir la liste des templates enregistrés.",
+            inline=False
+        )
         return embed
 
     def create_setup_view(self):
         view = discord.ui.View()
+        view.add_item(ListButton())
         view.add_item(CreateButton())
         view.add_item(EditButton())
         view.add_item(DeleteButton())
@@ -453,6 +459,33 @@ class MapVetoCog(commands.Cog):
     async def mapveto_setup(self, ctx):
         """Crée ou met à jour le message avec les boutons pour gérer les templates de veto."""
         await self.update_setup_message(ctx.channel)
+
+class ListButton(Button):
+    def __init__(self):
+        super().__init__(label="Liste des Templates", style=discord.ButtonStyle.secondary, custom_id="list_templates")
+
+    async def callback(self, interaction: discord.Interaction):
+        veto_names = list(veto_config.vetos.keys())
+        if not veto_names:
+            await interaction.response.send_message("Aucun template de veto enregistré.", ephemeral=True)
+            return
+
+        # Créer l'embed pour la liste des templates
+        embed = discord.Embed(
+            title="Liste des Templates de Veto",
+            description="Voici la liste des templates enregistrés :",
+            color=discord.Color.green()
+        )
+        
+        for name in veto_names:
+            veto = veto_config.get_veto(name)
+            embed.add_field(
+                name=name,
+                value=f"Maps: {veto['maps']}\nRules: {veto['rules']}",
+                inline=False
+            )
+
+        await interaction.response.send_message(embed=embed, ephemeral=True)
 
 class CreateButton(Button):
     def __init__(self):
