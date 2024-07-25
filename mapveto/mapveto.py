@@ -539,15 +539,6 @@ class ConfirmDeleteButton(Button):
         else:
             await interaction.response.send_message(f"Erreur lors de la suppression du template '{self.template_name}'.", ephemeral=True)
 
-    @mapveto.command(name='list')
-    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-    async def mapveto_list(self, ctx):
-        """Liste tous les templates de veto disponibles."""
-        if veto_config.vetos:
-            await ctx.send(f"Templates de veto disponibles : {', '.join(veto_config.vetos.keys())}")
-        else:
-            await ctx.send("Aucun template de veto disponible.")
-
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def start_mapveto(self, ctx, name: str, team_a_id: int, team_a_name: str, team_b_id: int, team_b_name: str):
