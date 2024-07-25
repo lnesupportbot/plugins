@@ -57,53 +57,6 @@ class MapVetoConfig:
 veto_config = MapVetoConfig()
 vetos = {}
 
-class TournamentConfig:
-    def __init__(self, filename="tourney.json"):
-        self.filename = filename
-        self.tournaments = self.load_tournaments()
-
-    def load_tournaments(self):
-        if os.path.exists(self.filename):
-            with open(self.filename, "r") as file:
-                return json.load(file)
-        return {}
-
-    def save_tournaments(self):
-        with open(self.filename, "w") as file:
-            json.dump(self.tournaments, file, indent=4)
-
-    def create_tournament(self, template_name, tournament_name):
-        tournament_path = os.path.join(self.base_path, f"{tournament_name}.json")
-        if os.path.exists(tournament_path):
-            return False
-        template = self.get_veto(template_name)
-        if template:
-            with open(tournament_path, "w") as file:
-                json.dump({
-                    "name": tournament_name,
-                    "template": template
-                }, file, indent=4)
-            return True
-        return False
-
-class TournamentCreateModal(Modal):
-    def __init__(self, template_name):
-        super().__init__(title="Créer un tournoi")
-        self.template_name = template_name
-        self.tournament_name = TextInput(label="Nom du tournoi", placeholder="Entrez le nom du tournoi")
-        self.add_item(self.tournament_name)
-
-    async def on_submit(self, interaction: discord.Interaction):
-        tournament_name = self.tournament_name.value.strip()
-        if not tournament_name:
-            await interaction.response.send_message("Le nom du tournoi ne peut pas être vide.", ephemeral=True)
-            return
-
-        if TournamentConfig.create_tournament(self.template_name, tournament_name):
-            await interaction.response.send_message(f"Tournoi '{tournament_name}' créé avec succès.", ephemeral=True)
-        else:
-            await interaction.response.send_message(f"Erreur lors de la création du tournoi '{tournament_name}'.", ephemeral=True)
-
 class VetoCreateModal(Modal):
     def __init__(self):
         super().__init__(title="Créer un template de veto")
@@ -434,38 +387,6 @@ class MapVeto:
                     except discord.Forbidden:
                         print(f"Cannot DM user {participant_id}")
 
-class TournamentCog(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-
-    @commands.group(name='tournament', invoke_without_command=True)
-    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-    async def tournament(self, ctx):
-        """Affiche les options de gestion des tournois."""
-        await ctx.send("Utilisez les sous-commandes pour gérer les tournois. Ex: `?tournament create`.")
-
-    @tournament.command(name='create')
-    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-    async def tournament_create(self, ctx):
-        """Ouvre une fenêtre modale pour créer un tournoi."""
-        veto_names = list(veto_config.vetos.keys())
-        if not veto_names:
-            await ctx.send("Aucun template de veto disponible pour créer un tournoi.")
-            return
-
-        class TournamentSelect(Select):
-            def __init__(self, options):
-                super().__init__(placeholder="Choisissez un template pour le tournoi...", options=options)
-
-            async def callback(self, interaction: discord.Interaction):
-                selected_template = self.values[0]
-                modal = TournamentCreateModal(selected_template)
-                await interaction.response.send_modal(modal)
-
-        view = View()
-        view.add_item(TournamentSelect([discord.SelectOption(label=name, value=name) for name in veto_names]))
-        await ctx.send("Sélectionnez un template pour créer un tournoi :", view=view)
-
 class MapVetoCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -476,148 +397,118 @@ class MapVetoCog(commands.Cog):
         """Affiche les options de gestion des templates de veto."""
         await ctx.send("Utilisez les sous-commandes pour gérer les templates de veto. Ex: `?mapveto create`.")
 
-    @mapveto.command(name='create')
+    @commands.command(name='mapveto_setup')
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-    async def mapveto_create(self, ctx):
-        """Ouvre un modal pour créer un template de veto."""
+    async def mapveto_setup(self, ctx):
+        """Crée un embed avec des boutons pour créer, éditer et supprimer des templates de veto."""
+        embed = discord.Embed(
+            title="Configuration des Templates de Veto",
+            description="Utilisez les boutons ci-dessous pour gérer les templates de veto.",
+            color=discord.Color.blue()
+        )
+        embed.add_field(
+            name="Créer un Template",
+            value="Cliquez sur le bouton pour créer un nouveau template de veto.",
+            inline=False
+        )
+        embed.add_field(
+            name="Éditer un Template",
+            value="Cliquez sur le bouton pour éditer un template de veto existant.",
+            inline=False
+        )
+        embed.add_field(
+            name="Supprimer un Template",
+            value="Cliquez sur le bouton pour supprimer un template de veto existant.",
+            inline=False
+        )
+
         class CreateButton(Button):
             def __init__(self):
-                super().__init__(label="Créer un template", style=discord.ButtonStyle.primary)
+                super().__init__(label="Créer un template", style=discord.ButtonStyle.primary, custom_id="create_template")
 
             async def callback(self, interaction: discord.Interaction):
                 modal = VetoCreateModal()
                 await interaction.response.send_modal(modal)
-                # Ne pas désactiver le bouton
-                await interaction.message.edit(view=view)
-
-        view = View()
-        view.add_item(CreateButton())
-        await ctx.send("Cliquez sur le bouton ci-dessous pour créer un template de veto:", view=view)
-
-    @mapveto.command(name='edit')
-    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-    async def mapveto_edit(self, ctx):
-        """Ouvre un modal pour éditer un template de veto existant."""
-        veto_names = list(veto_config.vetos.keys())
-        if not veto_names:
-            await ctx.send("Aucun template de veto à modifier.")
-            return
-
-        class VetoEditSelect(Select):
-            def __init__(self, options):
-                super().__init__(placeholder="Choisissez un template à éditer...", options=options)
-        
-            async def callback(self, interaction: discord.Interaction):
-                selected_template = self.values[0]
-                veto = veto_config.get_veto(selected_template)
-                
-                if not veto:
-                    await interaction.response.send_message("Template de veto introuvable.", ephemeral=True)
-                    return
-        
-                # Créer et afficher le formulaire de modification avec les informations actuelles
-                edit_modal = VetoEditModal(selected_template, veto)
-                await interaction.response.send_modal(edit_modal)
 
         class EditButton(Button):
             def __init__(self):
-                super().__init__(label="Éditer un template", style=discord.ButtonStyle.primary)
-        
+                super().__init__(label="Éditer un template", style=discord.ButtonStyle.primary, custom_id="edit_template")
+
             async def callback(self, interaction: discord.Interaction):
-                # Obtenir la liste des templates de veto
                 veto_names = list(veto_config.vetos.keys())
-        
                 if not veto_names:
-                    await interaction.response.send_message("Aucun template de veto disponible pour la modification.", ephemeral=True)
+                    await interaction.response.send_message("Aucun template de veto disponible pour modification.", ephemeral=True)
                     return
-                
-                # Créer un select menu avec les templates disponibles
+
+                class VetoEditSelect(Select):
+                    def __init__(self, options):
+                        super().__init__(placeholder="Choisissez un template à éditer...", options=options)
+            
+                    async def callback(self, interaction: discord.Interaction):
+                        selected_template = self.values[0]
+                        veto = veto_config.get_veto(selected_template)
+                        
+                        if not veto:
+                            await interaction.response.send_message("Template de veto introuvable.", ephemeral=True)
+                            return
+                        
+                        edit_modal = VetoEditModal(selected_template, veto)
+                        await interaction.response.send_modal(edit_modal)
+
                 select = VetoEditSelect([discord.SelectOption(label=name, value=name) for name in veto_names])
                 view = View()
                 view.add_item(select)
-                
-                # Envoyer un message avec le select menu
-                await interaction.response.send_message(
-                    "Sélectionnez un template de veto à éditer :",
-                    view=view,
-                    ephemeral=True
-                )
-
-        view = View()
-        view.add_item(EditButton())
-        await ctx.send("Cliquez sur le bouton ci-dessous pour éditer un template de veto :", view=view)
-        
-    @mapveto.command(name='delete')
-    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-    async def mapveto_delete(self, ctx):
-        """Affiche un bouton pour supprimer un template de veto existant."""
-        veto_names = list(veto_config.vetos.keys())
-        if not veto_names:
-            await ctx.send("Aucun template de veto à supprimer.")
-            return
-
-        class VetoDeleteSelect(Select):
-            def __init__(self, options):
-                super().__init__(placeholder="Choisissez un template à supprimer...", options=options)
-        
-            async def callback(self, interaction: discord.Interaction):
-                selected_template = self.values[0]
-                
-                # Demander une confirmation pour la suppression
-                confirm_view = View()
-                confirm_view.add_item(ConfirmDeleteButton(selected_template))
-                
-                await interaction.response.send_message(
-                    f"Êtes-vous sûr de vouloir supprimer le template '{selected_template}' ?",
-                    view=confirm_view,
-                    ephemeral=True
-                )
-
-        class ConfirmDeleteButton(Button):
-            def __init__(self, template_name):
-                super().__init__(label=f"Confirmer la suppression de {template_name}", style=discord.ButtonStyle.danger)
-                self.template_name = template_name
-        
-            async def callback(self, interaction: discord.Interaction):
-                # Supprimer le template sélectionné
-                if veto_config.delete_veto(self.template_name):
-                    await interaction.response.send_message(
-                        f"Le template '{self.template_name}' a été supprimé avec succès.",
-                        ephemeral=True
-                    )
-                else:
-                    await interaction.response.send_message(
-                        f"Erreur lors de la suppression du template '{self.template_name}'.",
-                        ephemeral=True
-                    )
+                await interaction.response.send_message("Sélectionnez un template à éditer :", view=view, ephemeral=True)
 
         class DeleteButton(Button):
             def __init__(self):
-                super().__init__(label="Supprimer un template", style=discord.ButtonStyle.danger)
-        
+                super().__init__(label="Supprimer un template", style=discord.ButtonStyle.danger, custom_id="delete_template")
+
             async def callback(self, interaction: discord.Interaction):
-                # Obtenir la liste des templates de veto
                 veto_names = list(veto_config.vetos.keys())
-        
                 if not veto_names:
-                    await interaction.response.send_message("Aucun template de veto disponible pour la suppression.", ephemeral=True)
+                    await interaction.response.send_message("Aucun template de veto disponible pour suppression.", ephemeral=True)
                     return
+
+                class VetoDeleteSelect(Select):
+                    def __init__(self, options):
+                        super().__init__(placeholder="Choisissez un template à supprimer...", options=options)
                 
-                # Créer un select menu avec les templates disponibles
+                    async def callback(self, interaction: discord.Interaction):
+                        selected_template = self.values[0]
+                        confirm_view = View()
+                        confirm_view.add_item(ConfirmDeleteButton(selected_template))
+                        
+                        await interaction.response.send_message(
+                            f"Êtes-vous sûr de vouloir supprimer le template '{selected_template}' ?",
+                            view=confirm_view,
+                            ephemeral=True
+                        )
+
                 select = VetoDeleteSelect([discord.SelectOption(label=name, value=name) for name in veto_names])
                 view = View()
                 view.add_item(select)
-                
-                # Envoyer un message avec le select menu
-                await interaction.response.send_message(
-                    "Sélectionnez un template de veto à supprimer :",
-                    view=view,
-                    ephemeral=True
-                )
+                await interaction.response.send_message("Sélectionnez un template à supprimer :", view=view, ephemeral=True)
+
+        class ConfirmDeleteButton(Button):
+            def __init__(self, template_name):
+                super().__init__(label=f"Confirmer la suppression de {template_name}", style=discord.ButtonStyle.danger, custom_id=f"confirm_delete_{template_name}")
+                self.template_name = template_name
+
+            async def callback(self, interaction: discord.Interaction):
+                if veto_config.delete_veto(self.template_name):
+                    await interaction.response.send_message(f"Le template '{self.template_name}' a été supprimé avec succès.", ephemeral=True)
+                else:
+                    await interaction.response.send_message(f"Erreur lors de la suppression du template '{self.template_name}'.", ephemeral=True)
 
         view = View()
+        view.add_item(CreateButton())
+        view.add_item(EditButton())
         view.add_item(DeleteButton())
-        await ctx.send("Cliquez sur le bouton ci-dessous pour supprimer un template de veto :", view=view)
+
+        # Envoyer ou mettre à jour le message dans le channel
+        await ctx.send(embed=embed, view=view)
+
 
     @mapveto.command(name='list')
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
@@ -732,4 +623,3 @@ class MapVetoCog(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(MapVetoCog(bot))
-    await bot.add_cog(TournamentCog(bot))
