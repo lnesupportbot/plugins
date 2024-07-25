@@ -387,6 +387,12 @@ class MapVeto:
                     except discord.Forbidden:
                         print(f"Cannot DM user {participant_id}")
 
+import discord
+from discord.ext import commands
+from discord.ui import Button, Select, View
+import json
+import os
+
 class MapVetoCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -448,208 +454,201 @@ class MapVetoCog(commands.Cog):
         view.add_item(DeleteButton())
         return view
 
-
-    @commands.group(name='mapveto', invoke_without_command=True)
-    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-    async def mapveto(self, ctx):
-        """Affiche les options de gestion des templates de veto."""
-        await ctx.send("Utilisez les sous-commandes pour gérer les templates de veto. Ex: `?mapveto create`.")
-
     @commands.command(name='mapveto_setup')
-    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
+    @commands.has_permissions(administrator=True)
     async def mapveto_setup(self, ctx):
         """Crée ou met à jour le message avec les boutons pour gérer les templates de veto."""
         await self.update_setup_message(ctx.channel)
 
-        class CreateButton(discord.ui.Button):
-            def __init__(self):
-                super().__init__(label="Créer un template", style=discord.ButtonStyle.primary, custom_id="create_template")
+class CreateButton(Button):
+    def __init__(self):
+        super().__init__(label="Créer un template", style=discord.ButtonStyle.primary, custom_id="create_template")
 
+    async def callback(self, interaction: discord.Interaction):
+        modal = VetoCreateModal()
+        await interaction.response.send_modal(modal)
+
+class EditButton(Button):
+    def __init__(self):
+        super().__init__(label="Éditer un template", style=discord.ButtonStyle.primary, custom_id="edit_template")
+
+    async def callback(self, interaction: discord.Interaction):
+        veto_names = list(veto_config.vetos.keys())
+        if not veto_names:
+            await interaction.response.send_message("Aucun template de veto disponible pour modification.", ephemeral=True)
+            return
+
+        class VetoEditSelect(Select):
+            def __init__(self, options):
+                super().__init__(placeholder="Choisissez un template à éditer...", options=options)
+        
             async def callback(self, interaction: discord.Interaction):
-                modal = VetoCreateModal()
-                await interaction.response.send_modal(modal)
-
-        class EditButton(discord.ui.Button):
-            def __init__(self):
-                super().__init__(label="Éditer un template", style=discord.ButtonStyle.primary, custom_id="edit_template")
-
-            async def callback(self, interaction: discord.Interaction):
-                veto_names = list(veto_config.vetos.keys())
-                if not veto_names:
-                    await interaction.response.send_message("Aucun template de veto disponible pour modification.", ephemeral=True)
-                    return
-
-                class VetoEditSelect(discord.ui.Select):
-                    def __init__(self, options):
-                        super().__init__(placeholder="Choisissez un template à éditer...", options=options)
+                selected_template = self.values[0]
+                veto = veto_config.get_veto(selected_template)
                 
-                    async def callback(self, interaction: discord.Interaction):
-                        selected_template = self.values[0]
-                        veto = veto_config.get_veto(selected_template)
-                        
-                        if not veto:
-                            await interaction.response.send_message("Template de veto introuvable.", ephemeral=True)
-                            return
-                        
-                        edit_modal = VetoEditModal(selected_template, veto)
-                        await interaction.response.send_modal(edit_modal)
-
-                select = VetoEditSelect([discord.SelectOption(label=name, value=name) for name in veto_names])
-                view = discord.ui.View()
-                view.add_item(select)
-                await interaction.response.send_message("Sélectionnez un template à éditer :", view=view, ephemeral=True)
-
-        class DeleteButton(discord.ui.Button):
-            def __init__(self):
-                super().__init__(label="Supprimer un template", style=discord.ButtonStyle.danger, custom_id="delete_template")
-
-            async def callback(self, interaction: discord.Interaction):
-                veto_names = list(veto_config.vetos.keys())
-                if not veto_names:
-                    await interaction.response.send_message("Aucun template de veto disponible pour suppression.", ephemeral=True)
+                if not veto:
+                    await interaction.response.send_message("Template de veto introuvable.", ephemeral=True)
                     return
+                
+                edit_modal = VetoEditModal(selected_template, veto)
+                await interaction.response.send_modal(edit_modal)
 
-                class VetoDeleteSelect(discord.ui.Select):
-                    def __init__(self, options):
-                        super().__init__(placeholder="Choisissez un template à supprimer...", options=options)
-                    
-                    async def callback(self, interaction: discord.Interaction):
-                        selected_template = self.values[0]
-                        confirm_view = discord.ui.View()
-                        confirm_view.add_item(ConfirmDeleteButton(selected_template))
-                        
-                        await interaction.response.send_message(
-                            f"Êtes-vous sûr de vouloir supprimer le template '{selected_template}' ?",
-                            view=confirm_view,
-                            ephemeral=True
-                        )
+        select = VetoEditSelect([discord.SelectOption(label=name, value=name) for name in veto_names])
+        view = View()
+        view.add_item(select)
+        await interaction.response.send_message("Sélectionnez un template à éditer :", view=view, ephemeral=True)
 
-                select = VetoDeleteSelect([discord.SelectOption(label=name, value=name) for name in veto_names])
-                view = discord.ui.View()
-                view.add_item(select)
-                await interaction.response.send_message("Sélectionnez un template à supprimer :", view=view, ephemeral=True)
+class DeleteButton(Button):
+    def __init__(self):
+        super().__init__(label="Supprimer un template", style=discord.ButtonStyle.danger, custom_id="delete_template")
 
-        class ConfirmDeleteButton(discord.ui.Button):
-            def __init__(self, template_name):
-                super().__init__(label=f"Confirmer la suppression de {template_name}", style=discord.ButtonStyle.danger, custom_id=f"confirm_delete_{template_name}")
-                self.template_name = template_name
+    async def callback(self, interaction: discord.Interaction):
+        veto_names = list(veto_config.vetos.keys())
+        if not veto_names:
+            await interaction.response.send_message("Aucun template de veto disponible pour suppression.", ephemeral=True)
+            return
 
-            async def callback(self, interaction: discord.Interaction):
-                if veto_config.delete_veto(self.template_name):
-                    await interaction.response.send_message(f"Le template '{self.template_name}' a été supprimé avec succès.", ephemeral=True)
-                else:
-                    await interaction.response.send_message(f"Erreur lors de la suppression du template '{self.template_name}'.", ephemeral=True)
-
-            @mapveto.command(name='list')
-            @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-            async def mapveto_list(self, ctx):
-                """Liste tous les templates de veto disponibles."""
-                if veto_config.vetos:
-                    await ctx.send(f"Templates de veto disponibles : {', '.join(veto_config.vetos.keys())}")
-                else:
-                    await ctx.send("Aucun template de veto disponible.")
-
-            @commands.command()
-            @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-            async def start_mapveto(self, ctx, name: str, team_a_id: int, team_a_name: str, team_b_id: int, team_b_name: str):
-                """Démarre un veto et envoie des messages en DM aux équipes spécifiées."""
-                if name not in veto_config.vetos:
-                    await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
-                    return
-
-                veto = MapVeto(name, veto_config.vetos[name]["maps"], team_a_id, team_a_name, team_b_id, team_b_name, veto_config.vetos[name]["rules"], ctx.channel, self.bot)
-                vetos[name] = veto
+        class VetoDeleteSelect(Select):
+            def __init__(self, options):
+                super().__init__(placeholder="Choisissez un template à supprimer...", options=options)
             
-                await send_ticket_message(self.bot, veto, ctx.channel)
-
-            @commands.command()
-            @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-            async def pause_mapveto(self, ctx, name: str):
-                """Met en pause le veto spécifié."""
-                if name not in vetos:
-                    await ctx.send(f"Aucun veto en cours avec le nom '{name}'.")
-                    return
-
-                veto = vetos[name]
-                veto.pause()
-                await ctx.send(f"Le veto '{name}' a été mis en pause.")
-
-            @commands.command()
-            @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-            async def resume_mapveto(self, ctx, name: str):
-                """Reprend le veto spécifié."""
-                if name not in vetos:
-                    await ctx.send(f"Aucun veto en cours avec le nom '{name}'.")
-                    return
-
-                veto = vetos[name]
-                veto.resume()
-                await ctx.send(f"Le veto '{name}' a repris.")
-
-            @commands.command()
-            @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-            async def stop_mapveto(self, ctx, name: str):
-                """Arrête complètement le veto spécifié mais ne supprime pas le template."""
-                if name not in vetos:
-                    await ctx.send(f"Aucun veto en cours avec le nom '{name}'.")
-                    return
-
-                veto = vetos[name]
-                veto.stop()  # Call stop to end the veto
-
-            @commands.command()
-            @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-            async def help_veto(self, ctx):
-                """Affiche les commandes disponibles pour la gestion des veto de cartes."""
-                embed = discord.Embed(title="Aide pour les Commandes MapVeto", description="Voici un résumé des commandes disponibles pour la gestion des veto de cartes.")
-
-                embed.add_field(
-                    name="mapveto create <name>",
-                    value="Crée un template de veto avec le nom donné.",
-                    inline=False
-                )
-                embed.add_field(
-                    name="mapveto add <name> <map_name>",
-                    value="Ajoute plusieurs maps au template de veto spécifié.",
-                    inline=False
-                )
-                embed.add_field(
-                    name="mapveto rules <name> <rules>",
-                    value="Définit les règles pour le template de veto spécifié.",
-                    inline=False
-                )
-                embed.add_field(
-                    name="mapveto delete <name>",
-                    value="Supprime le template de veto spécifié.",
-                    inline=False
-                )
-                embed.add_field(
-                    name="mapveto list",
-                    value="Liste tous les templates de veto disponibles.",
-                    inline=False
-                )
-                embed.add_field(
-                    name="start_mapveto <name> <team_a_id> <team_a_name> <team_b_id> <team_b_name>",
-                    value="Démarre un veto et envoie des messages en DM aux équipes spécifiées.",
-                    inline=False
-                )
-                embed.add_field(
-                    name="pause_mapveto <name>",
-                    value="Met en pause le veto spécifié.",
-                    inline=False
-                )
-                embed.add_field(
-                    name="resume_mapveto <name>",
-                    value="Reprend le veto spécifié.",
-                    inline=False
-                )
-                embed.add_field(
-                    name="stop_mapveto <name>",
-                    value="Arrête complètement le veto spécifié et le supprime des enregistrements.",
-                    inline=False
+            async def callback(self, interaction: discord.Interaction):
+                selected_template = self.values[0]
+                confirm_view = View()
+                confirm_view.add_item(ConfirmDeleteButton(selected_template))
+                
+                await interaction.response.send_message(
+                    f"Êtes-vous sûr de vouloir supprimer le template '{selected_template}' ?",
+                    view=confirm_view,
+                    ephemeral=True
                 )
 
-                await ctx.send(embed=embed)
+        select = VetoDeleteSelect([discord.SelectOption(label=name, value=name) for name in veto_names])
+        view = View()
+        view.add_item(select)
+        await interaction.response.send_message("Sélectionnez un template à supprimer :", view=view, ephemeral=True)
+
+class ConfirmDeleteButton(Button):
+    def __init__(self, template_name):
+        super().__init__(label=f"Confirmer la suppression de {template_name}", style=discord.ButtonStyle.danger, custom_id=f"confirm_delete_{template_name}")
+        self.template_name = template_name
+
+    async def callback(self, interaction: discord.Interaction):
+        if veto_config.delete_veto(self.template_name):
+            await interaction.response.send_message(f"Le template '{self.template_name}' a été supprimé avec succès.", ephemeral=True)
+        else:
+            await interaction.response.send_message(f"Erreur lors de la suppression du template '{self.template_name}'.", ephemeral=True)
+
+    @mapveto.command(name='list')
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
+    async def mapveto_list(self, ctx):
+        """Liste tous les templates de veto disponibles."""
+        if veto_config.vetos:
+            await ctx.send(f"Templates de veto disponibles : {', '.join(veto_config.vetos.keys())}")
+        else:
+            await ctx.send("Aucun template de veto disponible.")
+
+    @commands.command()
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
+    async def start_mapveto(self, ctx, name: str, team_a_id: int, team_a_name: str, team_b_id: int, team_b_name: str):
+        """Démarre un veto et envoie des messages en DM aux équipes spécifiées."""
+        if name not in veto_config.vetos:
+            await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
+            return
+
+        veto = MapVeto(name, veto_config.vetos[name]["maps"], team_a_id, team_a_name, team_b_id, team_b_name, veto_config.vetos[name]["rules"], ctx.channel, self.bot)
+        vetos[name] = veto
+    
+        await send_ticket_message(self.bot, veto, ctx.channel)
+
+    @commands.command()
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
+    async def pause_mapveto(self, ctx, name: str):
+        """Met en pause le veto spécifié."""
+        if name not in vetos:
+            await ctx.send(f"Aucun veto en cours avec le nom '{name}'.")
+            return
+
+        veto = vetos[name]
+        veto.pause()
+        await ctx.send(f"Le veto '{name}' a été mis en pause.")
+
+    @commands.command()
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
+    async def resume_mapveto(self, ctx, name: str):
+        """Reprend le veto spécifié."""
+        if name not in vetos:
+            await ctx.send(f"Aucun veto en cours avec le nom '{name}'.")
+            return
+
+        veto = vetos[name]
+        veto.resume()
+        await ctx.send(f"Le veto '{name}' a repris.")
+
+    @commands.command()
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
+    async def stop_mapveto(self, ctx, name: str):
+        """Arrête complètement le veto spécifié mais ne supprime pas le template."""
+        if name not in vetos:
+            await ctx.send(f"Aucun veto en cours avec le nom '{name}'.")
+            return
+
+        veto = vetos[name]
+        veto.stop()  # Call stop to end the veto
+
+    @commands.command()
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
+    async def help_veto(self, ctx):
+        """Affiche les commandes disponibles pour la gestion des veto de cartes."""
+        embed = discord.Embed(title="Aide pour les Commandes MapVeto", description="Voici un résumé des commandes disponibles pour la gestion des veto de cartes.")
+
+        embed.add_field(
+            name="mapveto create <name>",
+            value="Crée un template de veto avec le nom donné.",
+            inline=False
+        )
+        embed.add_field(
+            name="mapveto add <name> <map_name>",
+            value="Ajoute plusieurs maps au template de veto spécifié.",
+            inline=False
+        )
+        embed.add_field(
+            name="mapveto rules <name> <rules>",
+            value="Définit les règles pour le template de veto spécifié.",
+            inline=False
+        )
+        embed.add_field(
+            name="mapveto delete <name>",
+            value="Supprime le template de veto spécifié.",
+            inline=False
+        )
+        embed.add_field(
+            name="mapveto list",
+            value="Liste tous les templates de veto disponibles.",
+            inline=False
+        )
+        embed.add_field(
+            name="start_mapveto <name> <team_a_id> <team_a_name> <team_b_id> <team_b_name>",
+            value="Démarre un veto et envoie des messages en DM aux équipes spécifiées.",
+            inline=False
+        )
+        embed.add_field(
+            name="pause_mapveto <name>",
+            value="Met en pause le veto spécifié.",
+            inline=False
+        )
+        embed.add_field(
+            name="resume_mapveto <name>",
+            value="Reprend le veto spécifié.",
+            inline=False
+        )
+        embed.add_field(
+            name="stop_mapveto <name>",
+            value="Arrête complètement le veto spécifié et le supprime des enregistrements.",
+            inline=False
+        )
+
+        await ctx.send(embed=embed)
 
 async def setup(bot):
     await bot.add_cog(MapVetoCog(bot))
