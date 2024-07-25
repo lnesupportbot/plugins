@@ -101,14 +101,15 @@ tournament_config = TournamentConfig()
 class TournamentCreateModal(Modal):
     def __init__(self, template_name):
         super().__init__(title="Créer un Tournoi")
-        self.template = template_name
+        self.template_name = template_name
         self.name = TextInput(label="Nom du Tournoi", placeholder="Entrez le nom du tournoi")
 
         self.add_item(self.name)
 
-    async def callback(self, interaction: discord.Interaction):
-        tournament_name = self.name.value
-        template_name = self.template.value
+    async def on_submit(self, interaction: discord.Interaction):
+        tournament_name = self.name.value.strip()
+        template_name = self.template_name
+
         # Enregistrer le tournoi avec le nom et le template sélectionné
         if tournament_config.create_tournament(tournament_name, template_name):
             await interaction.response.send_message(f"Tournoi '{tournament_name}' créé avec le template '{template_name}'.", ephemeral=True)
@@ -844,7 +845,7 @@ class CreateTournamentButton(Button):
                 await interaction.response.send_modal(modal)
 
         select = TemplateSelect([discord.SelectOption(label=name, value=name) for name in templates])
-        view = View()
+        view = discord.ui.View()
         view.add_item(select)
         await interaction.response.send_message("Veuillez choisir un template pour le tournoi :", view=view, ephemeral=True)
 
