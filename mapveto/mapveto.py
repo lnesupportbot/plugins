@@ -57,6 +57,28 @@ class MapVetoConfig:
 veto_config = MapVetoConfig()
 vetos = {}
 
+class TournamentConfig:
+    def __init__(self, filename="tourney.json"):
+        self.filename = filename
+        self.tournaments = self.load_tournaments()
+
+    def load_tournaments(self):
+        if os.path.exists(self.filename):
+            with open(self.filename, "r") as file:
+                return json.load(file)
+        return {}
+
+    def save_tournaments(self):
+        with open(self.filename, "w") as file:
+            json.dump(self.tournaments, file, indent=4)
+
+    def create_tournament(self, name):
+        if name not in self.tournaments:
+            self.tournaments[name] = {}  # Vous pouvez ajouter des informations supplémentaires ici
+            self.save_tournaments()
+            return True
+        return False
+
 class VetoCreateModal(Modal):
     def __init__(self):
         super().__init__(title="Créer un template de veto")
@@ -128,6 +150,31 @@ class VetoEditModal(Modal):
 
         veto_config.update_veto(self.template_name, maps, rules)
         await interaction.response.send_message(f"Template de veto '{self.template_name}' mis à jour avec succès.", ephemeral=True)
+
+class TournamentCreateModal(Modal):
+    def __init__(self):
+        super().__init__(title="Créer un tournoi")
+
+        self.tournament_name = TextInput(
+            label="Nom du tournoi",
+            placeholder="Entrez le nom du tournoi"
+        )
+
+        self.add_item(self.tournament_name)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        tournament_name = self.tournament_name.value.strip()
+
+        if not tournament_name:
+            await interaction.response.send_message("Le nom du tournoi ne peut pas être vide.", ephemeral=True)
+            return
+
+        tournaments = TournamentConfig()  # Initialise la configuration des tournois
+        if tournaments.create_tournament(tournament_name):
+            await interaction.response.send_message(f"Tournoi '{tournament_name}' créé avec succès.", ephemeral=True)
+        else:
+            await interaction.response.send_message(f"Un tournoi avec le nom '{tournament_name}' existe déjà.", ephemeral=True)
+
 
 class MapButton(discord.ui.Button):
     def __init__(self, label, veto_name, action_type, channel):
@@ -387,6 +434,34 @@ class MapVeto:
                     except discord.Forbidden:
                         print(f"Cannot DM user {participant_id}")
 
+class TournamentCog(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+
+    @commands.group(name='tournament', invoke_without_command=True)
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
+    async def tournament(self, ctx):
+        """Affiche les options de gestion des tournois."""
+        await ctx.send("Utilisez les sous-commandes pour gérer les tournois. Ex: `?tournament create`.")
+
+    @tournament.command(name='create')
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
+    async def tournament_create(self, ctx):
+        """Ouvre un modal pour créer un tournoi."""
+        class CreateButton(Button):
+            def __init__(self):
+                super().__init__(label="Créer un tournoi", style=discord.ButtonStyle.primary)
+
+            async def callback(self, interaction: discord.Interaction):
+                modal = TournamentCreateModal()
+                await interaction.response.send_modal(modal)
+                # Ne pas désactiver le bouton
+                await interaction.message.edit(view=view)
+
+        view = View()
+        view.add_item(CreateButton())
+        await ctx.send("Cliquez sur le bouton ci-dessous pour créer un tournoi:", view=view)
+
 class MapVetoCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -540,6 +615,8 @@ class MapVetoCog(commands.Cog):
         view.add_item(DeleteButton())
         await ctx.send("Cliquez sur le bouton ci-dessous pour supprimer un template de veto :", view=view)
 
+
+
     @mapveto.command(name='list')
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def mapveto_list(self, ctx):
@@ -653,3 +730,4 @@ class MapVetoCog(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(MapVetoCog(bot))
+    await bot.add_cog(TournamentCog(bot))
