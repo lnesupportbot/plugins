@@ -53,21 +53,7 @@ class MapVetoConfig:
             self.save_vetos()
             return True
         return False
-    
-    def create_tournament(self, template_name, tournament_name):
-        tournament_path = os.path.join("plugins", "sous dossier", "sous dossier", f"{tournament_name}.json")
-        if os.path.exists(tournament_path):
-            return False
-        template = self.get_veto(template_name)
-        if template:
-            with open(tournament_path, "w") as file:
-                json.dump({
-                    "name": tournament_name,
-                    "template": template
-                }, file, indent=4)
-            return True
-        return False
-
+        
 veto_config = MapVetoConfig()
 vetos = {}
 
