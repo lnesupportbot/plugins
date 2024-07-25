@@ -160,10 +160,22 @@ class TournamentCreateModal(Modal):
             placeholder="Entrez le nom du tournoi"
         )
 
+        # Obtenir la liste des templates de veto existants
+        veto_names = list(veto_config.vetos.keys())
+        if not veto_names:
+            veto_names = ["Aucun template disponible"]
+
+        self.veto_template = Select(
+            placeholder="Choisissez un template de veto",
+            options=[discord.SelectOption(label=name, value=name) for name in veto_names]
+        )
+
         self.add_item(self.tournament_name)
+        self.add_item(self.veto_template)
 
     async def on_submit(self, interaction: discord.Interaction):
         tournament_name = self.tournament_name.value.strip()
+        selected_veto_template = self.veto_template.values[0]
 
         if not tournament_name:
             await interaction.response.send_message("Le nom du tournoi ne peut pas être vide.", ephemeral=True)
@@ -171,10 +183,12 @@ class TournamentCreateModal(Modal):
 
         tournaments = TournamentConfig()  # Initialise la configuration des tournois
         if tournaments.create_tournament(tournament_name):
-            await interaction.response.send_message(f"Tournoi '{tournament_name}' créé avec succès.", ephemeral=True)
+            # Associer le tournoi au template de veto sélectionné
+            tournaments.tournaments[tournament_name]['veto_template'] = selected_veto_template
+            tournaments.save_tournaments()
+            await interaction.response.send_message(f"Tournoi '{tournament_name}' créé avec succès et associé au template de veto '{selected_veto_template}'.", ephemeral=True)
         else:
             await interaction.response.send_message(f"Un tournoi avec le nom '{tournament_name}' existe déjà.", ephemeral=True)
-
 
 class MapButton(discord.ui.Button):
     def __init__(self, label, veto_name, action_type, channel):
