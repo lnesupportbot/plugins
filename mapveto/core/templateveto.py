@@ -47,6 +47,9 @@ class MapVetoConfig:
             self.save_vetos()
             return True
         return False
+    
+veto_config = MapVetoConfig()
+vetos = {}
 
 class VetoCreateModal(Modal):
     def __init__(self):
