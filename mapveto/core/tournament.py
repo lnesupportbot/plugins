@@ -46,6 +46,7 @@ class TournamentConfig:
         return False
 
 tournament_config = TournamentConfig()
+veto_config = MapVetoConfig()
 
 class TournamentCreateModal(Modal):
     def __init__(self, template_name):
