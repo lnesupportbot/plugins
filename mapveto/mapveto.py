@@ -354,3 +354,6 @@ class MapVetoCog(commands.Cog):
         veto.stop()
 
         await ctx.send(embed=embed)
+
+async def setup(bot: ModmailBot) -> None:
+    await bot.add_cog(mapveto(bot))
