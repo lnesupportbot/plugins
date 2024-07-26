@@ -7,7 +7,6 @@ import os
 from core import checks
 from core.models import PermissionLevel
 
-from .core.config import veto_config  # Importer veto_config depuis config.py
 from .core.templateveto import (
     MapVetoConfig,
     VetoCreateModal,
