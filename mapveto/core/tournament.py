@@ -3,8 +3,7 @@ import os
 import discord
 from discord.ui import Modal, TextInput, Button, Select, View
 from discord.ext import commands
-
-from .templateveto import veto_config
+from core.templateveto import veto_config  # Importer veto_config
 
 class TournamentConfig:
     def __init__(self, filename="tourney.json"):
@@ -186,28 +185,19 @@ class TournamentCog(commands.Cog):
 
 class ListTournamentsButton(Button):
     def __init__(self):
-        super().__init__(label="Liste des Tournois", style=discord.ButtonStyle.secondary, custom_id="list_tournaments")
+        super().__init__(label="Liste des Tournois", style=discord.ButtonStyle.primary, custom_id="list_tournaments")
 
     async def callback(self, interaction: discord.Interaction):
-        tournament_names = list(tournament_config.tournaments.keys())
-        if not tournament_names:
-            await interaction.response.send_message("Aucun tournoi enregistré.", ephemeral=True)
+        tournaments = tournament_config.tournaments
+        if not tournaments:
+            await interaction.response.send_message("Aucun tournoi trouvé.", ephemeral=True)
             return
 
         embed = discord.Embed(
             title="Liste des Tournois",
-            description="Voici la liste des tournois enregistrés :",
+            description="\n".join(f"- {name} (Template: {data['template']})" for name, data in tournaments.items()),
             color=discord.Color.green()
         )
-
-        for name in tournament_names:
-            tournament = tournament_config.get_tournament(name)
-            embed.add_field(
-                name=name,
-                value=f"Template: {tournament['template']}",
-                inline=False
-            )
-
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
 class CreateTournamentButton(Button):
@@ -241,7 +231,7 @@ class EditTournamentButton(Button):
     async def callback(self, interaction: discord.Interaction):
         tournament_names = list(tournament_config.tournaments.keys())
         if not tournament_names:
-            await interaction.response.send_message("Aucun tournoi disponible pour modification.", ephemeral=True)
+            await interaction.response.send_message("Aucun tournoi disponible pour édition.", ephemeral=True)
             return
 
         class TournamentEditSelect(Select):
@@ -304,3 +294,6 @@ class ConfirmTournamentDeleteButton(Button):
             await interaction.response.send_message(f"Le tournoi '{self.tournament_name}' a été supprimé avec succès.", ephemeral=True)
         else:
             await interaction.response.send_message(f"Erreur lors de la suppression du tournoi '{self.tournament_name}'.", ephemeral=True)
+
+async def setup(bot):
+    await bot.add_cog(TournamentCog(bot))
