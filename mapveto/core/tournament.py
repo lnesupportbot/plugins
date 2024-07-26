@@ -212,6 +212,15 @@ class CreateTournamentButton(Button):
         if not templates:
             await interaction.response.send_message("Aucun template disponible pour création de tournoi.", ephemeral=True)
             return
+        
+        class TemplateSelect(Select):
+            def __init__(self, options):
+                super().__init__(placeholder="Choisissez un template pour le tournoi...", options=options)
+
+            async def callback(self, interaction: discord.Interaction):
+                selected_template = self.values[0]
+                modal = TournamentCreateModal(selected_template)
+                await interaction.response.send_modal(modal)
 
         select = TemplateSelect([discord.SelectOption(label=name, value=name) for name in templates])
         view = discord.ui.View()
@@ -225,7 +234,7 @@ class EditTournamentButton(Button):
     async def callback(self, interaction: discord.Interaction):
         tournament_names = list(tournament_config.tournaments.keys())
         if not tournament_names:
-            await interaction.response.send_message("Aucun tournoi disponible pour édition.", ephemeral=True)
+            await interaction.response.send_message("Aucun tournoi disponible pour modification.", ephemeral=True)
             return
 
         class TournamentEditSelect(Select):
