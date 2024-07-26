@@ -1,3 +1,4 @@
+
 import discord # type: ignore
 from discord.ext import commands # type: ignore
 import asyncio
@@ -309,6 +310,21 @@ class MapVetoCog(commands.Cog):
             with open('setup_message_id.json', 'r') as f:
                 data = json.load(f)
                 self.setup_message_id = data.get('setup_message_id')
+
+    async def update_setup_message(self, channel):
+        if self.setup_message_id:
+            try:
+                message = await channel.fetch_message(self.setup_message_id)
+                await message.edit(embed=self.create_setup_embed(), view=self.create_setup_view())
+            except discord.NotFound:
+                await self.send_setup_message(channel)
+        else:
+            await self.send_setup_message(channel)
+
+    async def send_setup_message(self, channel):
+        message = await channel.send(embed=self.create_setup_embed(), view=self.create_setup_view())
+        self.setup_message_id = message.id
+        self.save_setup_message_id(message.id)
 
     @commands.command(name='mapveto_setup')
     @commands.has_permissions(administrator=True)
