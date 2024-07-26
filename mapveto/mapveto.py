@@ -1,4 +1,3 @@
-
 import discord # type: ignore
 from discord.ext import commands # type: ignore
 import asyncio
@@ -310,7 +309,7 @@ class MapVetoCog(commands.Cog):
             with open('setup_message_id.json', 'r') as f:
                 data = json.load(f)
                 self.setup_message_id = data.get('setup_message_id')
-                
+
     @commands.command(name='mapveto_setup')
     @commands.has_permissions(administrator=True)
     async def mapveto_setup(self, ctx):
@@ -366,3 +365,6 @@ class MapVetoCog(commands.Cog):
         veto.stop()
 
         await ctx.send(embed=embed)
+
+async def setup(bot):
+    await bot.add_cog(MapVetoCog(bot))
