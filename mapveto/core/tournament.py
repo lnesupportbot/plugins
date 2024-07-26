@@ -4,6 +4,8 @@ import discord
 from discord.ui import Modal, TextInput, Button, Select, View
 from discord.ext import commands
 
+from .templateveto import veto_config
+
 class TournamentConfig:
     def __init__(self, filename="tourney.json"):
         self.filename = filename
