@@ -3,7 +3,7 @@ import os
 import discord
 from discord.ui import Modal, TextInput, Button, Select, View
 from discord.ext import commands
-from core.config import tournament_config, veto_config  # Importer depuis config.py
+from .config import tournament_config, veto_config  # Importer depuis config.py
 
 class TournamentConfig:
     def __init__(self, filename="tourney.json"):
