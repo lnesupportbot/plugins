@@ -161,3 +161,4 @@ class MapVetoCog(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(MapVetoCog(bot))
+    await bot.add_cog(TournamentCog(bot))
