@@ -4,7 +4,7 @@ import discord
 from discord.ui import Modal, TextInput, Button, Select, View
 from discord.ext import commands
 
-from templateveto import MapVetoConfig
+from .templateveto import MapVetoConfig
 
 veto_config = MapVetoConfig()
 
