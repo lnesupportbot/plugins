@@ -5,7 +5,6 @@ import asyncio
 import json
 import os
 
-from typing import TYPE_CHECKING
 from core import checks
 from core.models import PermissionLevel # type: ignore
 
@@ -33,9 +32,6 @@ from .core.tournament import (
     DeleteTournamentButton,
     ConfirmTournamentDeleteButton
 )
-
-if TYPE_CHECKING:
-    from bot import ModmailBot
 
 veto_config = MapVetoConfig
 vetos = {}
