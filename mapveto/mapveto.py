@@ -6,7 +6,7 @@ import os
 
 from core import checks
 from core.models import PermissionLevel
-from core.templateveto import (
+from .core.templateveto import (
     MapVetoConfig,
     VetoCreateModal,
     VetoEditModal,
@@ -20,7 +20,7 @@ from core.templateveto import (
     ConfirmDeleteButton
 )
 
-from core.tournament import (
+from .core.tournament import (
 TournamentConfig,
 TournamentCreateModal,
 TournamentEditModal,
