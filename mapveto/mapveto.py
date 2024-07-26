@@ -296,41 +296,12 @@ class MapVeto:
 
 
 class MapVetoCog(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-        self.setup_message_id = None
-        self.load_setup_message_id()
-
-    def save_setup_message_id(self, message_id):
-        with open('setup_message_id.json', 'w') as f:
-            json.dump({'setup_message_id': message_id}, f)
-
-    def load_setup_message_id(self):
-        if os.path.exists('setup_message_id.json'):
-            with open('setup_message_id.json', 'r') as f:
-                data = json.load(f)
-                self.setup_message_id = data.get('setup_message_id')
-
-    async def update_setup_message(self, channel):
-        if self.setup_message_id:
-            try:
-                message = await channel.fetch_message(self.setup_message_id)
-                await message.edit(embed=self.create_setup_embed(), view=self.create_setup_view())
-            except discord.NotFound:
-                await self.send_setup_message(channel)
-        else:
-            await self.send_setup_message(channel)
-
-    async def send_setup_message(self, channel):
-        message = await channel.send(embed=self.create_setup_embed(), view=self.create_setup_view())
-        self.setup_message_id = message.id
-        self.save_setup_message_id(message.id)
 
     @commands.command(name='mapveto_setup')
     @commands.has_permissions(administrator=True)
     async def mapveto_setup(self, ctx):
         """Crée ou met à jour le message avec les boutons pour gérer les templates de veto."""
-        await self.update_setup_message(ctx.channel)
+        await TemplateVetoCog.update_setup_message(ctx.channel)
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
