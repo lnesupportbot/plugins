@@ -2,7 +2,6 @@ import json
 import os
 import discord
 from discord.ui import Modal, TextInput, View, Button, Select
-from .config import veto_config  # Importer depuis config.py
 
 class MapVetoConfig:
     def __init__(self, filename="vetos.json"):
