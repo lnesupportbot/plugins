@@ -4,6 +4,8 @@ import discord # type: ignore
 from discord.ui import Modal, TextInput, Button, Select, View # type: ignore
 from discord.ext import commands # type: ignore
 
+from .templateveto import MapVetoConfig, veto_config
+
 class TournamentConfig:
     def __init__(self, filename="tourney.json"):
         self.filename = filename
@@ -44,8 +46,6 @@ class TournamentConfig:
         return False
 
 tournament_config = TournamentConfig()
-veto_config = MapVetoConfig()
-vetos = {}
 
 class TournamentCreateModal(Modal):
     def __init__(self, template_name):
@@ -295,3 +295,6 @@ class ConfirmTournamentDeleteButton(Button):
             await interaction.response.send_message(f"Le tournoi '{self.tournament_name}' a été supprimé avec succès.", ephemeral=True)
         else:
             await interaction.response.send_message(f"Erreur lors de la suppression du tournoi '{self.tournament_name}'.", ephemeral=True)
+
+async def setup(bot):
+    await bot.add_cog(TournamentCog(bot))
