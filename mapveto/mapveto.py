@@ -7,8 +7,8 @@ import os
 from core import checks
 from core.models import PermissionLevel
 
-from .config import veto_config  # Importer veto_config depuis config.py
-from .templateveto import (
+from .core.config import veto_config  # Importer veto_config depuis config.py
+from .core.templateveto import (
     MapVetoConfig,
     VetoCreateModal,
     VetoEditModal,
@@ -22,7 +22,7 @@ from .templateveto import (
     ConfirmDeleteButton
 )
 
-from .tournament import (
+from .core.tournament import (
     TournamentConfig,
     TournamentCreateModal,
     TournamentEditModal,
