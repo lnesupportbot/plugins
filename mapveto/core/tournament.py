@@ -1,11 +1,10 @@
-
 import json
 import os
 import discord # type: ignore
 from discord.ui import Modal, TextInput, Button, Select, View # type: ignore
 from discord.ext import commands # type: ignore
 
-from .templateveto import MapVetoConfig
+from .templateveto import MapVetoConfig, veto_config
 
 class TournamentConfig:
     def __init__(self, filename="tourney.json"):
