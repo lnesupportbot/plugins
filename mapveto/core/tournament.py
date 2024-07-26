@@ -1,10 +1,13 @@
+
 import json
 import os
 import discord
 from discord.ui import Modal, TextInput, Button, Select, View
 from discord.ext import commands
 
-from .templateveto import veto_config
+from .templateveto import MapVetoConfig
+
+veto_config = MapVetoConfig()
 
 class TournamentConfig:
     def __init__(self, filename="tourney.json"):
@@ -202,6 +205,7 @@ class ListTournamentsButton(Button):
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
 class CreateTournamentButton(Button):
+    veto_config = MapVetoConfig()
     def __init__(self):
         super().__init__(label="Créer un tournoi", style=discord.ButtonStyle.primary, custom_id="create_tournament")
 
