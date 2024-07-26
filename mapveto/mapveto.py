@@ -354,7 +354,3 @@ class MapVetoCog(commands.Cog):
         veto.stop()
 
         await ctx.send(embed=embed)
-
-async def setup(bot):
-    await bot.add_cog(TemplateVetoCog(bot))
-    await bot.add_cog(TournamentCog(bot))
