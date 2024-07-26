@@ -187,7 +187,7 @@ class TournamentCog(commands.Cog):
 
 class ListTournamentsButton(Button):
     def __init__(self):
-        super().__init__(label="Liste des Tournois", style=discord.ButtonStyle.secondary, custom_id="list_tournaments")
+        super().__init__(label="Liste des Tournois", style=discord.ButtonStyle.primary, custom_id="list_tournaments")
 
     async def callback(self, interaction: discord.Interaction):
         tournaments = tournament_config.tournaments
@@ -296,3 +296,6 @@ class ConfirmTournamentDeleteButton(Button):
             await interaction.response.send_message(f"Le tournoi '{self.tournament_name}' a été supprimé avec succès.", ephemeral=True)
         else:
             await interaction.response.send_message(f"Erreur lors de la suppression du tournoi '{self.tournament_name}'.", ephemeral=True)
+
+async def setup(bot):
+    await bot.add_cog(TournamentCog(bot))
