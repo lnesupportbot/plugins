@@ -6,7 +6,8 @@ from discord.ext import commands
 
 from .templateveto import MapVetoConfig
 
-veto_config = MapVetoConfig()
+veto_config = MapVetoConfig.get_veto()
+vetos = {}
 
 class TournamentConfig:
     def __init__(self, filename="tourney.json"):
