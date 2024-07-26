@@ -4,7 +4,7 @@ import discord # type: ignore
 from discord.ui import Modal, TextInput, Button, Select, View # type: ignore
 from discord.ext import commands # type: ignore
 
-from .templateveto import MapVetoConfig, veto_config
+from .templateveto import veto_config
 
 class TournamentConfig:
     def __init__(self, filename="tourney.json"):
@@ -46,8 +46,6 @@ class TournamentConfig:
         return False
 
 tournament_config = TournamentConfig()
-veto_config = MapVetoConfig()
-vetos = {}
 
 class TournamentCreateModal(Modal):
     def __init__(self, template_name):
@@ -227,35 +225,29 @@ class CreateTournamentButton(Button):
         view.add_item(select)
         await interaction.response.send_message("Veuillez choisir un template pour le tournoi :", view=view, ephemeral=True)
 
-class EditTournamentButton(Button):
-    def __init__(self):
-        super().__init__(label="Éditer un tournoi", style=discord.ButtonStyle.primary, custom_id="edit_tournament")
+class TemplateSelect(Select):
+    def __init__(self, options):
+        super().__init__(placeholder="Choisissez un template pour le tournoi...", options=options)
 
     async def callback(self, interaction: discord.Interaction):
-        tournament_names = list(tournament_config.tournaments.keys())
-        if not tournament_names:
-            await interaction.response.send_message("Aucun tournoi disponible pour édition.", ephemeral=True)
+        selected_template = self.values[0]
+        modal = TournamentCreateModal(selected_template)
+        await interaction.response.send_modal(modal)
+
+class CreateTournamentButton(Button):
+    def __init__(self):
+        super().__init__(label="Créer un tournoi", style=discord.ButtonStyle.primary, custom_id="create_tournament")
+
+    async def callback(self, interaction: discord.Interaction):
+        templates = list(veto_config.vetos.keys())
+        if not templates:
+            await interaction.response.send_message("Aucun template disponible pour création de tournoi.", ephemeral=True)
             return
 
-        class TournamentEditSelect(Select):
-            def __init__(self, options):
-                super().__init__(placeholder="Choisissez un tournoi à éditer...", options=options)
-
-            async def callback(self, interaction: discord.Interaction):
-                selected_tournament = self.values[0]
-                tournament = tournament_config.get_tournament(selected_tournament)
-
-                if not tournament:
-                    await interaction.response.send_message("Tournoi introuvable.", ephemeral=True)
-                    return
-
-                modal = TournamentEditModal(selected_tournament, tournament)
-                await interaction.response.send_modal(modal)
-
-        select = TournamentEditSelect([discord.SelectOption(label=name, value=name) for name in tournament_names])
-        view = View()
+        select = TemplateSelect([discord.SelectOption(label=name, value=name) for name in templates])
+        view = discord.ui.View()
         view.add_item(select)
-        await interaction.response.send_message("Sélectionnez un tournoi à éditer :", view=view, ephemeral=True)
+        await interaction.response.send_message("Veuillez choisir un template pour le tournoi :", view=view, ephemeral=True)
 
 class DeleteTournamentButton(Button):
     def __init__(self):
