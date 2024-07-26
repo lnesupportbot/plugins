@@ -298,7 +298,19 @@ class MapVeto:
 class MapVetoCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.setup_message_id = None
+        self.load_setup_message_id()
 
+    def save_setup_message_id(self, message_id):
+        with open('setup_message_id.json', 'w') as f:
+            json.dump({'setup_message_id': message_id}, f)
+
+    def load_setup_message_id(self):
+        if os.path.exists('setup_message_id.json'):
+            with open('setup_message_id.json', 'r') as f:
+                data = json.load(f)
+                self.setup_message_id = data.get('setup_message_id')
+                
     @commands.command(name='mapveto_setup')
     @commands.has_permissions(administrator=True)
     async def mapveto_setup(self, ctx):
@@ -354,6 +366,3 @@ class MapVetoCog(commands.Cog):
         veto.stop()
 
         await ctx.send(embed=embed)
-
-async def setup(bot):
-    await bot.add_cog(MapVetoCog(bot))
