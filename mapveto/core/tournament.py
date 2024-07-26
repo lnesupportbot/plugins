@@ -4,10 +4,7 @@ import discord
 from discord.ui import Modal, TextInput, Button, Select, View
 from discord.ext import commands
 
-from .templateveto import veto_config
-
-veto_config = MapVetoConfig()
-vetos = {}
+from templateveto import veto_config
 
 class TournamentConfig:
     def __init__(self, filename="tourney.json"):
@@ -49,7 +46,6 @@ class TournamentConfig:
         return False
 
 tournament_config = TournamentConfig()
-veto_config = MapVetoConfig()
 
 class TournamentCreateModal(Modal):
     def __init__(self, template_name):
@@ -219,7 +215,7 @@ class CreateTournamentButton(Button):
         super().__init__(label="Créer un tournoi", style=discord.ButtonStyle.primary, custom_id="create_tournament")
 
     async def callback(self, interaction: discord.Interaction):
-        templates = list(veto_config.vetos.keys())  # Assurez-vous que veto_config est importé et disponible
+        templates = list(veto_config.vetos.keys())
         if not templates:
             await interaction.response.send_message("Aucun template disponible pour création de tournoi.", ephemeral=True)
             return
