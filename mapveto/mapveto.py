@@ -33,6 +33,9 @@ from .core.tournament import (
     ConfirmTournamentDeleteButton
 )
 
+if TYPE_CHECKING:
+    from bot import ModmailBot
+
 veto_config = MapVetoConfig
 vetos = {}
 
