@@ -21,16 +21,16 @@ from .core.templateveto import (
 )
 
 from .core.tournament import (
-TournamentConfig,
-TournamentCreateModal,
-TournamentEditModal,
-TournamentDeleteButton,
-TournamentCog,
-ListTournamentsButton,
-CreateTournamentButton,
-EditTournamentButton,
-DeleteTournamentButton,
-ConfirmTournamentDeleteButton
+    TournamentConfig,
+    TournamentCreateModal,
+    TournamentEditModal,
+    TournamentDeleteButton,
+    TournamentCog,
+    ListTournamentsButton,
+    CreateTournamentButton,
+    EditTournamentButton,
+    DeleteTournamentButton,
+    ConfirmTournamentDeleteButton
 )
 
 tournament_config = TournamentConfig()
