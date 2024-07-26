@@ -4,7 +4,7 @@ import discord
 from discord.ui import Modal, TextInput, Button, Select, View
 from discord.ext import commands
 
-from .templateveto import MapVetoConfig
+from templateveto import MapVetoConfig
 
 veto_config = MapVetoConfig()
 
@@ -306,6 +306,3 @@ class ConfirmTournamentDeleteButton(Button):
             await interaction.response.send_message(f"Le tournoi '{self.tournament_name}' a été supprimé avec succès.", ephemeral=True)
         else:
             await interaction.response.send_message(f"Erreur lors de la suppression du tournoi '{self.tournament_name}'.", ephemeral=True)
-
-async def setup(bot):
-    await bot.add_cog(TournamentCog(bot))
