@@ -35,8 +35,6 @@ from .core.tournament import (
 )
 
 tournament_config = TournamentConfig()
-veto_config = MapVetoConfig()
-vetos = {}
 
 class MapVetoCog(commands.Cog):
     def __init__(self, bot):
