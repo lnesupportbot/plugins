@@ -203,15 +203,6 @@ class ListTournamentsButton(Button):
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
-class TemplateSelect(Select):
-    def __init__(self, options):
-        super().__init__(placeholder="Choisissez un template pour le tournoi...", options=options)
-
-    async def callback(self, interaction: discord.Interaction):
-        selected_template = self.values[0]
-        modal = TournamentCreateModal(selected_template)
-        await interaction.response.send_modal(modal)
-
 class CreateTournamentButton(Button):
     def __init__(self):
         super().__init__(label="Créer un tournoi", style=discord.ButtonStyle.primary, custom_id="create_tournament")
