@@ -20,6 +20,20 @@ from core.templateveto import (
     ConfirmDeleteButton
 )
 
+from core.tournament import (
+TournamentConfig,
+TournamentCreateModal,
+TournamentEditModal,
+TournamentDeleteButton,
+TournamentCog,
+ListTournamentsButton,
+CreateTournamentButton,
+EditTournamentButton,
+DeleteTournamentButton,
+ConfirmTournamentDeleteButton
+)
+
+tournament_config = TournamentConfig()
 veto_config = MapVetoConfig()
 vetos = {}
 
@@ -148,3 +162,4 @@ class MapVetoCog(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(MapVetoCog(bot))
+    await bot.add_cog(TournamentCog(bot))
