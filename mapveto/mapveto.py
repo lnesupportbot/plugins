@@ -1,4 +1,3 @@
-
 import discord # type: ignore
 from discord.ext import commands # type: ignore
 import asyncio
@@ -296,12 +295,6 @@ class MapVeto:
 
 
 class MapVetoCog(commands.Cog):
-
-    @commands.command(name='mapveto_setup')
-    @commands.has_permissions(administrator=True)
-    async def mapveto_setup(self, ctx):
-        """Crée ou met à jour le message avec les boutons pour gérer les templates de veto."""
-        await TemplateVetoCog.update_setup_message(ctx.channel)
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
