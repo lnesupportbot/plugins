@@ -5,6 +5,7 @@ import asyncio
 import json
 import os
 
+from typing import TYPE_CHECKING
 from core import checks
 from core.models import PermissionLevel # type: ignore
 
