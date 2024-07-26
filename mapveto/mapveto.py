@@ -237,6 +237,103 @@ class VetoEditModal(Modal):
         veto_config.update_veto(self.template_name, maps, rules)
         await interaction.response.send_message(f"Template de veto '{self.template_name}' mis à jour avec succès.", ephemeral=True)
 
+tournament_config = TournamentConfig()
+
+class TeamCreateModal(Modal):
+    def __init__(self, tournament_name):
+        super().__init__(title="Ajouter une Équipe")
+        self.tournament_name = tournament_name
+        self.team_name = TextInput(label="Nom de l'Équipe", placeholder="Entrez le nom de l'équipe")
+        self.add_item(self.team_name)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        team_name = self.team_name.value.strip()
+        if team_config.add_team(self.tournament_name, team_name):
+            await interaction.response.send_message(f"Équipe '{team_name}' ajoutée au tournoi '{self.tournament_name}'.", ephemeral=True)
+        else:
+            await interaction.response.send_message(f"L'équipe '{team_name}' existe déjà dans le tournoi '{self.tournament_name}'.", ephemeral=True)
+
+class TeamEditModal(Modal):
+    def __init__(self, tournament_name, old_team_name):
+        super().__init__(title=f"Modifier l'Équipe '{old_team_name}'")
+        self.tournament_name = tournament_name
+        self.old_team_name = old_team_name
+        self.new_team_name = TextInput(
+            label="Nouveau Nom de l'Équipe",
+            default=old_team_name,
+            placeholder="Entrez le nouveau nom de l'équipe"
+        )
+        self.add_item(self.new_team_name)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        new_team_name = self.new_team_name.value.strip()
+        if not new_team_name:
+            await interaction.response.send_message("Le nom de l'équipe ne peut pas être vide.", ephemeral=True)
+            return
+
+        if team_config.update_team(self.tournament_name, self.old_team_name, new_team_name):
+            await interaction.response.send_message(f"Équipe '{self.old_team_name}' mise à jour en '{new_team_name}'.", ephemeral=True)
+        else:
+            await interaction.response.send_message(f"Échec de la mise à jour de l'équipe '{self.old_team_name}'.", ephemeral=True)
+
+class TeamDeleteButton(Button):
+    def __init__(self, tournament_name, team_name):
+        super().__init__(label=f"Supprimer {team_name}", style=discord.ButtonStyle.danger, custom_id=f"delete_{team_name}")
+        self.tournament_name = tournament_name
+        self.team_name = team_name
+
+    async def callback(self, interaction: discord.Interaction):
+        if team_config.delete_team(self.tournament_name, self.team_name):
+            await interaction.response.send_message(f"Équipe '{self.team_name}' supprimée du tournoi '{self.tournament_name}'.", ephemeral=True)
+        else:
+            await interaction.response.send_message(f"Erreur lors de la suppression de l'équipe '{self.team_name}'.", ephemeral=True)
+
+class TeamConfig:
+    def __init__(self, filename="teams.json"):
+        self.filename = filename
+        self.teams = self.load_teams()
+
+    def load_teams(self):
+        if os.path.exists(self.filename):
+            with open(self.filename, "r") as file:
+                return json.load(file)
+        return {}
+
+    def save_teams(self):
+        with open(self.filename, "w") as file:
+            json.dump(self.teams, file, indent=4)
+
+    def add_team(self, tournament, team_name):
+        if tournament not in self.teams:
+            self.teams[tournament] = []
+        if team_name not in self.teams[tournament]:
+            self.teams[tournament].append(team_name)
+            self.save_teams()
+            return True
+        return False
+
+    def delete_team(self, tournament, team_name):
+        if tournament in self.teams and team_name in self.teams[tournament]:
+            self.teams[tournament].remove(team_name)
+            if not self.teams[tournament]:
+                del self.teams[tournament]
+            self.save_teams()
+            return True
+        return False
+
+    def update_team(self, tournament, old_name, new_name):
+        if tournament in self.teams and old_name in self.teams[tournament]:
+            index = self.teams[tournament].index(old_name)
+            self.teams[tournament][index] = new_name
+            self.save_teams()
+            return True
+        return False
+
+    def get_teams(self, tournament):
+        return self.teams.get(tournament, [])
+
+team_config = TeamConfig()
+
 class MapButton(discord.ui.Button):
     def __init__(self, label, veto_name, action_type, channel):
         super().__init__(label=label, style=discord.ButtonStyle.primary, custom_id=f"{veto_name}_{label}_{action_type}")
@@ -920,6 +1017,44 @@ class ConfirmTournamentDeleteButton(Button):
         else:
             await interaction.response.send_message(f"Erreur lors de la suppression du tournoi '{self.tournament_name}'.", ephemeral=True)
 
+    def __init__(self, bot):
+        self.bot = bot
+
+    @commands.command(name='list_teams')
+    async def list_teams(self, ctx, tournament_name: str):
+        """Liste les équipes pour un tournoi donné."""
+        teams = team_config.get_teams(tournament_name)
+        if not teams:
+            await ctx.send(f"Aucune équipe trouvée pour le tournoi '{tournament_name}'.")
+        else:
+            embed = discord.Embed(
+                title=f"Équipes pour le tournoi '{tournament_name}'",
+                description="\n".join(teams),
+                color=discord.Color.green()
+            )
+            await ctx.send(embed=embed)
+
+    @commands.command(name='add_team')
+    async def add_team(self, ctx, tournament_name: str):
+        """Ajoute une équipe à un tournoi donné."""
+        modal = TeamCreateModal(tournament_name)
+        await ctx.send_modal(modal)
+
+    @commands.command(name='edit_team')
+    async def edit_team(self, ctx, tournament_name: str, old_team_name: str):
+        """Édite le nom d'une équipe existante."""
+        modal = TeamEditModal(tournament_name, old_team_name)
+        await ctx.send_modal(modal)
+
+    @commands.command(name='delete_team')
+    async def delete_team(self, ctx, tournament_name: str, team_name: str):
+        """Supprime une équipe d'un tournoi donné."""
+        if team_config.delete_team(tournament_name, team_name):
+            await ctx.send(f"Équipe '{team_name}' supprimée du tournoi '{tournament_name}'.")
+        else:
+            await ctx.send(f"Erreur lors de la suppression de l'équipe '{team_name}'.")
+
 async def setup(bot):
     await bot.add_cog(MapVetoCog(bot))
+    await bot.add_cog(TournamentCog(bot))
     await bot.add_cog(TournamentCog(bot))
