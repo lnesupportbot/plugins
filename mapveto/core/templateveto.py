@@ -6,7 +6,7 @@ from discord.ext import commands # type: ignore
 
 class MapVetoConfig:
     def __init__(self, filename="vetos.json"):
-        self.filename = filename
+        self.filename = os.path.join(os.path.dirname(__file__), '..', filename)
         self.vetos = self.load_vetos()
 
     def load_vetos(self):
