@@ -23,7 +23,7 @@ class TeamConfig:
 
     def create_team(self, name, tournament_name):
         if name not in self.teams:
-            self.teams[name] = {"template": tournament_name}
+            self.teams[name] = {"tournament": tournament_name}
             self.save_teams()
             return True
         return False
@@ -40,13 +40,17 @@ class TeamConfig:
 
     def update_team(self, name, tournament_name):
         if name in self.teams:
-            self.teams[name]["template"] = tournament_name
+            self.teams[name]["tournament"] = tournament_name
             self.save_teams()
             return True
         return False
         
     def get_teams_by_tournament(self, tournament_name):
-            return {name: data for name, data in self.teams.items() if data["tournament"] == tournament_name}
+        teams = {}
+        for name, data in self.teams.items():
+            if "tournament" in data and data["tournament"] == tournament_name:
+                teams[name] = data
+        return teams
 
 team_config = TeamConfig()
 tournament_config = TournamentConfig()
