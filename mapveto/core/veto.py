@@ -131,6 +131,7 @@ class MapVeto:
         self.participants = [team_a_id, team_b_id]
         self.bot = bot
 
+
     def create_summary_embed(self):
         embed = discord.Embed(title="__**Résumé du Veto**__", color=discord.Color.blue())
 
