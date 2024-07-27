@@ -202,8 +202,8 @@ class CreateTeamButton(Button):
         super().__init__(label="Créer une équipe", style=discord.ButtonStyle.primary, custom_id="create_team")
 
     async def callback(self, interaction: discord.Interaction):
-        tournament_names = list(tournament_config.tournaments.keys())  # Remplacez par la liste réelle des templates si nécessaire
-        if not templates:
+        tournament_names = list(tournament_config.tournaments.keys())  # Remplacez par la liste réelle des tournament_names si nécessaire
+        if not tournament_names:
             await interaction.response.send_message("Aucun template disponible pour création d'équipe.", ephemeral=True)
             return
         
@@ -216,7 +216,7 @@ class CreateTeamButton(Button):
                 modal = TeamCreateModal(selected_tournament)
                 await interaction.response.send_modal(modal)
 
-        select = TournamentSelect([discord.SelectOption(label=name, value=name) for name in templates])
+        select = TournamentSelect([discord.SelectOption(label=name, value=name) for name in tournament_names])
         view = discord.ui.View()
         view.add_item(select)
         await interaction.response.send_message("Veuillez choisir un template pour l'équipe :", view=view, ephemeral=True)
