@@ -40,6 +40,19 @@ class MapVetoCog(commands.Cog):
         self.channel = None
         self.participants = []
 
+    def set_veto_params(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel):
+        self.name = name
+        self.maps = maps[:]
+        self.listmaps = maps[:]
+        self.team_a_id = team_a_id
+        self.team_a_name = team_a_name
+        self.team_b_id = team_b_id
+        self.team_b_name = team_b_name
+        self.rules = rules
+        self.current_turn = team_a_id
+        self.channel = channel
+        self.participants = [team_a_id, team_b_id]
+
     @commands.command(name='mapveto_setup')
     @commands.has_permissions(administrator=True)
     async def mapveto_setup(self, ctx):
@@ -55,19 +68,6 @@ class MapVetoCog(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def tournament_setup(self, ctx):
         await self.teams.update_setup_message(ctx.channel)
-
-    def set_veto_params(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel):
-        self.name = name
-        self.maps = maps[:]
-        self.listmaps = maps[:]
-        self.team_a_id = team_a_id
-        self.team_a_name = team_a_name
-        self.team_b_id = team_b_id
-        self.team_b_name = team_b_name
-        self.rules = rules
-        self.current_turn = team_a_id
-        self.channel = channel
-        self.participants = [team_a_id, team_b_id]
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
