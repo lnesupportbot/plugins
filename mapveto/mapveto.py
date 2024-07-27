@@ -1,3 +1,4 @@
+
 import discord  # type: ignore
 from discord.ext import commands  # type: ignore
 import asyncio
@@ -56,7 +57,6 @@ class MapVetoCog(commands.Cog):
 
         veto = MapVeto(name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, ctx.channel, self.bot)
         vetos[name] = veto
-        print(veto)
 
         await veto.send_ticket_message(ctx.channel)
 
