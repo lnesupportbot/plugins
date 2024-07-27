@@ -16,6 +16,8 @@ class MapButton(discord.ui.Button):
         self.veto_name = veto_name
         self.action_type = action_type
         self.channel = channel
+        self.paused = False
+        self.stopped = False
 
     async def callback(self, interaction: discord.Interaction):
         veto = vetos.get(self.veto_name)
@@ -23,7 +25,7 @@ class MapButton(discord.ui.Button):
             await interaction.response.send_message("Veto non trouvé.", ephemeral=True)
             return
 
-        if MapVeto.pause or MapVeto.stop:
+        if veto.paused or veto.stopped:
             await interaction.response.send_message("Le veto est actuellement en pause ou a été arrêté.", ephemeral=True)
             return
 
