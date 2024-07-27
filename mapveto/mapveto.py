@@ -24,7 +24,7 @@ from .core.tournament import (
     TournamentCreateModal,
     TournamentEditModal,
     TournamentDeleteButton,
-    TournamentCog,
+    Tournament,
     ListTournamentsButton,
     CreateTournamentButton,
     EditTournamentButton,
@@ -298,12 +298,18 @@ class MapVetoCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.template_veto = TemplateVeto(bot)
+        self.tournament = Tournament(bot)
 
     @commands.command(name='mapveto_setup')
     @commands.has_permissions(administrator=True)
     async def mapveto_setup(self, ctx):
         """Crée ou met à jour le message avec les boutons pour gérer les templates de veto."""
         await self.template_veto.update_setup_message(ctx.channel)
+
+    @commands.command(name='tournament_setup')
+    @commands.has_permissions(administrator=True)
+    async def tournament_setup(self, ctx):
+        await self.tournament.update_setup_message(ctx.channel)
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
