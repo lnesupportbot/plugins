@@ -57,7 +57,7 @@ class MapVetoCog(commands.Cog):
         vetos[name] = veto
         print(veto)
 
-        await veto.send_ticket_message(veto, ctx.channel)
+        await veto.send_ticket_message(bot, veto, ctx.channel)
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
