@@ -10,7 +10,7 @@ from core.models import PermissionLevel  # type: ignore
 from .core.templateveto import MapVetoConfig, TemplateManager, vetos
 from .core.tournament import TournamentManager
 from .core.teams import TeamManager
-from .core.veto import MapVeto
+from .core.veto import MapVeto,send_ticket_message
 
 veto_config = MapVetoConfig()
 vetos = {}
