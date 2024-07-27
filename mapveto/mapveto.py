@@ -7,7 +7,7 @@ import os
 from core import checks
 from core.models import PermissionLevel # type: ignore
 
-from .core.templateveto import (
+from .core.templates import (
     MapVetoConfig,
     VetoCreateModal,
     VetoEditModal,
