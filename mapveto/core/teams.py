@@ -68,7 +68,7 @@ class TeamCreateModal(Modal):
         tournament_name = self.tournament_name
 
         if team_config.create_team(team_name, tournament_name):
-            await interaction.response.send_message(f"Équipe '{team_name}' créée avec le template '{tournament_name}'.", ephemeral=True)
+            await interaction.response.send_message(f"Équipe '{team_name}' créée pour le tournoi '{tournament_name}'.", ephemeral=True)
         else:
             await interaction.response.send_message(f"Une équipe avec le nom '{team_name}' existe déjà.", ephemeral=True)
 
@@ -83,9 +83,9 @@ class TeamEditModal(Modal):
             placeholder="Entrez le nom de l'équipe"
         )
         self.template = TextInput(
-            label="Template de l'Équipe",
-            default=team["template"],
-            placeholder="Entrez le nom du template"
+            label="Tournoi rattaché à l'Équipe",
+            default=team["tournament"],
+            placeholder="Entrez le nom du tournoi"
         )
         self.add_item(self.name)
         self.add_item(self.template)
