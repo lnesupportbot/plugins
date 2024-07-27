@@ -15,6 +15,12 @@ class MapButton(discord.ui.Button):
         self.veto_name = veto_name
         self.action_type = action_type
         self.channel = channel
+        self.team_a_id = MapVeto.team_a_id
+        self.team_a_name = MapVeto.team_a_name
+        self.team_b_id = MapVeto.team_b_id
+        self.team_b_name = MapVeto.team_b_name
+        self.current_turn = MapVeto.team_a_id
+        self.current_action = 0
         self.paused = False
         self.stopped = False
 
