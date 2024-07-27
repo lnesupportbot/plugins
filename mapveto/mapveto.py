@@ -22,6 +22,23 @@ class MapVetoCog(commands.Cog):
         self.tournament = TournamentManager(bot)
         self.teams = TeamManager(bot)
         self.veto = MapVeto(bot)
+        self.name = None
+        self.maps = []
+        self.listmaps = []
+        self.team_a_id = None
+        self.team_a_name = None
+        self.team_b_id = None
+        self.team_b_name = None
+        self.rules = None
+        self.current_turn = None
+        self.current_action = 0
+        self.picked_maps = []
+        self.picked_maps_only = []
+        self.banned_maps = []
+        self.paused = False
+        self.stopped = False
+        self.channel = None
+        self.participants = []
 
     @commands.command(name='mapveto_setup')
     @commands.has_permissions(administrator=True)
