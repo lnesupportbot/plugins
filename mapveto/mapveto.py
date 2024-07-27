@@ -13,8 +13,7 @@ from .core.teams import TeamManager
 from .core.veto import MapVeto
 
 veto_config = MapVetoConfig()
-veto_config.load_config('path_to_config_file.json')
-
+veto_config.load_vetos()
 vetos = {}
 
 class MapVetoCog(commands.Cog):
