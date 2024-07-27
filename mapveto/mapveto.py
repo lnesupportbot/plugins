@@ -21,7 +21,7 @@ class MapVetoCog(commands.Cog):
         self.template_veto = TemplateManager(bot)
         self.tournament = TournamentManager(bot)
         self.teams = TeamManager(bot)
-        self.veto = MapVeto(bot)
+        self.veto = MapVeto(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel, bot)
         self.current_veto = None
 
     def set_veto_params(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel):
