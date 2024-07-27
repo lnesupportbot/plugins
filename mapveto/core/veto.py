@@ -15,13 +15,13 @@ class MapButton(discord.ui.Button):
         self.veto_name = veto_name
         self.action_type = action_type
         self.channel = channel
-        self.veto = veto
+        self.veto = veto  # Add the veto object reference
         self.current_action = 0
         self.paused = False
         self.stopped = False
 
     async def callback(self, interaction: discord.Interaction):
-        veto = self.veto
+        veto = self.veto  # Use the passed veto object
         if not veto:
             await interaction.response.send_message("Veto non trouvé.", ephemeral=True)
             return
@@ -30,7 +30,7 @@ class MapButton(discord.ui.Button):
             await interaction.response.send_message("Le veto est actuellement en pause ou a été arrêté.", ephemeral=True)
             return
 
-        if interaction.user.id != veto.current_turn:
+        if interaction.user.id != veto.current_turn:  # Access current_turn from veto
             await interaction.response.send_message("Ce n'est pas votre tour.", ephemeral=True)
             return
 
@@ -53,7 +53,7 @@ class MapButton(discord.ui.Button):
 
         veto.next_turn()
         if veto.current_turn is not None:
-            await MapVeto.send_ticket_message(interaction.client, veto, self.channel)
+            await veto.send_ticket_message(self.channel)  # Correct method call
         else:
             if len(veto.maps) == 1:
                 last_map = veto.maps[0]
@@ -97,47 +97,47 @@ class MapVeto:
         self.bot = bot
         self.channel = channel
 
-async def send_ticket_message(self, channel):
-    action = self.current_action_type()
-    if action is None:
-        return
+    async def send_ticket_message(self, channel):
+        action = self.current_action_type()
+        if action is None:
+            return
 
-    current_user = self.bot.get_user(self.get_current_turn())
-    if not current_user:
-        return
+        current_user = self.bot.get_user(self.get_current_turn())
+        if not current_user:
+            return
 
-    components = []
-    if action == "Side":
-        components.append(MapButton(label="Attaque", veto_name=self.name, action_type="side", channel=channel, veto=self))
-        components.append(MapButton(label="Défense", veto_name=self.name, action_type="side", channel=channel, veto=self))
-    else:
-        for map_name in self.listmaps:
-            button = MapButton(label=map_name, veto_name=self.name, action_type=action.lower(), channel=channel, veto=self)
-            if map_name in self.banned_maps or map_name in self.picked_maps_only:
-                button.disabled = True
-            components.append(button)
-
-    view = discord.ui.View()
-    for component in components:
-        view.add_item(component)
-
-    #team_name = veto.team_a_name if veto.get_current_turn() == veto.team_a_id else veto.team_b_name
-
-    if action == "Side":
-        if len(self.maps) == 1:
-            last_picked_map = self.maps[0]
-            message = f"{current_user.mention}, vous devez choisir votre Side sur **{last_picked_map}**."
+        components = []
+        if action == "Side":
+            components.append(MapButton(label="Attaque", veto_name=self.name, action_type="side", channel=channel, veto=self))
+            components.append(MapButton(label="Défense", veto_name=self.name, action_type="side", channel=channel, veto=self))
         else:
-            # Include the last picked map in the message
-            last_picked_map = self.picked_maps[-1]["map"] if self.picked_maps else "Unknown"
-            message = f"{current_user.mention}, vous devez choisir votre Side sur **{last_picked_map}**."
-    else:
-        message = f"{current_user.mention}, c'est votre tour de {action} une map."
+            for map_name in self.listmaps:
+                button = MapButton(label=map_name, veto_name=self.name, action_type=action.lower(), channel=channel, veto=self)
+                if map_name in self.banned_maps or map_name in self.picked_maps_only:
+                    button.disabled = True
+                components.append(button)
 
-    try:
-        await current_user.send(message, view=view)
-    except discord.Forbidden:
-        print(f"Cannot DM user {current_user.id}")
+        view = discord.ui.View()
+        for component in components:
+            view.add_item(component)
+
+        #team_name = veto.team_a_name if veto.get_current_turn() == veto.team_a_id else veto.team_b_name
+
+        if action == "Side":
+            if len(self.maps) == 1:
+                last_picked_map = self.maps[0]
+                message = f"{current_user.mention}, vous devez choisir votre Side sur **{last_picked_map}**."
+            else:
+                # Include the last picked map in the message
+                last_picked_map = self.picked_maps[-1]["map"] if self.picked_maps else "Unknown"
+                message = f"{current_user.mention}, vous devez choisir votre Side sur **{last_picked_map}**."
+        else:
+            message = f"{current_user.mention}, c'est votre tour de {action} une map."
+
+        try:
+            await current_user.send(message, view=view)
+        except discord.Forbidden:
+            print(f"Cannot DM user {current_user.id}")
 
     def create_summary_embed(self):
         embed = discord.Embed(title="__**Résumé du Veto**__", color=discord.Color.blue())
