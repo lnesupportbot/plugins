@@ -297,7 +297,6 @@ class MapVeto:
 class MapVetoCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.template_veto = TemplateVeto(bot)
 
     @commands.command(name='mapveto_setup')
     @commands.has_permissions(administrator=True)
