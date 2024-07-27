@@ -44,6 +44,9 @@ class TeamConfig:
             self.save_teams()
             return True
         return False
+        
+    def get_teams_by_tournament(self, tournament_name):
+            return {name: data for name, data in self.teams.items() if data["tournament"] == tournament_name}
 
 team_config = TeamConfig()
 tournament_config = TournamentConfig()
@@ -185,17 +188,33 @@ class ListTeamsButton(Button):
         super().__init__(label="Liste des Équipes", style=discord.ButtonStyle.secondary, custom_id="list_teams")
 
     async def callback(self, interaction: discord.Interaction):
-        teams = team_config.teams
-        if not teams:
-            await interaction.response.send_message("Aucune équipe trouvée.", ephemeral=True)
+        tournament_names = list(tournament_config.tournaments.keys())  # Liste des tournois
+        if not tournament_names:
+            await interaction.response.send_message("Aucun tournoi trouvé.", ephemeral=True)
             return
 
-        embed = discord.Embed(
-            title="Liste des Équipes",
-            description="\n".join(f"- {name} (Template: {data['template']})" for name, data in teams.items()),
-            color=discord.Color.green()
-        )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        class TournamentSelect(Select):
+            def __init__(self, options):
+                super().__init__(placeholder="Choisissez un tournoi...", options=options)
+
+            async def callback(self, interaction: discord.Interaction):
+                selected_tournament = self.values[0]
+                teams = team_config.get_teams_by_tournament(selected_tournament)
+                if not teams:
+                    await interaction.response.send_message(f"Aucune équipe trouvée pour le tournoi '{selected_tournament}'.", ephemeral=True)
+                    return
+
+                embed = discord.Embed(
+                    title=f"Équipes pour le Tournoi '{selected_tournament}'",
+                    description="\n".join(f"- {name}" for name in teams.keys()),
+                    color=discord.Color.green()
+                )
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+
+        select = TournamentSelect([discord.SelectOption(label=name, value=name) for name in tournament_names])
+        view = discord.ui.View()
+        view.add_item(select)
+        await interaction.response.send_message("Veuillez choisir un tournoi pour afficher les équipes :", view=view, ephemeral=True)
 
 class CreateTeamButton(Button):
     def __init__(self):
