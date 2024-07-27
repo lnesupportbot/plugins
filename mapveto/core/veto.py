@@ -24,7 +24,7 @@ class MapButton(discord.ui.Button):
             await interaction.response.send_message("Veto non trouvé.", ephemeral=True)
             return
 
-        if MapVeto.pause or MapVeto.stop:
+        if self.paused or self.stopped:
             await interaction.response.send_message("Le veto est actuellement en pause ou a été arrêté.", ephemeral=True)
             return
 
