@@ -15,11 +15,6 @@ class MapButton(discord.ui.Button):
         self.veto_name = veto_name
         self.action_type = action_type
         self.channel = channel
-        self.team_a_id = MapVeto.team_a_id
-        self.team_a_name = MapVeto.team_a_name
-        self.team_b_id = MapVeto.team_b_id
-        self.team_b_name = MapVeto.team_b_name
-        self.current_turn = MapVeto.team_a_id
         self.current_action = 0
         self.paused = False
         self.stopped = False
@@ -34,7 +29,7 @@ class MapButton(discord.ui.Button):
             await interaction.response.send_message("Le veto est actuellement en pause ou a été arrêté.", ephemeral=True)
             return
 
-        if interaction.user.id != MapVeto.get_current_turn(self):
+        if interaction.user.id != self.current_turn:
             await interaction.response.send_message("Ce n'est pas votre tour.", ephemeral=True)
             return
 
