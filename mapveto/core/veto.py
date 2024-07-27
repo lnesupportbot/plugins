@@ -9,7 +9,7 @@ from .templateveto import MapVetoConfig, vetos
 
 veto_config = MapVetoConfig()
 veto_config.load_vetos()
-vetos = {}
+vetos = veto_config.load_vetos()
 print(vetos)
 
 class MapButton(discord.ui.Button):
