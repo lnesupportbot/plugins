@@ -113,7 +113,7 @@ class TournamentDeleteButton(Button):
         else:
             await interaction.response.send_message(f"Erreur lors de la suppression du tournoi '{self.tournament_name}'.", ephemeral=True)
 
-class TournamentCog(commands.Cog):
+class Tournament:
     def __init__(self, bot):
         self.bot = bot
         self.setup_message_id = None
@@ -179,11 +179,6 @@ class TournamentCog(commands.Cog):
         view.add_item(EditTournamentButton())
         view.add_item(DeleteTournamentButton())
         return view
-
-    @commands.command(name='tournament_setup')
-    @commands.has_permissions(administrator=True)
-    async def tournament_setup(self, ctx):
-        await self.update_setup_message(ctx.channel)
 
 class ListTournamentsButton(Button):
     def __init__(self):
@@ -296,6 +291,3 @@ class ConfirmTournamentDeleteButton(Button):
             await interaction.response.send_message(f"Le tournoi '{self.tournament_name}' a été supprimé avec succès.", ephemeral=True)
         else:
             await interaction.response.send_message(f"Erreur lors de la suppression du tournoi '{self.tournament_name}'.", ephemeral=True)
-
-async def setup(bot):
-    await bot.add_cog(TournamentCog(bot))
