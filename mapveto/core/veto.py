@@ -4,7 +4,7 @@ import discord # type: ignore
 from discord.ui import Modal, TextInput, Button, Select, View # type: ignore
 from discord.ext import commands # type: ignore
 
-from .templateveto import MapVetoConfig, selfs
+from .templateveto import MapVetoConfig, vetos
 
 class MapButton(discord.ui.Button):
     def __init__(self, label, self_name, action_type, channel):
