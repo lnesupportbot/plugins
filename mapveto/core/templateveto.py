@@ -124,7 +124,7 @@ class VetoEditModal(Modal):
         veto_config.update_veto(self.template_name, maps, rules)
         await interaction.response.send_message(f"Template de veto '{self.template_name}' mis à jour avec succès.", ephemeral=True)
 
-class TemplateVeto:
+class TemplateManager:
     def __init__(self, bot):
         self.bot = bot
         self.setup_message_id = None
