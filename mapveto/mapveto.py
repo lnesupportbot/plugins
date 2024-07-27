@@ -297,12 +297,13 @@ class MapVeto:
 class MapVetoCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.template_veto = TemplateVeto(bot)
 
     @commands.command(name='mapveto_setup')
     @commands.has_permissions(administrator=True)
     async def mapveto_setup(self, ctx):
         """Crée ou met à jour le message avec les boutons pour gérer les templates de veto."""
-        await TemplateVeto.update_setup_message(self, ctx.channel)
+        await self.template_veto.update_setup_message(ctx.channel)
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
