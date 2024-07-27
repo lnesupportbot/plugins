@@ -21,7 +21,7 @@ class MapVetoCog(commands.Cog):
         self.template_veto = TemplateManager(bot)
         self.tournament = TournamentManager(bot)
         self.teams = TeamManager(bot)
-        self.veto = MapVeto(bot)
+        self.veto = MapVeto(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel, bot)
 
     @commands.command(name='mapveto_setup')
     @commands.has_permissions(administrator=True)
