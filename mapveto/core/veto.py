@@ -1,3 +1,4 @@
+
 import json
 import os
 import discord # type: ignore
@@ -7,7 +8,9 @@ from discord.ext import commands # type: ignore
 from .templateveto import MapVetoConfig, vetos
 
 veto_config = MapVetoConfig()
+veto_config.load_vetos()
 vetos = {}
+print(vetos)
 
 class MapButton(discord.ui.Button):
     def __init__(self, label, veto_name, action_type, channel):
