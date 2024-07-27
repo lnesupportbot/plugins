@@ -16,7 +16,7 @@ from .core.templateveto import (
     EditButton,
     DeleteButton,
     ConfirmDeleteButton,
-    TemplateVetoCog
+    TemplateVeto
 )
 
 from .core.tournament import (
@@ -295,12 +295,15 @@ class MapVeto:
 
 
 class MapVetoCog(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+        self.template_veto = TemplateVeto()
 
     @commands.command(name='mapveto_setup')
     @commands.has_permissions(administrator=True)
     async def mapveto_setup(self, ctx):
         """Crée ou met à jour le message avec les boutons pour gérer les templates de veto."""
-        await self.update_setup_message(self, ctx.channel)
+        await TemplateVeto.update_setup_message(ctx.channel)
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
