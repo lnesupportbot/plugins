@@ -1,4 +1,3 @@
-
 import json
 import os
 import discord # type: ignore
@@ -8,9 +7,7 @@ from discord.ext import commands # type: ignore
 from .templateveto import MapVetoConfig, vetos
 
 veto_config = MapVetoConfig()
-veto_config.load_vetos()
 vetos = veto_config.load_vetos()
-print(vetos)
 
 class MapButton(discord.ui.Button):
     def __init__(self, label, veto_name, action_type, channel):
@@ -25,7 +22,7 @@ class MapButton(discord.ui.Button):
             await interaction.response.send_message("Veto non trouvé.", ephemeral=True)
             return
 
-        if veto.paused or veto.stopped:
+        if MapVeto.paused or MapVeto.stopped:
             await interaction.response.send_message("Le veto est actuellement en pause ou a été arrêté.", ephemeral=True)
             return
 
