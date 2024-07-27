@@ -7,30 +7,12 @@ import os
 from core import checks
 from core.models import PermissionLevel # type: ignore
 
-from .core.templateveto import (
-    MapVetoConfig,
-    VetoCreateModal,
-    VetoEditModal,
-    ListButton,
-    CreateButton,
-    EditButton,
-    DeleteButton,
-    ConfirmDeleteButton,
-    TemplateVeto
-)
+from .core.templateveto import MapVetoConfig, TemplateManager
 
-from .core.tournament import (
-    TournamentConfig,
-    TournamentCreateModal,
-    TournamentEditModal,
-    TournamentDeleteButton,
-    Tournament,
-    ListTournamentsButton,
-    CreateTournamentButton,
-    EditTournamentButton,
-    DeleteTournamentButton,
-    ConfirmTournamentDeleteButton
-)
+from .core.tournament import TournamentManager
+
+from .core.teams import TeamManager
+
 
 veto_config = MapVetoConfig
 vetos = {}
@@ -297,8 +279,9 @@ class MapVeto:
 class MapVetoCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.template_veto = TemplateVeto(bot)
-        self.tournament = Tournament(bot)
+        self.template_veto = TemplateManager(bot)
+        self.tournament = TournamentManager(bot)
+        self.teams = TeamManager(bot)
 
     @commands.command(name='mapveto_setup')
     @commands.has_permissions(administrator=True)
@@ -310,6 +293,11 @@ class MapVetoCog(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def tournament_setup(self, ctx):
         await self.tournament.update_setup_message(ctx.channel)
+
+    @commands.command(name='team_setup')
+    @commands.has_permissions(administrator=True)
+    async def tournament_setup(self, ctx):
+        await self.teams.update_setup_message(ctx.channel)
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
