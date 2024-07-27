@@ -182,7 +182,7 @@ class Tournament:
 
 class ListTournamentsButton(Button):
     def __init__(self):
-        super().__init__(label="Liste des Tournois", style=discord.ButtonStyle.primary, custom_id="list_tournaments")
+        super().__init__(label="Liste des Tournois", style=discord.ButtonStyle.secondary, custom_id="list_tournaments")
 
     async def callback(self, interaction: discord.Interaction):
         tournaments = tournament_config.tournaments
