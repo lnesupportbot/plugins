@@ -1,11 +1,11 @@
-import discord # type: ignore
-from discord.ext import commands # type: ignore
+import discord  # type: ignore
+from discord.ext import commands  # type: ignore
 import asyncio
 import json
 import os
 
 from core import checks
-from core.models import PermissionLevel # type: ignore
+from core.models import PermissionLevel  # type: ignore
 
 from .core.templateveto import MapVetoConfig, TemplateManager
 from .core.tournament import TournamentManager
@@ -16,42 +16,34 @@ veto_config = MapVetoConfig
 vetos = {}
 
 class MapVetoCog(commands.Cog):
-    def __init__(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel, bot):
+    def __init__(self, bot):
         self.bot = bot
         self.template_veto = TemplateManager(bot)
         self.tournament = TournamentManager(bot)
         self.teams = TeamManager(bot)
         self.veto = MapVeto(bot)
-        self.name = None
-        self.maps = []
-        self.listmaps = []
-        self.team_a_id = None
-        self.team_a_name = None
-        self.team_b_id = None
-        self.team_b_name = None
-        self.rules = None
-        self.current_turn = None
-        self.current_action = 0
-        self.picked_maps = []
-        self.picked_maps_only = []
-        self.banned_maps = []
-        self.paused = False
-        self.stopped = False
-        self.channel = None
-        self.participants = []
+        self.current_veto = None
 
     def set_veto_params(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel):
-        self.name = name
-        self.maps = maps[:]
-        self.listmaps = maps[:]
-        self.team_a_id = team_a_id
-        self.team_a_name = team_a_name
-        self.team_b_id = team_b_id
-        self.team_b_name = team_b_name
-        self.rules = rules
-        self.current_turn = team_a_id
-        self.channel = channel
-        self.participants = [team_a_id, team_b_id]
+        self.current_veto = {
+            "name": name,
+            "maps": maps[:],
+            "listmaps": maps[:],
+            "team_a_id": team_a_id,
+            "team_a_name": team_a_name,
+            "team_b_id": team_b_id,
+            "team_b_name": team_b_name,
+            "rules": rules,
+            "current_turn": team_a_id,
+            "current_action": 0,
+            "picked_maps": [],
+            "picked_maps_only": [],
+            "banned_maps": [],
+            "paused": False,
+            "stopped": False,
+            "channel": channel,
+            "participants": [team_a_id, team_b_id]
+        }
 
     @commands.command(name='mapveto_setup')
     @commands.has_permissions(administrator=True)
@@ -66,7 +58,7 @@ class MapVetoCog(commands.Cog):
 
     @commands.command(name='team_setup')
     @commands.has_permissions(administrator=True)
-    async def tournament_setup(self, ctx):
+    async def team_setup(self, ctx):
         await self.teams.update_setup_message(ctx.channel)
 
     @commands.command()
@@ -77,7 +69,7 @@ class MapVetoCog(commands.Cog):
             await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
             return
 
-        veto = MapVeto(self.bot)
+        veto = MapVetoCog(self.bot)
         veto.set_veto_params(name, veto_config.vetos[name]["maps"], team_a_id, team_a_name, team_b_id, team_b_name, veto_config.vetos[name]["rules"], ctx.channel)
         vetos[name] = veto
     
