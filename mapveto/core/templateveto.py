@@ -124,7 +124,7 @@ class VetoEditModal(Modal):
         veto_config.update_veto(self.template_name, maps, rules)
         await interaction.response.send_message(f"Template de veto '{self.template_name}' mis à jour avec succès.", ephemeral=True)
 
-class TemplateVetoCog(commands.Cog):
+class TemplateVeto:
     def __init__(self, bot):
         self.bot = bot
         self.setup_message_id = None
@@ -190,12 +190,6 @@ class TemplateVetoCog(commands.Cog):
         view.add_item(EditButton())
         view.add_item(DeleteButton())
         return view
-
-    @commands.command(name='mapveto_setup')
-    @commands.has_permissions(administrator=True)
-    async def mapveto_setup(self, ctx):
-        """Crée ou met à jour le message avec les boutons pour gérer les templates de veto."""
-        await self.update_setup_message(ctx.channel)
 
 class ListButton(Button):
     def __init__(self):
@@ -302,6 +296,3 @@ class ConfirmDeleteButton(Button):
             await interaction.response.send_message(f"Le template '{self.template_name}' a été supprimé avec succès.", ephemeral=True)
         else:
             await interaction.response.send_message(f"Erreur lors de la suppression du template '{self.template_name}'.", ephemeral=True)
-
-async def setup(bot):
-    await bot.add_cog(TemplateVetoCog(bot))
