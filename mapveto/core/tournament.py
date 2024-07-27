@@ -113,7 +113,7 @@ class TournamentDeleteButton(Button):
         else:
             await interaction.response.send_message(f"Erreur lors de la suppression du tournoi '{self.tournament_name}'.", ephemeral=True)
 
-class Tournament:
+class TournamentManager:
     def __init__(self, bot):
         self.bot = bot
         self.setup_message_id = None
