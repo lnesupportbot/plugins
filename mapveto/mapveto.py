@@ -21,29 +21,10 @@ class MapVetoCog(commands.Cog):
         self.template_veto = TemplateManager(bot)
         self.tournament = TournamentManager(bot)
         self.teams = TeamManager(bot)
-        self.veto = MapVeto(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel, bot)
         self.current_veto = None
 
     def set_veto_params(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel):
-        self.current_veto = {
-            "name": name,
-            "maps": maps[:],
-            "listmaps": maps[:],
-            "team_a_id": team_a_id,
-            "team_a_name": team_a_name,
-            "team_b_id": team_b_id,
-            "team_b_name": team_b_name,
-            "rules": rules,
-            "current_turn": team_a_id,
-            "current_action": 0,
-            "picked_maps": [],
-            "picked_maps_only": [],
-            "banned_maps": [],
-            "paused": False,
-            "stopped": False,
-            "channel": channel,
-            "participants": [team_a_id, team_b_id]
-        }
+        self.current_veto = MapVeto(name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel, self.bot)
 
     @commands.command(name='mapveto_setup')
     @commands.has_permissions(administrator=True)
@@ -69,11 +50,13 @@ class MapVetoCog(commands.Cog):
             await ctx.send(f"Aucun template de veto trouvé avec le nom '{name}'.")
             return
 
-        veto = MapVetoCog(self.bot)
-        veto.set_veto_params(name, veto_config.vetos[name]["maps"], team_a_id, team_a_name, team_b_id, team_b_name, veto_config.vetos[name]["rules"], ctx.channel)
+        maps = veto_config.vetos[name]["maps"]
+        rules = veto_config.vetos[name]["rules"]
+
+        veto = MapVeto(name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, ctx.channel, self.bot)
         vetos[name] = veto
-    
-        await self.veto.send_ticket_message(self.bot, veto, ctx.channel)
+
+        await veto.send_ticket_message(self.bot, veto, ctx.channel)
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
