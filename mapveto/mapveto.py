@@ -12,7 +12,7 @@ from .core.tournament import TournamentManager
 from .core.teams import TeamManager
 from .core.veto import MapVeto
 
-veto_config = MapVetoConfig
+veto_config = MapVetoConfig()
 vetos = {}
 
 class MapVetoCog(commands.Cog):
