@@ -1,3 +1,4 @@
+
 import json
 import os
 import discord # type: ignore
@@ -22,7 +23,7 @@ class MapButton(discord.ui.Button):
             await interaction.response.send_message("Veto non trouvé.", ephemeral=True)
             return
 
-        if MapVeto.paused or MapVeto.stopped:
+        if MapVeto.pause or MapVeto.stop:
             await interaction.response.send_message("Le veto est actuellement en pause ou a été arrêté.", ephemeral=True)
             return
 
