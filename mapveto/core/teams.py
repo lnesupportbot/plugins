@@ -21,9 +21,12 @@ class TeamConfig:
         with open(self.filename, "w") as file:
             json.dump(self.teams, file, indent=4)
 
-    def create_team(self, name, tournament_name):
+    def create_team(self, name, tournament_name, captain_discord_id):
         if name not in self.teams:
-            self.teams[name] = {"tournament": tournament_name}
+            self.teams[name] = {
+                "tournament": tournament_name,
+                "captain_discord_id": captain_discord_id
+            }
             self.save_teams()
             return True
         return False
@@ -38,9 +41,10 @@ class TeamConfig:
     def get_team(self, name):
         return self.teams.get(name, None)
 
-    def update_team(self, name, tournament_name):
+    def update_team(self, name, tournament_name, captain_discord_id):
         if name in self.teams:
             self.teams[name]["tournament"] = tournament_name
+            self.teams[name]["captain_discord_id"] = captain_discord_id
             self.save_teams()
             return True
         return False
@@ -60,15 +64,15 @@ class TeamCreateModal(Modal):
         super().__init__(title="Créer une Équipe")
         self.tournament_name = tournament_name
         self.name = TextInput(label="Nom de l'Équipe", placeholder="Entrez le nom de l'équipe")
-
+        self.captain_discord_id = TextInput(label="Discord ID du Capitaine", placeholder="Entrez le Discord ID du capitaine")
         self.add_item(self.name)
+        self.add_item(self.captain_discord_id)
 
     async def on_submit(self, interaction: discord.Interaction):
-        team_name = self.name.value.strip()
-        tournament_name = self.tournament_name
-
-        if team_config.create_team(team_name, tournament_name):
-            await interaction.response.send_message(f"Équipe '{team_name}' créée pour le tournoi '{tournament_name}'.", ephemeral=True)
+        team_name = self.name.value
+        captain_discord_id = self.captain_discord_id.value
+        if team_config.create_team(team_name, self.tournament_name, captain_discord_id):
+            await interaction.response.send_message(f"L'équipe '{team_name}' a été créée avec succès.", ephemeral=True)
         else:
             await interaction.response.send_message(f"Une équipe avec le nom '{team_name}' existe déjà.", ephemeral=True)
 
@@ -222,17 +226,17 @@ class ListTeamsButton(Button):
 
 class CreateTeamButton(Button):
     def __init__(self):
-        super().__init__(label="Créer une équipe", style=discord.ButtonStyle.primary, custom_id="create_team")
+        super().__init__(label="Créer une nouvelle équipe", style=discord.ButtonStyle.primary, custom_id="create_team")
 
     async def callback(self, interaction: discord.Interaction):
-        tournament_names = list(tournament_config.tournaments.keys())  # Remplacez par la liste réelle des tournament_names si nécessaire
+        tournament_names = list(tournament_config.tournaments.keys())
         if not tournament_names:
-            await interaction.response.send_message("Aucun template disponible pour création d'équipe.", ephemeral=True)
+            await interaction.response.send_message("Aucun tournoi disponible.", ephemeral=True)
             return
-        
+
         class TournamentSelect(Select):
             def __init__(self, options):
-                super().__init__(placeholder="Choisissez un template pour l'équipe...", options=options)
+                super().__init__(placeholder="Choisissez un tournoi...", options=options)
 
             async def callback(self, interaction: discord.Interaction):
                 selected_tournament = self.values[0]
@@ -240,9 +244,9 @@ class CreateTeamButton(Button):
                 await interaction.response.send_modal(modal)
 
         select = TournamentSelect([discord.SelectOption(label=name, value=name) for name in tournament_names])
-        view = discord.ui.View()
+        view = View()
         view.add_item(select)
-        await interaction.response.send_message("Veuillez choisir un template pour l'équipe :", view=view, ephemeral=True)
+        await interaction.response.send_message("Sélectionnez un tournoi pour créer une équipe :", view=view, ephemeral=True)
 
 class EditTeamButton(Button):
     def __init__(self):
