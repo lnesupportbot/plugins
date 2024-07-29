@@ -8,7 +8,7 @@ from .templateveto import MapVetoConfig, veto_config
 
 class TournamentConfig:
     def __init__(self, filename="tourney.json"):
-        self.filename = filename
+        self.filename = os.path.join(os.path.dirname(__file__), '..', filename)
         self.tournaments = self.load_tournaments()
 
     def load_tournaments(self):
