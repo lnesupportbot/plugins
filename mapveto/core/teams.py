@@ -8,7 +8,7 @@ from .tournament import TournamentConfig, tournament_config
 
 class TeamConfig:
     def __init__(self, filename="teams.json"):
-        self.filename = filename
+        self.filename = os.path.join(os.path.dirname(__file__), '..', filename)
         self.teams = self.load_teams()
 
     def load_teams(self):
