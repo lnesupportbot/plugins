@@ -10,12 +10,14 @@ from core import checks
 from core.models import PermissionLevel  # type: ignore
 
 from .core.templateveto import MapVetoConfig, TemplateManager, vetos
-from .core.tournament import TournamentManager
+from .core.tournament import TournamentManager, TournamentConfig
 from .core.teams import TeamManager
 from .core.veto import MapVeto
 
 veto_config = MapVetoConfig()
 veto_config.load_vetos()
+tournament_config = TournamentConfig()
+tournaments = tournament_config.load_tournaments()
 vetos = {}
 
 class MapVetoCog(commands.Cog):
@@ -135,7 +137,6 @@ class TournamentSelectView(View):
 
 class TournamentSelect(Select):
     def __init__(self, bot):
-        tournaments = bot.tournament.get_all_tournaments()  # Assurez-vous que cette méthode existe
         options = [discord.SelectOption(label=t, value=t) for t in tournaments]
         super().__init__(placeholder="Choisissez un tournoi...", options=options)
         self.bot = bot
