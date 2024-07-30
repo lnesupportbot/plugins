@@ -41,8 +41,13 @@ class TeamSelect(Select):
         team_a_id = int(teams[team_a_name]["captain_discord_id"])
         team_b_id = int(teams[team_b_name]["captain_discord_id"])
 
-        maps = veto_config.vetos[self.template_name]["maps"]
-        rules = veto_config.vetos[self.template_name]["rules"]
+        # Obtenez les membres des équipes
+        team_a_member = interaction.guild.get_member(team_a_id)
+        team_b_member = interaction.guild.get_member(team_b_id)
+
+        if not team_a_member or not team_b_member:
+            await interaction.response.send_message("Un ou les deux capitaines ne sont pas trouvés sur le serveur.", ephemeral=True)
+            return
 
         # Appeler la méthode contact pour créer un ticket
         modmail_cog = self.bot.get_cog("Modmail")
@@ -52,15 +57,19 @@ class TeamSelect(Select):
         
         # Crée le ticket avec les capitaines d'équipe
         category = None  # Vous pouvez spécifier une catégorie si besoin
-        users = [interaction.guild.get_member(team_a_id), interaction.guild.get_member(team_b_id)]
-        ticket_channel = await modmail_cog.contact(
+        users = [team_a_member, team_b_member]
+        await modmail_cog.contact(
             users,
             category=category,
             manual_trigger=False
         )
 
         # Démarrer le veto dans le nouveau ticket
-        veto = MapVeto(self.template_name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, ticket_channel, interaction.client)
+        maps = veto_config.vetos[self.template_name]["maps"]
+        rules = veto_config.vetos[self.template_name]["rules"]
+        ticket_channel = interaction.channel  # Le channel du ticket peut être obtenu ici après création du ticket
+
+        veto = MapVeto(self.template_name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, ticket_channel, self.bot)
         vetos[self.template_name] = veto
 
         await veto.send_ticket_message(ticket_channel)
@@ -197,8 +206,12 @@ class MapVetoCog(commands.Cog):
     @commands.command(name='mapveto_button')
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def mapveto_button(self, ctx):
-        """Affiche un embed avec un bouton pour lancer un mapveto."""
-        embed = discord.Embed(title="MapVeto", description="Cliquez sur le bouton pour lancer un mapveto.")
+        """Affiche un embed avec un bouton pour lancer un map veto."""
+        embed = discord.Embed(
+            title="Lancer un MapVeto",
+            description="Cliquez sur le bouton ci-dessous pour lancer un MapVeto.",
+            color=discord.Color.blue()
+        )
         view = View()
         view.add_item(MapVetoButton())
         await ctx.send(embed=embed, view=view)
