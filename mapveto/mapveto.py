@@ -1,4 +1,3 @@
-
 import discord  # type: ignore
 from discord.ext import commands  # type: ignore
 from discord.ui import View, Button, Select # type: ignore
@@ -20,6 +19,13 @@ tournament_config = TournamentConfig()
 tournaments = tournament_config.load_tournaments()
 team_config = TeamConfig()
 vetos = {}
+
+class MapVetoButton(Button):
+    def __init__(self):
+        super().__init__(label="Lancer un MapVeto", style=discord.ButtonStyle.primary)
+
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.send_message("Commande de MapVeto déclenchée!")
 
 class MapVetoCog(commands.Cog):
     def __init__(self, bot):
@@ -99,7 +105,16 @@ class MapVetoCog(commands.Cog):
         veto = vetos[name]
         veto.stop()
 
-        await ctx.send(embed=embed)
+        await ctx.send(f"Le veto '{name}' a été arrêté.")
+
+    @commands.command(name='mapveto_button')
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
+    async def mapveto_button(self, ctx):
+        """Affiche un embed avec un bouton pour lancer un mapveto."""
+        embed = discord.Embed(title="MapVeto", description="Cliquez sur le bouton pour lancer un mapveto.")
+        view = View()
+        view.add_item(MapVetoButton())
+        await ctx.send(embed=embed, view=view)
 
 async def setup(bot):
     await bot.add_cog(MapVetoCog(bot))
