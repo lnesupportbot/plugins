@@ -12,7 +12,7 @@ from .core.tournament import TournamentManager, TournamentConfig
 from .core.teams import TeamManager, TeamConfig
 from .core.veto import MapVeto
 
-# Charger les configurations de veto
+# Charger les configurations
 veto_config = MapVetoConfig()
 veto_config.load_vetos()
 tournament_config = TournamentConfig()
@@ -22,9 +22,10 @@ teams = team_config.load_teams()
 vetos = {}
 
 class TeamSelect(Select):
-    def __init__(self, tournament_name, template_name):
+    def __init__(self, tournament_name, template_name, bot):
         self.template_name = template_name
         self.tournament_name = tournament_name
+        self.bot = bot
 
         tournament_teams = [team for team, details in teams.items() if details["tournament"] == tournament_name]
 
@@ -43,26 +44,20 @@ class TeamSelect(Select):
         maps = veto_config.vetos[self.template_name]["maps"]
         rules = veto_config.vetos[self.template_name]["rules"]
 
-        # Créer un ticket avec les deux capitaines d'équipe
-        await self.create_ticket(interaction, team_a_id, team_b_id, team_a_name, team_b_name, maps, rules)
-
-    async def create_ticket(self, interaction, team_a_id, team_b_id, team_a_name, team_b_name, maps, rules):
-        guild = interaction.guild
-        category = discord.utils.get(guild.categories, name="Tickets")  # Changez cela pour la catégorie appropriée
-
-        if category is None:
-            category = await guild.create_category("Tickets")
-
-        overwrites = {
-            guild.default_role: discord.PermissionOverwrite(read_messages=False),
-            guild.get_member(team_a_id): discord.PermissionOverwrite(read_messages=True),
-            guild.get_member(team_b_id): discord.PermissionOverwrite(read_messages=True),
-            guild.me: discord.PermissionOverwrite(read_messages=True)
-        }
-
-        ticket_channel = await category.create_text_channel(f"ticket-{team_a_name}-vs-{team_b_name}", overwrites=overwrites)
-
-        await ticket_channel.send(f"Ticket créé pour {team_a_name} vs {team_b_name}")
+        # Appeler la méthode contact pour créer un ticket
+        modmail_cog = self.bot.get_cog("Modmail")
+        if modmail_cog is None:
+            await interaction.response.send_message("Le cog Modmail n'est pas chargé.", ephemeral=True)
+            return
+        
+        # Crée le ticket avec les capitaines d'équipe
+        category = None  # Vous pouvez spécifier une catégorie si besoin
+        users = [interaction.guild.get_member(team_a_id), interaction.guild.get_member(team_b_id)]
+        ticket_channel = await modmail_cog.contact(
+            users,
+            category=category,
+            manual_trigger=False
+        )
 
         # Démarrer le veto dans le nouveau ticket
         veto = MapVeto(self.template_name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, ticket_channel, interaction.client)
@@ -71,8 +66,9 @@ class TeamSelect(Select):
         await veto.send_ticket_message(ticket_channel)
 
 class TournamentSelect(Select):
-    def __init__(self, template_name):
+    def __init__(self, template_name, bot):
         self.template_name = template_name
+        self.bot = bot
 
         tournaments_set = {details["tournament"] for details in teams.values()}
         options = [
@@ -84,14 +80,15 @@ class TournamentSelect(Select):
 
     async def callback(self, interaction: discord.Interaction):
         tournament_name = self.values[0]
-        select = TeamSelect(tournament_name, self.template_name)
+        select = TeamSelect(tournament_name, self.template_name, self.bot)
         view = View()
         view.add_item(select)
         await interaction.response.send_message(f"Tournament choisi: {tournament_name}", view=view)
 
 
 class TemplateSelect(Select):
-    def __init__(self):
+    def __init__(self, bot):
+        self.bot = bot
         options = [
             discord.SelectOption(label=template, description=f"Template {template}")
             for template in veto_config.vetos.keys()
@@ -100,7 +97,7 @@ class TemplateSelect(Select):
 
     async def callback(self, interaction: discord.Interaction):
         template_name = self.values[0]
-        select = TournamentSelect(template_name)
+        select = TournamentSelect(template_name, self.bot)
         view = View()
         view.add_item(select)
         await interaction.response.send_message(f"Template choisi: {template_name}", view=view)
@@ -111,7 +108,7 @@ class MapVetoButton(Button):
         super().__init__(label="Lancer un MapVeto", style=discord.ButtonStyle.primary)
 
     async def callback(self, interaction: discord.Interaction):
-        select = TemplateSelect()
+        select = TemplateSelect(interaction.client)
         view = View()
         view.add_item(select)
         await interaction.response.send_message("Choisissez un template de veto:", view=view)
