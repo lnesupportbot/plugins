@@ -1,7 +1,6 @@
 import discord  # type: ignore
 from discord.ext import commands  # type: ignore
-from discord.ui import View, Button, Select # type: ignore
-import asyncio
+from discord.ui import View, Button, Select  # type: ignore
 import json
 import os
 
@@ -13,19 +12,90 @@ from .core.tournament import TournamentManager, TournamentConfig
 from .core.teams import TeamManager, TeamConfig
 from .core.veto import MapVeto
 
+# Charger les configurations de veto
 veto_config = MapVetoConfig()
 veto_config.load_vetos()
 tournament_config = TournamentConfig()
 tournaments = tournament_config.load_tournaments()
 team_config = TeamConfig()
+teams = team_config.load_teams()
 vetos = {}
+
+
+class TeamSelect(Select):
+    def __init__(self, tournament_name, template_name):
+        self.template_name = template_name
+        self.tournament_name = tournament_name
+
+        tournament_teams = [team for team, details in teams.items() if details["tournament"] == tournament_name]
+
+        options = [
+            discord.SelectOption(label=team, description=f"Team {team}", value=team)
+            for team in tournament_teams
+        ]
+
+        super().__init__(placeholder="Choisir deux équipes...", min_values=2, max_values=2, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        team_a_name, team_b_name = self.values
+        team_a_id = int(teams[team_a_name]["captain_discord_id"])
+        team_b_id = int(teams[team_b_name]["captain_discord_id"])
+
+        maps = veto_config.vetos[self.template_name]["maps"]
+        rules = veto_config.vetos[self.template_name]["rules"]
+
+        veto = MapVeto(self.template_name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, interaction.channel, interaction.client)
+        vetos[self.template_name] = veto
+
+        await veto.send_ticket_message(interaction.channel)
+
+
+class TournamentSelect(Select):
+    def __init__(self, template_name):
+        self.template_name = template_name
+
+        tournaments_set = {details["tournament"] for details in teams.values()}
+        options = [
+            discord.SelectOption(label=tournament, description=f"Tournament {tournament}")
+            for tournament in tournaments_set
+        ]
+
+        super().__init__(placeholder="Choisir un tournoi...", min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        tournament_name = self.values[0]
+        select = TeamSelect(tournament_name, self.template_name)
+        view = View()
+        view.add_item(select)
+        await interaction.response.send_message(f"Tournament choisi: {tournament_name}", view=view)
+
+
+class TemplateSelect(Select):
+    def __init__(self):
+        options = [
+            discord.SelectOption(label=template, description=f"Template {template}")
+            for template in veto_config.vetos.keys()
+        ]
+        super().__init__(placeholder="Choisir un template de veto...", min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        template_name = self.values[0]
+        select = TournamentSelect(template_name)
+        view = View()
+        view.add_item(select)
+        await interaction.response.send_message(f"Template choisi: {template_name}", view=view)
+
 
 class MapVetoButton(Button):
     def __init__(self):
         super().__init__(label="Lancer un MapVeto", style=discord.ButtonStyle.primary)
 
     async def callback(self, interaction: discord.Interaction):
-        await interaction.response.send_message("Commande de MapVeto déclenchée!")
+        select = TemplateSelect()
+        view = View()
+        view.add_item(select)
+        await interaction.response.send_message("Choisissez un template de veto:", view=view)
+
 
 class MapVetoCog(commands.Cog):
     def __init__(self, bot):
@@ -115,6 +185,7 @@ class MapVetoCog(commands.Cog):
         view = View()
         view.add_item(MapVetoButton())
         await ctx.send(embed=embed, view=view)
+
 
 async def setup(bot):
     await bot.add_cog(MapVetoCog(bot))
