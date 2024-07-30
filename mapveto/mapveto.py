@@ -21,7 +21,6 @@ team_config = TeamConfig()
 teams = team_config.load_teams()
 vetos = {}
 
-
 class TeamSelect(Select):
     def __init__(self, tournament_name, template_name):
         self.template_name = template_name
@@ -44,11 +43,32 @@ class TeamSelect(Select):
         maps = veto_config.vetos[self.template_name]["maps"]
         rules = veto_config.vetos[self.template_name]["rules"]
 
-        veto = MapVeto(self.template_name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, interaction.channel, interaction.client)
+        # Créer un ticket avec les deux capitaines d'équipe
+        await self.create_ticket(interaction, team_a_id, team_b_id, team_a_name, team_b_name, maps, rules)
+
+    async def create_ticket(self, interaction, team_a_id, team_b_id, team_a_name, team_b_name, maps, rules):
+        guild = interaction.guild
+        category = discord.utils.get(guild.categories, name="Tickets")  # Changez cela pour la catégorie appropriée
+
+        if category is None:
+            category = await guild.create_category("Tickets")
+
+        overwrites = {
+            guild.default_role: discord.PermissionOverwrite(read_messages=False),
+            guild.get_member(team_a_id): discord.PermissionOverwrite(read_messages=True),
+            guild.get_member(team_b_id): discord.PermissionOverwrite(read_messages=True),
+            guild.me: discord.PermissionOverwrite(read_messages=True)
+        }
+
+        ticket_channel = await category.create_text_channel(f"ticket-{team_a_name}-vs-{team_b_name}", overwrites=overwrites)
+
+        await ticket_channel.send(f"Ticket créé pour {team_a_name} vs {team_b_name}")
+
+        # Démarrer le veto dans le nouveau ticket
+        veto = MapVeto(self.template_name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, ticket_channel, interaction.client)
         vetos[self.template_name] = veto
 
-        await veto.send_ticket_message(interaction.channel)
-
+        await veto.send_ticket_message(ticket_channel)
 
 class TournamentSelect(Select):
     def __init__(self, template_name):
