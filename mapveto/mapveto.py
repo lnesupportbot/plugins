@@ -38,8 +38,15 @@ class TeamSelect(Select):
 
     async def callback(self, interaction: discord.Interaction):
         team_a_name, team_b_name = self.values
-        team_a_id = int(teams[team_a_name]["captain_discord_id"])
-        team_b_id = int(teams[team_b_name]["captain_discord_id"])
+        team_a_details = teams.get(team_a_name)
+        team_b_details = teams.get(team_b_name)
+
+        if not team_a_details or not team_b_details:
+            await interaction.response.send_message("Une ou les deux équipes sélectionnées ne sont pas trouvées.", ephemeral=True)
+            return
+
+        team_a_id = int(team_a_details["captain_discord_id"])
+        team_b_id = int(team_b_details["captain_discord_id"])
 
         # Obtenez les membres des équipes
         team_a_member = interaction.guild.get_member(team_a_id)
@@ -54,7 +61,7 @@ class TeamSelect(Select):
         if modmail_cog is None:
             await interaction.response.send_message("Le cog Modmail n'est pas chargé.", ephemeral=True)
             return
-        
+
         # Crée le ticket avec les capitaines d'équipe
         category = None  # Vous pouvez spécifier une catégorie si besoin
         users = [team_a_member, team_b_member]
@@ -206,7 +213,7 @@ class MapVetoCog(commands.Cog):
     @commands.command(name='mapveto_button')
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def mapveto_button(self, ctx):
-        """Affiche un embed avec un bouton pour lancer un map veto."""
+        """Envoie un message avec un bouton pour lancer un MapVeto."""
         embed = discord.Embed(
             title="Lancer un MapVeto",
             description="Cliquez sur le bouton ci-dessous pour lancer un MapVeto.",
