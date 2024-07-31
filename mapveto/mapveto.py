@@ -12,7 +12,6 @@ from .core.templateveto import MapVetoConfig, TemplateManager, vetos
 from .core.tournament import TournamentManager, TournamentConfig
 from .core.teams import TeamManager, TeamConfig
 from .core.veto import MapVeto
-from .cogs.modmail import Modmail
 
 # Charger les configurations
 veto_config = MapVetoConfig()
