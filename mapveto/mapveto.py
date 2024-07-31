@@ -80,22 +80,29 @@ class TeamSelect(Select):
         # Créez un contexte factice pour appeler la commande `contact`
         fake_context = await self.bot.get_context(interaction.message)
 
-        await modmail_cog.contact(
+        # Créer le thread
+        thread = await modmail_cog.contact(
             fake_context,  # passez le contexte de commande factice
             users,
             category=category,
             manual_trigger=False
         )
 
+        if not thread or not thread.channel:
+            await interaction.response.send_message("Erreur lors de la création du thread.", ephemeral=True)
+            return
+
+        ticket_channel = thread.channel  # Obtenir le canal du thread créé
+
         # Démarrer le veto dans le nouveau ticket
         maps = veto_config.vetos[self.template_name]["maps"]
         rules = veto_config.vetos[self.template_name]["rules"]
-        ticket_channel = interaction.channel  # Le channel du ticket peut être obtenu ici après création du ticket
 
         veto = MapVeto(self.template_name, maps, team_a_user.id, team_a_name, team_b_user.id, team_b_name, rules, ticket_channel, self.bot)
         vetos[self.template_name] = veto
 
         await veto.send_ticket_message(ticket_channel)
+
 class TournamentSelect(Select):
     def __init__(self, template_name, bot):
         self.template_name = template_name
