@@ -1,3 +1,4 @@
+
 import discord  # type: ignore
 from discord.ext import commands  # type: ignore
 from discord.ui import View, Button, Select  # type: ignore
@@ -11,6 +12,7 @@ from .core.templateveto import MapVetoConfig, TemplateManager, vetos
 from .core.tournament import TournamentManager, TournamentConfig
 from .core.teams import TeamManager, TeamConfig
 from .core.veto import MapVeto
+from .cogs.modmail import Modmail
 
 # Charger les configurations
 veto_config = MapVetoConfig()
@@ -38,19 +40,14 @@ class TeamSelect(Select):
 
     async def callback(self, interaction: discord.Interaction):
         team_a_name, team_b_name = self.values
-        team_a_details = teams.get(team_a_name)
-        team_b_details = teams.get(team_b_name)
-
-        if not team_a_details or not team_b_details:
-            await interaction.response.send_message("Une ou les deux équipes sélectionnées ne sont pas trouvées.", ephemeral=True)
-            return
-
-        team_a_id = int(team_a_details["captain_discord_id"])
-        team_b_id = int(team_b_details["captain_discord_id"])
+        team_a_id = int(teams[team_a_name]["captain_discord_id"])
+        team_b_id = int(teams[team_b_name]["captain_discord_id"])
 
         # Obtenez les membres des équipes
         team_a_member = interaction.guild.get_member(team_a_id)
         team_b_member = interaction.guild.get_member(team_b_id)
+        print(team_a_id)
+        print(team_a_member)
 
         if not team_a_member or not team_b_member:
             await interaction.response.send_message("Un ou les deux capitaines ne sont pas trouvés sur le serveur.", ephemeral=True)
@@ -61,10 +58,11 @@ class TeamSelect(Select):
         if modmail_cog is None:
             await interaction.response.send_message("Le cog Modmail n'est pas chargé.", ephemeral=True)
             return
-
+        
         # Crée le ticket avec les capitaines d'équipe
         category = None  # Vous pouvez spécifier une catégorie si besoin
-        users = [team_a_member, team_b_member]
+        user = [team_a_member, team_b_member]
+        users = user
         await modmail_cog.contact(
             users,
             category=category,
@@ -213,7 +211,7 @@ class MapVetoCog(commands.Cog):
     @commands.command(name='mapveto_button')
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def mapveto_button(self, ctx):
-        """Envoie un message avec un bouton pour lancer un MapVeto."""
+        """Affiche un embed avec un bouton pour lancer un map veto."""
         embed = discord.Embed(
             title="Lancer un MapVeto",
             description="Cliquez sur le bouton ci-dessous pour lancer un MapVeto.",
