@@ -54,10 +54,23 @@ class TeamSelect(Select):
             await interaction.response.send_message("Un ou les deux capitaines ne sont pas trouvés sur le serveur.", ephemeral=True)
             return
 
-        # Appeler la méthode contact pour créer un ticket
+        # Vérifier si des threads existent déjà pour les utilisateurs
+        errors = []
         modmail_cog = self.bot.get_cog("Modmail")
-        if (modmail_cog is None):
+        if modmail_cog is None:
             await interaction.response.send_message("Le cog Modmail n'est pas chargé.", ephemeral=True)
+            return
+
+        existing_thread_a = await self.bot.threads.find(recipient=team_a_user)
+        existing_thread_b = await self.bot.threads.find(recipient=team_b_user)
+
+        if existing_thread_a:
+            errors.append(f"Un thread pour {team_a_user.name} existe déjà.")
+        if existing_thread_b:
+            errors.append(f"Un thread pour {team_b_user.name} existe déjà.")
+
+        if errors:
+            await interaction.response.send_message("\n".join(errors), ephemeral=True)
             return
 
         # Crée le ticket avec les capitaines d'équipe
