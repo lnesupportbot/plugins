@@ -175,7 +175,7 @@ class TemplateSelect(Select):
         options = [
             discord.SelectOption(
                 label=template, 
-                description=f"Règles: {veto_config.vetos[template]['rules']}",
+                description=f"{veto_config.vetos[template]['rules']}",
                 value=template
             )
             for template in veto_config.vetos.keys()
