@@ -163,13 +163,17 @@ class TournamentSelect(Select):
         select = TeamSelect(tournament_name, self.template_name, self.bot)
         view = View()
         view.add_item(select)
-        await interaction.response.send_message(f"Tournament choisi: {tournament_name}", view=view)
+        await interaction.response.send_message(f"Tournament choisi: {tournament_name}", view=view, ephemeral=True)
 
 class TemplateSelect(Select):
     def __init__(self, bot):
         self.bot = bot
         options = [
-            discord.SelectOption(label=template, description=f"Template {template}")
+            discord.SelectOption(
+                label=template, 
+                description=f"Règles: {veto_config.vetos[template]['rules']}",
+                value=template
+            )
             for template in veto_config.vetos.keys()
         ]
         super().__init__(placeholder="Choisir un template de veto...", min_values=1, max_values=1, options=options)
@@ -179,7 +183,7 @@ class TemplateSelect(Select):
         select = TournamentSelect(template_name, self.bot)
         view = View()
         view.add_item(select)
-        await interaction.response.send_message(f"Template choisi: {template_name}", view=view)
+        await interaction.response.send_message(f"Template choisi: {template_name}", view=view, ephemeral=True)
 
 class MapVetoButton(Button):
     def __init__(self):
@@ -189,29 +193,7 @@ class MapVetoButton(Button):
         select = TemplateSelect(interaction.client)
         view = View()
         view.add_item(select)
-        await interaction.response.send_message("Choisissez un template de veto:", view=view)
-
-class MapVetoCog(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-        self.template_veto = TemplateManager(bot)
-        self.tournament = TournamentManager(bot)
-        self.teams = TeamManager(bot)
-        self.current_veto = None
-
-    def set_veto_params(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel):
-        self.current_veto = MapVeto(name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel, self.bot)
-
-class MapVetoButton(Button):
-    def __init__(self):
-        super().__init__(label="Lancer un MapVeto", style=discord.ButtonStyle.primary)
-
-    async def callback(self, interaction: discord.Interaction):
-        select = TemplateSelect(interaction.client)
-        view = View()
-        view.add_item(select)
-        await interaction.response.send_message("Choisissez un template de veto:", view=view)
-
+        await interaction.response.send_message("Choisissez un template de veto:", view=view, ephemeral=True) 
 
 class MapVetoCog(commands.Cog):
     def __init__(self, bot):
