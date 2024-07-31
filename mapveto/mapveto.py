@@ -38,6 +38,7 @@ class TeamSelect(Select):
         super().__init__(placeholder="Choisir deux équipes...", min_values=2, max_values=2, options=options)
 
     async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: discord.Interaction):
         team_a_name, team_b_name = self.values
         team_a_id = int(teams[team_a_name]["captain_discord_id"])
         team_b_id = int(teams[team_b_name]["captain_discord_id"])
@@ -47,11 +48,10 @@ class TeamSelect(Select):
             return
 
         # Récupérer les objets utilisateur à partir des IDs
-        guild = interaction.guild
-        team_a_member = await guild.fetch_member(team_a_id)
-        team_b_member = await guild.fetch_member(team_b_id)
+        team_a_user = await self.bot.fetch_user(team_a_id)
+        team_b_user = await self.bot.fetch_user(team_b_id)
 
-        if not team_a_member or not team_b_member:
+        if not team_a_user or not team_b_user:
             await interaction.response.send_message("Un ou les deux capitaines ne sont pas trouvés sur le serveur.", ephemeral=True)
             return
 
@@ -63,7 +63,7 @@ class TeamSelect(Select):
 
         # Crée le ticket avec les capitaines d'équipe
         category = None  # Vous pouvez spécifier une catégorie si besoin
-        users = [team_a_member, team_b_member]
+        users = [team_a_user, team_b_user]
 
         # Créez un contexte factice pour appeler la commande `contact`
         fake_context = await self.bot.get_context(interaction.message)
@@ -80,7 +80,7 @@ class TeamSelect(Select):
         rules = veto_config.vetos[self.template_name]["rules"]
         ticket_channel = interaction.channel  # Le channel du ticket peut être obtenu ici après création du ticket
 
-        veto = MapVeto(self.template_name, maps, team_a_member.id, team_a_name, team_b_member.id, team_b_name, rules, ticket_channel, self.bot)
+        veto = MapVeto(self.template_name, maps, team_a_user.id, team_a_name, team_b_user.id, team_b_name, rules, ticket_channel, self.bot)
         vetos[self.template_name] = veto
 
         await veto.send_ticket_message(ticket_channel)
