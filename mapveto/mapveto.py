@@ -22,6 +22,39 @@ team_config = TeamConfig()
 teams = team_config.load_teams()
 vetos = {}
 
+class SelectTeamForMapVeto(Select):
+    def __init__(self, team_a_name, team_b_name, template_name, bot):
+        self.template_name = template_name
+        self.team_a_name = team_a_name
+        self.team_b_name = team_b_name
+        self.bot = bot
+
+        options = [
+            discord.SelectOption(label=team_a_name, description=f"{team_a_name} commence", value=team_a_name),
+            discord.SelectOption(label=team_b_name, description=f"{team_b_name} commence", value=team_b_name),
+        ]
+
+        super().__init__(placeholder="Choisir l'équipe qui commence...", min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        starting_team = self.values[0]
+        other_team = self.team_b_name if starting_team == self.team_a_name else self.team_a_name
+
+        # Obtenir les IDs des capitaines des équipes
+        starting_team_id = int(teams[starting_team]["captain_discord_id"])
+        other_team_id = int(teams[other_team]["captain_discord_id"])
+
+        maps = veto_config.vetos[self.template_name]["maps"]
+        rules = veto_config.vetos[self.template_name]["rules"]
+        ticket_channel = interaction.channel
+
+        veto = MapVeto(self.template_name, maps, starting_team_id, starting_team, other_team_id, other_team, rules, ticket_channel, self.bot)
+        vetos[self.template_name] = veto
+
+        await interaction.response.send_message(f"Le Map Veto commence avec {starting_team} contre {other_team}.", ephemeral=True)
+        await veto.send_ticket_message(ticket_channel)
+
+
 class TeamSelect(Select):
     def __init__(self, tournament_name, template_name, bot):
         self.template_name = template_name
@@ -100,52 +133,18 @@ class TeamSelect(Select):
 
         ticket_channel = thread.channel  # Obtenir le canal du thread créé
 
-        # Démarrer le veto dans le nouveau ticket
-        maps = veto_config.vetos[self.template_name]["maps"]
-        rules = veto_config.vetos[self.template_name]["rules"]
+        # Envoyer l'embed avec la liste déroulante et le bouton dans le thread
+        embed = discord.Embed(
+            title="Sélection de l'équipe qui commence le MapVeto",
+            description=f"Veuillez choisir quelle équipe commence le MapVeto :",
+            color=discord.Color.blue()
+        )
 
-        veto = MapVeto(self.template_name, maps, team_a_user.id, team_a_name, team_b_user.id, team_b_name, rules, ticket_channel, self.bot)
-        vetos[self.template_name] = veto
-
-        await veto.send_ticket_message(ticket_channel)
-
-class TournamentSelect(Select):
-    def __init__(self, template_name, bot):
-        self.template_name = template_name
-        self.bot = bot
-
-        tournaments_set = {details["tournament"] for details in teams.values()}
-        options = [
-            discord.SelectOption(label=tournament, description=f"Tournament {tournament}")
-            for tournament in tournaments_set
-        ]
-
-        super().__init__(placeholder="Choisir un tournoi...", min_values=1, max_values=1, options=options)
-
-    async def callback(self, interaction: discord.Interaction):
-        tournament_name = self.values[0]
-        select = TeamSelect(tournament_name, self.template_name, self.bot)
+        select = SelectTeamForMapVeto(team_a_name, team_b_name, self.template_name, self.bot)
         view = View()
         view.add_item(select)
-        await interaction.response.send_message(f"Tournament choisi: {tournament_name}", view=view)
 
-
-class TemplateSelect(Select):
-    def __init__(self, bot):
-        self.bot = bot
-        options = [
-            discord.SelectOption(label=template, description=f"Template {template}")
-            for template in veto_config.vetos.keys()
-        ]
-        super().__init__(placeholder="Choisir un template de veto...", min_values=1, max_values=1, options=options)
-
-    async def callback(self, interaction: discord.Interaction):
-        template_name = self.values[0]
-        select = TournamentSelect(template_name, self.bot)
-        view = View()
-        view.add_item(select)
-        await interaction.response.send_message(f"Template choisi: {template_name}", view=view)
-
+        await ticket_channel.send(embed=embed, view=view)
 
 class MapVetoButton(Button):
     def __init__(self):
