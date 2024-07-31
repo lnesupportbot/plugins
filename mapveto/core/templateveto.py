@@ -151,7 +151,7 @@ class TemplateManager:
             await self.send_setup_message(channel)
 
     async def send_setup_message(self, channel):
-        message = await channel.send(embed=self.create_setup_embed(), view=self.create_setup_view(), timeout=None)
+        message = await channel.send(embed=self.create_setup_embed(), view=self.create_setup_view())
         self.setup_message_id = message.id
         self.save_setup_message_id(message.id)
 
@@ -184,7 +184,7 @@ class TemplateManager:
         return embed
 
     def create_setup_view(self):
-        view = discord.ui.View()
+        view = discord.ui.View(timeout=None)
         view.add_item(ListButton())
         view.add_item(CreateButton())
         view.add_item(EditButton())
