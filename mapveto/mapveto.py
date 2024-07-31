@@ -42,13 +42,7 @@ class TeamSelect(Select):
         team_a_id = int(teams[team_a_name]["captain_discord_id"])
         team_b_id = int(teams[team_b_name]["captain_discord_id"])
 
-        # Obtenez les membres des équipes
-        team_a_member = interaction.guild.get_member(team_a_id)
-        team_b_member = interaction.guild.get_member(team_b_id)
-        print(team_a_id)
-        print(team_a_member)
-
-        if not team_a_member or not team_b_member:
+        if not team_a_id or not team_b_id:
             await interaction.response.send_message("Un ou les deux capitaines ne sont pas trouvés sur le serveur.", ephemeral=True)
             return
 
@@ -57,12 +51,16 @@ class TeamSelect(Select):
         if modmail_cog is None:
             await interaction.response.send_message("Le cog Modmail n'est pas chargé.", ephemeral=True)
             return
-        
+
         # Crée le ticket avec les capitaines d'équipe
         category = None  # Vous pouvez spécifier une catégorie si besoin
-        user = [team_a_id, team_b_id]
-        users = user
+        users = [team_a_id, team_b_id]
+
+        # Créez un contexte factice pour appeler la commande `contact`
+        fake_context = await self.bot.get_context(interaction.message)
+
         await modmail_cog.contact(
+            fake_context,  # passez le contexte de commande factice
             users,
             category=category,
             manual_trigger=False
