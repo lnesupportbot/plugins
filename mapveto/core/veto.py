@@ -4,7 +4,7 @@ import discord # type: ignore
 from discord.ui import Modal, TextInput, Button, Select, View # type: ignore
 from discord.ext import commands # type: ignore
 
-from .templateveto import MapVetoConfig, vetos
+from .templateveto import MapVetoConfig
 
 veto_config = MapVetoConfig()
 vetos = veto_config.load_vetos()
@@ -117,7 +117,7 @@ class MapVeto:
                     button.disabled = True
                 components.append(button)
 
-        view = discord.ui.View()
+        view = discord.ui.View(timeout=None)
         for component in components:
             view.add_item(component)
 
@@ -186,7 +186,6 @@ class MapVeto:
         if self.current_action < len(self.rules):
             return self.rules[self.current_action]
         return None
-        pass
 
     def get_current_turn(self):
         return self.current_turn
