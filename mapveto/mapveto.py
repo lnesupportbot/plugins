@@ -61,14 +61,19 @@ class TeamSelect(Select):
         self.bot = bot
 
         tournament_teams = [team for team, details in teams.items() if details["tournament"] == tournament_name]
-        teams_users = tournament_teams[teams]['captain_discord_id']
-
-        options = [
-            discord.SelectOption(label=team, description=f"Team {teams_users}", value=team)
-            for team in tournament_teams
-        ]
+        
+        options = []
+        for team in tournament_teams:
+            captain_id = int(teams[team]["captain_discord_id"])
+            captain_user = self.bot.get_user(captain_id)
+            if captain_user:
+                description = f"Capitaine : {captain_user.name}"
+            else:
+                description = "Capitaine non trouvé"
+            options.append(discord.SelectOption(label=team, description=description, value=team))
 
         super().__init__(placeholder="Choisir deux équipes...", min_values=2, max_values=2, options=options)
+
 
     async def callback(self, interaction: discord.Interaction):
         team_a_name, team_b_name = self.values
