@@ -88,6 +88,9 @@ class TeamSelect(Select):
             manual_trigger=False
         )
 
+        # Attendre que le thread soit prêt
+        await thread.wait_until_ready()
+
         if not thread or not thread.channel:
             await interaction.response.send_message("Erreur lors de la création du thread.", ephemeral=True)
             return
