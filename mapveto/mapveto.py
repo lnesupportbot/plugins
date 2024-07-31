@@ -34,7 +34,7 @@ class SelectTeamForMapVeto(Select):
             discord.SelectOption(label=team_b_name, description=f"{team_b_name} commence", value=team_b_name),
         ]
 
-        super().__init__(placeholder="Choisir l'équipe qui commence...", min_values=1, max_values=1, options=options)
+        super().__init__(placeholder="Choisir l'équipe qui commence...", min_values=1, max_values=1, options=options, timeout=None)
 
     async def callback(self, interaction: discord.Interaction):
         starting_team = self.values[0]
@@ -63,8 +63,12 @@ class TeamSelect(Select):
         tournament_teams = [team for team, details in teams.items() if details["tournament"] == tournament_name]
 
         options = [
-            discord.SelectOption(label=team, description=f"Team {team}", value=team)
-            for team in tournament_teams
+            discord.SelectOption(
+                label=team, 
+                description=f"Capitaine : {self.bot.get_user(details['captain_discord_id']).name}" if details['captain_discord_id'] else "Capitaine non trouvé",
+                value=team
+            )
+            for team, details in teams.items() if details["tournament"] == tournament_name
         ]
 
         super().__init__(placeholder="Choisir deux équipes...", min_values=2, max_values=2, options=options)
@@ -286,8 +290,7 @@ class MapVetoCog(commands.Cog):
         )
         view = View()
         view.add_item(MapVetoButton())
-        await ctx.send(embed=embed, view=view)
-
+        await ctx.send(embed=embed, view=view, timeout=None)
 
 async def setup(bot):
     await bot.add_cog(MapVetoCog(bot))
