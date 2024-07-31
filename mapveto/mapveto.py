@@ -195,7 +195,7 @@ class MapVetoButton(Button):
 
     async def callback(self, interaction: discord.Interaction):
         select = TemplateSelect(interaction.client)
-        view = View()
+        view = View(timeout=None)
         view.add_item(select)
         await interaction.response.send_message("Choisissez un template de veto:", view=view, ephemeral=True) 
 
