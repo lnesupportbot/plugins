@@ -81,15 +81,18 @@ class TeamSelect(Select):
         fake_context = await self.bot.get_context(interaction.message)
 
         # Créer le thread
-        thread = await modmail_cog.contact(
+        await modmail_cog.contact(
             fake_context,  # passez le contexte de commande factice
             users,
             category=category,
             manual_trigger=False
         )
 
-        # Attendre que le thread soit prêt
-        await thread.wait_until_ready()
+        # Pause explicite pour attendre la création complète du thread
+        await asyncio.sleep(2)
+
+        # Trouver le thread pour s'assurer qu'il est prêt
+        thread = await self.bot.threads.find(recipient=team_a_user)
 
         if not thread or not thread.channel:
             await interaction.response.send_message("Erreur lors de la création du thread.", ephemeral=True)
