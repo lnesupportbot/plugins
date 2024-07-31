@@ -46,15 +46,24 @@ class TeamSelect(Select):
             await interaction.response.send_message("Un ou les deux capitaines ne sont pas trouvés sur le serveur.", ephemeral=True)
             return
 
+        # Récupérer les objets utilisateur à partir des IDs
+        guild = interaction.guild
+        team_a_member = await guild.fetch_member(team_a_id)
+        team_b_member = await guild.fetch_member(team_b_id)
+
+        if not team_a_member or not team_b_member:
+            await interaction.response.send_message("Un ou les deux capitaines ne sont pas trouvés sur le serveur.", ephemeral=True)
+            return
+
         # Appeler la méthode contact pour créer un ticket
         modmail_cog = self.bot.get_cog("Modmail")
-        if modmail_cog is None:
+        if (modmail_cog is None):
             await interaction.response.send_message("Le cog Modmail n'est pas chargé.", ephemeral=True)
             return
 
         # Crée le ticket avec les capitaines d'équipe
         category = None  # Vous pouvez spécifier une catégorie si besoin
-        users = [team_a_id, team_b_id]
+        users = [team_a_member, team_b_member]
 
         # Créez un contexte factice pour appeler la commande `contact`
         fake_context = await self.bot.get_context(interaction.message)
@@ -71,7 +80,7 @@ class TeamSelect(Select):
         rules = veto_config.vetos[self.template_name]["rules"]
         ticket_channel = interaction.channel  # Le channel du ticket peut être obtenu ici après création du ticket
 
-        veto = MapVeto(self.template_name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, ticket_channel, self.bot)
+        veto = MapVeto(self.template_name, maps, team_a_member.id, team_a_name, team_b_member.id, team_b_name, rules, ticket_channel, self.bot)
         vetos[self.template_name] = veto
 
         await veto.send_ticket_message(ticket_channel)
