@@ -60,7 +60,7 @@ class TeamSelect(Select):
         
         # Crée le ticket avec les capitaines d'équipe
         category = None  # Vous pouvez spécifier une catégorie si besoin
-        user = [team_a_member, team_b_member]
+        user = [team_a_id, team_b_id]
         users = user
         await modmail_cog.contact(
             users,
