@@ -65,9 +65,9 @@ class TeamSelect(Select):
         existing_thread_b = await self.bot.threads.find(recipient=team_b_user)
 
         if existing_thread_a:
-            errors.append(f"Un thread pour **{team_a_user.name} {team_a_name}** existe déjà.")
+            errors.append(f"Un thread pour **{team_a_user.name}**({team_a_name}) existe déjà.")
         if existing_thread_b:
-            errors.append(f"Un thread pour **{team_b_user.name} {team_b_name}** existe déjà.")
+            errors.append(f"Un thread pour **{team_b_user.name}**({team_b_name}) existe déjà.")
 
         if errors:
             await interaction.response.send_message("\n".join(errors), ephemeral=True)
