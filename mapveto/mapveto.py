@@ -34,7 +34,7 @@ class SelectTeamForMapVeto(Select):
             discord.SelectOption(label=team_b_name, description=f"{team_b_name} commence", value=team_b_name),
         ]
 
-        super().__init__(placeholder="Choisir l'équipe qui commence...", min_values=1, max_values=1, options=options, timeout=None)
+        super().__init__(placeholder="Choisir l'équipe qui commence...", min_values=1, max_values=1, options=options)
 
     async def callback(self, interaction: discord.Interaction):
         starting_team = self.values[0]
