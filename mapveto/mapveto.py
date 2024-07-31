@@ -290,7 +290,7 @@ class MapVetoCog(commands.Cog):
         )
         view = View()
         view.add_item(MapVetoButton())
-        await ctx.send(embed=embed, view=view, timeout=None)
+        await ctx.send(embed=embed, view=view)
 
 async def setup(bot):
     await bot.add_cog(MapVetoCog(bot))
