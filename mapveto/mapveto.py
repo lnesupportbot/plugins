@@ -275,26 +275,6 @@ class TournamentSelect(Select):
         view.add_item(select)
         await interaction.response.send_message(f"Tournament choisi: {tournament_name}", view=view, ephemeral=True)
 
-    def __init__(self, template_name, bot):
-        self.template_name = template_name
-        self.bot = bot
-
-        tournament_config.load_tournaments()
-        tournaments_set = {details["tournament"] for details in teams.values()}
-        options = [
-            discord.SelectOption(label=tournament, description=f"Tournament {tournament}")
-            for tournament in tournaments_set
-        ]
-
-        super().__init__(placeholder="Choisir un tournoi...", min_values=1, max_values=1, options=options)
-
-    async def callback(self, interaction: discord.Interaction):
-        tournament_name = self.values[0]
-        select = TeamSelect(tournament_name, self.template_name, self.bot)
-        view = View()
-        view.add_item(select)
-        await interaction.response.send_message(f"Tournament choisi: {tournament_name}", view=view, ephemeral=True)
-
 class TemplateSelect(Select):
     def __init__(self, bot):
         self.bot = bot
