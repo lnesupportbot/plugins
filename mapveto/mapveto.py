@@ -59,12 +59,10 @@ class TeamSelect(Select):
         self.template_name = template_name
         self.tournament_name = tournament_name
         self.bot = bot
-
-        # Charger les équipes à partir de la configuration la plus récente
-        teams = team_config.load_teams()  # Charger les équipes ici
+        
+        team_config.load_teams()
         tournament_teams = [team for team, details in teams.items() if details["tournament"] == tournament_name]
-
-        # Préparer les options avec les descriptions des capitaines
+        
         options = []
         for team in tournament_teams:
             captain_id = int(teams[team]["captain_discord_id"])
@@ -76,6 +74,7 @@ class TeamSelect(Select):
             options.append(discord.SelectOption(label=team, description=description, value=team))
 
         super().__init__(placeholder="Choisir deux équipes...", min_values=2, max_values=2, options=options)
+
 
     async def callback(self, interaction: discord.Interaction):
         team_a_name, team_b_name = self.values
@@ -105,9 +104,9 @@ class TeamSelect(Select):
         existing_thread_b = await self.bot.threads.find(recipient=team_b_user)
 
         if existing_thread_a:
-            errors.append(f"Un thread pour {team_a_user.name} existe déjà.")
+            errors.append(f"Un thread pour **{team_a_user.name}**({team_a_name}) existe déjà.")
         if existing_thread_b:
-            errors.append(f"Un thread pour {team_b_user.name} existe déjà.")
+            errors.append(f"Un thread pour **{team_b_user.name}**({team_b_name}) existe déjà.")
 
         if errors:
             await interaction.response.send_message("\n".join(errors), ephemeral=True)
@@ -148,7 +147,7 @@ class TeamSelect(Select):
         )
 
         select = SelectTeamForMapVeto(team_a_name, team_b_name, self.template_name, self.bot)
-        view = View()
+        view = View(timeout=None)
         view.add_item(select)
 
         await ticket_channel.send(embed=embed, view=view)
@@ -158,8 +157,7 @@ class TournamentSelect(Select):
         self.template_name = template_name
         self.bot = bot
 
-        # Charger les tournois à partir de la configuration la plus récente
-        teams = team_config.load_teams()  # Charger les équipes ici pour les tournois
+        tournament_config.load_tournaments()
         tournaments_set = {details["tournament"] for details in teams.values()}
         options = [
             discord.SelectOption(label=tournament, description=f"Tournament {tournament}")
@@ -179,11 +177,14 @@ class TemplateSelect(Select):
     def __init__(self, bot):
         self.bot = bot
 
-        # Charger les templates de veto à partir de la configuration la plus récente
         veto_config.load_vetos()
 
         options = [
-            discord.SelectOption(label=template, description=f"Règles {template}")
+            discord.SelectOption(
+                label=template, 
+                description=f"{veto_config.vetos[template]['rules']}",
+                value=template
+            )
             for template in veto_config.vetos.keys()
         ]
         super().__init__(placeholder="Choisir un template de veto...", min_values=1, max_values=1, options=options)
@@ -200,17 +201,16 @@ class MapVetoButton(Button):
         super().__init__(label="Lancer un MapVeto", style=discord.ButtonStyle.primary)
 
     async def callback(self, interaction: discord.Interaction):
-        # Recharger toutes les configurations pertinentes
+
         veto_config.load_vetos()
         tournament_config.load_tournaments()
         team_config.load_teams()
 
-        # Créer une instance de TemplateSelect pour permettre la sélection
-        template_select = TemplateSelect(self.view.bot)
-        view = View()
-        view.add_item(template_select)
-        await interaction.response.send_message("Choisissez un template de MapVeto :", view=view, ephemeral=True)
-        
+        select = TemplateSelect(interaction.client)
+        view = View(timeout=None)
+        view.add_item(select)
+        await interaction.response.send_message("Choisissez un template de veto:", view=view, ephemeral=True) 
+
 class MapVetoCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
