@@ -1,5 +1,3 @@
-dans ce code ci dessous pour la class templateselect, dans la description au niveau de la liste de choix de template peux-tu me mettre les regles du template?
-
 import asyncio
 import discord  # type: ignore
 from discord.ext import commands  # type: ignore
