@@ -59,7 +59,8 @@ class TeamSelect(Select):
         self.template_name = template_name
         self.tournament_name = tournament_name
         self.bot = bot
-
+        
+        team_config.load_teams()
         tournament_teams = [team for team, details in teams.items() if details["tournament"] == tournament_name]
         
         options = []
@@ -156,6 +157,7 @@ class TournamentSelect(Select):
         self.template_name = template_name
         self.bot = bot
 
+        tournament_config.load_tournaments()
         tournaments_set = {details["tournament"] for details in teams.values()}
         options = [
             discord.SelectOption(label=tournament, description=f"Tournament {tournament}")
@@ -174,6 +176,9 @@ class TournamentSelect(Select):
 class TemplateSelect(Select):
     def __init__(self, bot):
         self.bot = bot
+
+        veto_config.load_vetos()
+
         options = [
             discord.SelectOption(
                 label=template, 
