@@ -173,7 +173,7 @@ class TournamentManager:
         return embed
 
     def create_setup_view(self):
-        view = discord.ui.View()
+        view = discord.ui.View(timeout=None)
         view.add_item(ListTournamentsButton())
         view.add_item(CreateTournamentButton())
         view.add_item(EditTournamentButton())
