@@ -184,7 +184,7 @@ class TeamManager:
         return embed
 
     def create_setup_view(self):
-        view = discord.ui.View()
+        view = discord.ui.View(timeout=None)
         view.add_item(ListTeamsButton())
         view.add_item(CreateTeamButton())
         view.add_item(EditTeamButton())
