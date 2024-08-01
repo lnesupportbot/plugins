@@ -159,7 +159,7 @@ class TeamSelect(Select):
         self.bot = bot
         
         team_config.load_teams()
-        tournament_teams = [team for team, details in teams.items() if details["tournament"] == tournament_name]
+        tournament_teams = team_config.get_teams_by_tournament(tournament_name)
         
         options = []
         for team in tournament_teams:
