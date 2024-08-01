@@ -61,7 +61,7 @@ class TeamSelect(Select):
         self.bot = bot
 
         # Charger les équipes à partir de la configuration la plus récente
-        team_config.load_teams()
+        teams = team_config.load_teams()  # Charger les équipes ici
         tournament_teams = [team for team, details in teams.items() if details["tournament"] == tournament_name]
 
         # Préparer les options avec les descriptions des capitaines
@@ -159,8 +159,7 @@ class TournamentSelect(Select):
         self.bot = bot
 
         # Charger les tournois à partir de la configuration la plus récente
-        tournaments = tournament_config.load_tournaments()
-
+        teams = team_config.load_teams()  # Charger les équipes ici pour les tournois
         tournaments_set = {details["tournament"] for details in teams.values()}
         options = [
             discord.SelectOption(label=tournament, description=f"Tournament {tournament}")
@@ -201,16 +200,17 @@ class MapVetoButton(Button):
         super().__init__(label="Lancer un MapVeto", style=discord.ButtonStyle.primary)
 
     async def callback(self, interaction: discord.Interaction):
-        # Recharger les configurations avant d'initialiser les options
+        # Recharger toutes les configurations pertinentes
         veto_config.load_vetos()
         tournament_config.load_tournaments()
         team_config.load_teams()
 
-        select = TemplateSelect(interaction.client)
+        # Créer une instance de TemplateSelect pour permettre la sélection
+        template_select = TemplateSelect(self.view.bot)
         view = View()
-        view.add_item(select)
-        await interaction.response.send_message("Choisissez un template de veto:", view=view, ephemeral=True)
-
+        view.add_item(template_select)
+        await interaction.response.send_message("Choisissez un template de MapVeto :", view=view, ephemeral=True)
+        
 class MapVetoCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
