@@ -157,8 +157,12 @@ class TournamentSelect(Select):
         self.template_name = template_name
         self.bot = bot
 
+        # Recharger les tournois chaque fois que ce sélecteur est initialisé
         tournament_config.load_tournaments()
-        tournaments_set = {details["tournament"] for details in teams.values()}
+        team_config.load_teams()  # Ensure teams are loaded
+
+        # Use team_config.teams to access the teams data
+        tournaments_set = {details["tournament"] for details in team_config.teams.values()}
         options = [
             discord.SelectOption(label=tournament, description=f"Tournament {tournament}")
             for tournament in tournaments_set
@@ -172,6 +176,7 @@ class TournamentSelect(Select):
         view = View()
         view.add_item(select)
         await interaction.response.send_message(f"Tournament choisi: {tournament_name}", view=view, ephemeral=True)
+
 
 class TemplateSelect(Select):
     def __init__(self, bot):
