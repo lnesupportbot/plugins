@@ -58,7 +58,6 @@ class TeamConfig:
 
 team_config = TeamConfig()
 tournament_config = TournamentConfig()
-tournament_config.get_tournament()
 
 class TeamCreateModal(Modal):
     def __init__(self, tournament_name):
