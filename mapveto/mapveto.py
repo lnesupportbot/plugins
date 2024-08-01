@@ -318,6 +318,7 @@ class MapVetoCog(commands.Cog):
     @commands.command(name='team_setup')
     @commands.has_permissions(administrator=True)
     async def team_setup(self, ctx):
+        tournament_config.load_tournaments()
         await self.teams.update_setup_message(ctx.channel)
 
     @commands.command()
