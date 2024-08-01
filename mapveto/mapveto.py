@@ -15,8 +15,11 @@ from .core.veto import MapVeto
 
 # Charger les configurations
 veto_config = MapVetoConfig()
+veto_config.load_vetos()
 tournament_config = TournamentConfig()
+tournaments = tournament_config.load_tournaments()
 team_config = TeamConfig()
+teams = team_config.load_teams()
 vetos = {}
 
 class SelectTeamForMapVeto(Select):
@@ -57,7 +60,6 @@ class TeamSelect(Select):
         self.tournament_name = tournament_name
         self.bot = bot
         
-        # Recharger les équipes à chaque fois que ce sélecteur est initialisé
         team_config.load_teams()
         tournament_teams = [team for team, details in teams.items() if details["tournament"] == tournament_name]
         
@@ -72,6 +74,7 @@ class TeamSelect(Select):
             options.append(discord.SelectOption(label=team, description=description, value=team))
 
         super().__init__(placeholder="Choisir deux équipes...", min_values=2, max_values=2, options=options)
+
 
     async def callback(self, interaction: discord.Interaction):
         team_a_name, team_b_name = self.values
@@ -154,7 +157,6 @@ class TournamentSelect(Select):
         self.template_name = template_name
         self.bot = bot
 
-        # Recharger les tournois chaque fois que ce sélecteur est initialisé
         tournament_config.load_tournaments()
         tournaments_set = {details["tournament"] for details in teams.values()}
         options = [
@@ -175,7 +177,6 @@ class TemplateSelect(Select):
     def __init__(self, bot):
         self.bot = bot
 
-        # Recharger les templates à chaque fois que ce sélecteur est initialisé
         veto_config.load_vetos()
 
         options = [
@@ -200,7 +201,7 @@ class MapVetoButton(Button):
         super().__init__(label="Lancer un MapVeto", style=discord.ButtonStyle.primary)
 
     async def callback(self, interaction: discord.Interaction):
-        # Charger les configurations à chaque clic sur le bouton
+
         veto_config.load_vetos()
         tournament_config.load_tournaments()
         team_config.load_teams()
