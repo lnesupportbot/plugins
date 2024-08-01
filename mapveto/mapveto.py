@@ -290,7 +290,7 @@ class MapVetoCog(commands.Cog):
             description="Cliquez sur le bouton ci-dessous pour lancer un MapVeto.",
             color=discord.Color.blue()
         )
-        view = View()
+        view = View(timeout=None)
         view.add_item(MapVetoButton())
         await ctx.send(embed=embed, view=view)
 
