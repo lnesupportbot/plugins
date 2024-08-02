@@ -129,7 +129,8 @@ class TeamManager:
         self.bot = bot
         self.setup_message_id = None
         self.load_setup_message_id()
-        self.tournaments = TournamentConfig.load_tournaments(self)
+        self.tournaments = tournament_config.load_tournaments()
+        print(self.tournaments)
 
     def save_setup_message_id(self, message_id):
         with open('setup_message_id.json', 'w') as f:
@@ -142,7 +143,6 @@ class TeamManager:
                 self.setup_message_id = data.get('setup_message_id')
 
     async def update_setup_message(self, channel):
-        tournament_config.load_tournaments()
         if self.setup_message_id:
             try:
                 message = await channel.fetch_message(self.setup_message_id)
