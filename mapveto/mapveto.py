@@ -287,6 +287,7 @@ class MapVetoButton(Button):
         super().__init__(label="Lancer un MapVeto", style=discord.ButtonStyle.primary)
 
     async def callback(self, interaction: discord.Interaction):
+        veto_config.refresh_templates()
         select = TemplateSelect(interaction.client)
         view = View()
         view.add_item(select)
