@@ -55,8 +55,6 @@ class SelectTeamForMapVeto(Select):
 
 class TeamSelect(Select):
     def __init__(self, tournament_name, template_name, bot):
-        team_config.refresh_teams()
-        print(team_config.teams)
         self.template_name = template_name
         self.tournament_name = tournament_name
         self.bot = bot
@@ -245,8 +243,6 @@ class TeamSelect(Select):
 
 class TournamentSelect(Select):
     def __init__(self, template_name, bot):
-        tournament_config.refresh_tournaments()
-        print(tournament_config.tournaments)
         self.template_name = template_name
         self.bot = bot
 
@@ -259,6 +255,8 @@ class TournamentSelect(Select):
         super().__init__(placeholder="Choisir un tournoi...", min_values=1, max_values=1, options=options)
 
     async def callback(self, interaction: discord.Interaction):
+        team_config.refresh_teams()
+        print(team_config.teams)
         tournament_name = self.values[0]
         select = TeamSelect(tournament_name, self.template_name, self.bot)
         view = View()
@@ -267,8 +265,6 @@ class TournamentSelect(Select):
 
 class TemplateSelect(Select):
     def __init__(self, bot):
-        veto_config.refresh_templates()
-        print(veto_config.vetos)
         self.bot = bot
         options = [
             discord.SelectOption(
@@ -281,6 +277,8 @@ class TemplateSelect(Select):
         super().__init__(placeholder="Choisir un template de veto...", min_values=1, max_values=1, options=options)
 
     async def callback(self, interaction: discord.Interaction):
+        tournament_config.refresh_tournaments()
+        print(tournament_config.tournaments)
         template_name = self.values[0]
         select = TournamentSelect(template_name, self.bot)
         view = View()
@@ -292,9 +290,8 @@ class MapVetoButton(Button):
         super().__init__(label="Lancer un MapVeto", style=discord.ButtonStyle.primary)
 
     async def callback(self, interaction: discord.Interaction):
-        print(veto_config.vetos)
-        print(tournament_config.tournaments)
-        print(team_config.teams)
+        veto_config.refresh_templates()
+        print(veto_config.vetos.keys())
 
         select = TemplateSelect(interaction.client)
         view = View()
