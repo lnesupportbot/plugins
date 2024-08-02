@@ -58,7 +58,7 @@ class TeamConfig:
 
     def refresh_teams(self):
         """Refresh the teams data from the file."""
-        self.tournaments = self.load_teams()
+        self.teams = self.load_teams()
 
 team_config = TeamConfig()
 tournament_config = TournamentConfig()
@@ -150,7 +150,6 @@ class TeamManager:
 
     async def update_setup_message(self, channel):
         self.refresh_setup_message_id()
-        print(self.setup_message_id)
         if self.setup_message_id:
             try:
                 message = await channel.fetch_message(self.setup_message_id)
