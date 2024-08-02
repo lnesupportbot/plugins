@@ -10,7 +10,6 @@ class TeamConfig:
     def __init__(self, filename="teams.json"):
         self.filename = os.path.join(os.path.dirname(__file__), '..', filename)
         self.teams = self.load_teams()
-        self.tournaments = TournamentConfig.load_tournaments()
 
     def load_teams(self):
         if os.path.exists(self.filename):
@@ -130,6 +129,7 @@ class TeamManager:
         self.bot = bot
         self.setup_message_id = None
         self.load_setup_message_id()
+        self.tournaments = TournamentConfig.load_tournaments()
 
     def save_setup_message_id(self, message_id):
         with open('setup_message_id.json', 'w') as f:
