@@ -265,7 +265,11 @@ class TemplateSelect(Select):
     def __init__(self, bot):
         self.bot = bot
         options = [
-            discord.SelectOption(label=template, description=f"Règles {template}")
+            discord.SelectOption(
+                label=template, 
+                description=f"Règles: {veto_config.vetos[template]['rules']}",
+                value=template
+            )
             for template in veto_config.vetos.keys()
         ]
         super().__init__(placeholder="Choisir un template de veto...", min_values=1, max_values=1, options=options)
