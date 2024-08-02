@@ -45,6 +45,10 @@ class TournamentConfig:
             return True
         return False
 
+    def refresh_tournaments(self):
+        """Refresh the tournament data from the file."""
+        self.tournaments = self.load_tournaments()
+
 tournament_config = TournamentConfig()
 veto_config = MapVetoConfig()
 
