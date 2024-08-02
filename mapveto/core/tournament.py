@@ -133,6 +133,10 @@ class TournamentManager:
                 data = json.load(f)
                 self.setup_message_id = data.get('setup_message_id')
 
+    def refresh_setup_message_id(self):
+        """Refresh the message id from the file."""
+        self.message_id = self.load_setup_message_id()
+
     async def update_setup_message(self, channel):
         if self.setup_message_id:
             try:
