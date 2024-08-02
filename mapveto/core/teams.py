@@ -141,6 +141,7 @@ class TeamManager:
                 self.setup_message_id = data.get('setup_message_id')
 
     async def update_setup_message(self, channel):
+        tournament_config.load_tournaments()
         if self.setup_message_id:
             try:
                 message = await channel.fetch_message(self.setup_message_id)
