@@ -8,14 +8,14 @@ import os
 from core import checks
 from core.models import PermissionLevel  # type: ignore
 
-from .core.templateveto import MapVetoConfig, TemplateManager, vetos
+from .core.templateveto import MapVetoConfig, TemplateManager
 from .core.tournament import TournamentManager, TournamentConfig
 from .core.teams import TeamManager, TeamConfig
 from .core.veto import MapVeto
 
 # Charger les configurations
 veto_config = MapVetoConfig()
-veto_config.load_vetos()
+vetos = veto_config.load_vetos()
 tournament_config = TournamentConfig()
 tournaments = tournament_config.load_tournaments()
 team_config = TeamConfig()
