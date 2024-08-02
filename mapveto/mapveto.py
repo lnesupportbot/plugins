@@ -256,8 +256,6 @@ class TournamentSelect(Select):
         super().__init__(placeholder="Choisir un tournoi...", min_values=1, max_values=1, options=options)
 
     async def callback(self, interaction: discord.Interaction):
-        team_config.refresh_teams()
-        print(team_config.teams)
         tournament_name = self.values[0]
         select = TeamSelect(tournament_name, self.template_name, self.bot)
         view = View()
@@ -278,8 +276,6 @@ class TemplateSelect(Select):
         super().__init__(placeholder="Choisir un template de veto...", min_values=1, max_values=1, options=options)
 
     async def callback(self, interaction: discord.Interaction):
-        tournament_config.refresh_tournaments()
-        print(tournament_config.tournaments)
         template_name = self.values[0]
         select = TournamentSelect(template_name, self.bot)
         view = View()
@@ -292,7 +288,11 @@ class MapVetoButton(Button):
 
     async def callback(self, interaction: discord.Interaction):
         veto_config.refresh_templates()
-        print(veto_config.vetos.keys())
+        tournament_config.refresh_tournaments()
+        team_config.refresh_teams()
+        print(veto_config.vetos.items())
+        print(veto_config.tournaments.items())        
+        print(team_config.teams.items())
 
         select = TemplateSelect(interaction.client)
         view = View()
@@ -392,11 +392,6 @@ class MapVetoCog(commands.Cog):
         view = View()
         view.add_item(MapVetoButton())
         await ctx.send(embed=embed, view=view)
-
-# Configuration des managers
-veto_config = TemplateManager()
-tournament_config = TournamentManager()
-team_config = TeamManager()
 
 async def setup(bot):
     await bot.add_cog(MapVetoCog(bot))
