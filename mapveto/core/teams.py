@@ -159,6 +159,8 @@ class TeamManager:
             await self.send_setup_message(channel)
 
     async def send_setup_message(self, channel):
+        self.refresh_setup_message_id()
+        print(self.setup_message_id)
         message = await channel.send(embed=self.create_setup_embed(), view=self.create_setup_view())
         self.setup_message_id = message.id
         self.save_setup_message_id(message.id)
