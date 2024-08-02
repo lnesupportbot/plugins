@@ -58,7 +58,7 @@ class TeamConfig:
 
 team_config = TeamConfig()
 tournament_config = TournamentConfig()
-tournaments = tournament_config.load_tournaments
+tournaments = tournament_config.load_tournaments()
 print(tournaments)
 
 class TeamCreateModal(Modal):
@@ -131,7 +131,7 @@ class TeamManager:
         self.bot = bot
         self.setup_message_id = None
         self.load_setup_message_id()
-        
+
     def save_setup_message_id(self, message_id):
         with open('setup_message_id.json', 'w') as f:
             json.dump({'setup_message_id': message_id}, f)
