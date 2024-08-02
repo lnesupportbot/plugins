@@ -15,11 +15,11 @@ from .core.veto import MapVeto
 
 # Charger les configurations
 veto_config = MapVetoConfig()
-vetos = veto_config.load_vetos()
+vetos = veto_config.refresh_templates()
 tournament_config = TournamentConfig()
-tournaments = tournament_config.load_tournaments()
+tournaments = tournament_config.refresh_tournaments()
 team_config = TeamConfig()
-teams = team_config.load_teams()
+teams = team_config.refresh_teams()
 
 class SelectTeamForMapVeto(Select):
     def __init__(self, team_a_name, team_b_name, template_name, bot):
