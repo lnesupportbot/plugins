@@ -20,7 +20,6 @@ tournament_config = TournamentConfig()
 tournaments = tournament_config.load_tournaments()
 team_config = TeamConfig()
 teams = team_config.load_teams()
-vetos = {}
 
 class SelectTeamForMapVeto(Select):
     def __init__(self, team_a_name, team_b_name, template_name, bot):
