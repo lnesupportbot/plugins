@@ -48,6 +48,10 @@ class MapVetoConfig:
             self.save_vetos()
             return True
         return False
+
+    def refresh_templates(self):
+        """Refresh the tournament data from the file."""
+        self.tournaments = self.load_vetos()
     
 veto_config = MapVetoConfig()
 vetos = {}
