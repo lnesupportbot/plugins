@@ -51,7 +51,7 @@ class MapVetoConfig:
 
     def refresh_templates(self):
         """Refresh the veto template data from the file."""
-        self.tournaments = self.load_vetos()
+        self.vetos = self.load_vetos()
     
 veto_config = MapVetoConfig()
 
