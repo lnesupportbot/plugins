@@ -15,11 +15,11 @@ from .core.veto import MapVeto
 
 # Charger les configurations
 veto_config = MapVetoConfig()
-vetos = veto_config.refresh_templates()
+vetos = veto_config.load_vetos()
 tournament_config = TournamentConfig()
-tournaments = tournament_config.refresh_tournaments()
+tournaments = tournament_config.load_tournaments()
 team_config = TeamConfig()
-teams = team_config.refresh_teams()
+teams = team_config.load_teams()
 
 class SelectTeamForMapVeto(Select):
     def __init__(self, team_a_name, team_b_name, template_name, bot):
@@ -247,6 +247,7 @@ class TournamentSelect(Select):
         self.template_name = template_name
         self.bot = bot
 
+        team_config.refresh_teams()
         tournaments_set = {details["tournament"] for details in teams.values()}
         options = [
             discord.SelectOption(label=tournament, description=f"Tournament {tournament}")
