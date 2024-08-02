@@ -50,7 +50,7 @@ class MapVetoConfig:
         return False
 
     def refresh_templates(self):
-        """Refresh the tournament data from the file."""
+        """Refresh the veto template data from the file."""
         self.tournaments = self.load_vetos()
     
 veto_config = MapVetoConfig()
@@ -143,6 +143,10 @@ class TemplateManager:
             with open('setup_message_id.json', 'r') as f:
                 data = json.load(f)
                 self.setup_message_id = data.get('setup_message_id')
+
+    def refresh_setup_message_id(self):
+        """Refresh the message id from the file."""
+        self.message_id = self.load_setup_message_id()
 
     async def update_setup_message(self, channel):
         if self.setup_message_id:
