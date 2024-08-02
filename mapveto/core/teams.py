@@ -198,6 +198,7 @@ class ListTeamsButton(Button):
         super().__init__(label="Liste des Équipes", style=discord.ButtonStyle.secondary, custom_id="list_teams")
 
     async def callback(self, interaction: discord.Interaction):
+        tournament_config.refresh_tournaments()
         tournament_names = list(tournament_config.tournaments.keys())  # Liste des tournois
         if not tournament_names:
             await interaction.response.send_message("Aucun tournoi trouvé.", ephemeral=True)
