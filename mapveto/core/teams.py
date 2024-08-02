@@ -129,7 +129,7 @@ class TeamManager:
         self.bot = bot
         self.setup_message_id = None
         self.load_setup_message_id()
-        self.tournaments = TournamentConfig.load_tournaments()
+        self.tournaments = TournamentConfig.load_tournaments(self)
 
     def save_setup_message_id(self, message_id):
         with open('setup_message_id.json', 'w') as f:
