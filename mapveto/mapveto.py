@@ -60,6 +60,7 @@ class TeamSelect(Select):
         self.bot = bot
 
         # Filtrer les équipes pour le tournoi spécifié
+        team_config.refresh_teams()
         tournament_teams = [team for team, details in teams.items() if details["tournament"] == tournament_name]
 
         # Préparer les options avec les descriptions des capitaines
@@ -392,6 +393,10 @@ class MapVetoCog(commands.Cog):
         view.add_item(MapVetoButton())
         await ctx.send(embed=embed, view=view)
 
+# Configuration des managers
+veto_config = TemplateManager()
+tournament_config = TournamentManager()
+team_config = TeamManager()
 
 async def setup(bot):
     await bot.add_cog(MapVetoCog(bot))
