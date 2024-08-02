@@ -276,6 +276,7 @@ class TemplateSelect(Select):
         super().__init__(placeholder="Choisir un template de veto...", min_values=1, max_values=1, options=options)
 
     async def callback(self, interaction: discord.Interaction):
+        veto_config.refresh_templates()
         template_name = self.values[0]
         select = TournamentSelect(template_name, self.bot)
         view = View()
@@ -287,7 +288,6 @@ class MapVetoButton(Button):
         super().__init__(label="Lancer un MapVeto", style=discord.ButtonStyle.primary)
 
     async def callback(self, interaction: discord.Interaction):
-        veto_config.refresh_templates()
         select = TemplateSelect(interaction.client)
         view = View()
         view.add_item(select)
