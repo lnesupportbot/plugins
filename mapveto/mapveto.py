@@ -8,9 +8,9 @@ import os
 from core import checks
 from core.models import PermissionLevel  # type: ignore
 
-from .core.templateveto import MapVetoConfig, TemplateManager
-from .core.tournament import TournamentManager, TournamentConfig
-from .core.teams import TeamManager, TeamConfig
+from .core.templateveto import MapVetoConfig, TemplateManager, veto_config
+from .core.tournament import TournamentManager, TournamentConfig, tournament_config
+from .core.teams import TeamManager, TeamConfig, team_config
 from .core.veto import MapVeto
 
 # Charger les configurations
