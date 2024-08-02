@@ -149,6 +149,7 @@ class TemplateManager:
         self.message_id = self.load_setup_message_id()
 
     async def update_setup_message(self, channel):
+        self.refresh_setup_message_id()
         if self.setup_message_id:
             try:
                 message = await channel.fetch_message(self.setup_message_id)
