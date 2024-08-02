@@ -54,7 +54,6 @@ class MapVetoConfig:
         self.tournaments = self.load_vetos()
     
 veto_config = MapVetoConfig()
-vetos = {}
 
 class VetoCreateModal(Modal):
     def __init__(self):
