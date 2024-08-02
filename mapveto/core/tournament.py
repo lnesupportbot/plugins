@@ -189,6 +189,7 @@ class ListTournamentsButton(Button):
         super().__init__(label="Liste des Tournois", style=discord.ButtonStyle.secondary, custom_id="list_tournaments")
 
     async def callback(self, interaction: discord.Interaction):
+        veto_config.refresh_templates()
         tournaments = tournament_config.tournaments
         if not tournaments:
             await interaction.response.send_message("Aucun tournoi trouvé.", ephemeral=True)
@@ -230,6 +231,7 @@ class EditTournamentButton(Button):
         super().__init__(label="Éditer un tournoi", style=discord.ButtonStyle.primary, custom_id="edit_tournament")
 
     async def callback(self, interaction: discord.Interaction):
+        veto_config.refresh_templates()
         tournament_names = list(tournament_config.tournaments.keys())
         if not tournament_names:
             await interaction.response.send_message("Aucun tournoi disponible pour modification.", ephemeral=True)
