@@ -290,9 +290,9 @@ class MapVetoButton(Button):
         veto_config.refresh_templates()
         tournament_config.refresh_tournaments()
         team_config.refresh_teams()
-        print(veto_config.vetos.items())
-        print(veto_config.tournaments.items())        
-        print(team_config.teams.items())
+        print(veto_config.items())
+        print(tournament_config.items())
+        print(team_config.items())
 
         select = TemplateSelect(interaction.client)
         view = View()
