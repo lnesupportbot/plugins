@@ -56,10 +56,12 @@ class TeamConfig:
                 teams[name] = data
         return teams
 
+    def refresh_teams(self):
+        """Refresh the tournament data from the file."""
+        self.tournaments = self.load_teams()
+
 team_config = TeamConfig()
 tournament_config = TournamentConfig()
-tournaments = tournament_config.load_tournaments()
-print(tournaments)
 
 class TeamCreateModal(Modal):
     def __init__(self, tournament_name):
@@ -232,6 +234,7 @@ class CreateTeamButton(Button):
         super().__init__(label="Créer une nouvelle équipe", style=discord.ButtonStyle.primary, custom_id="create_team")
 
     async def callback(self, interaction: discord.Interaction):
+        tournament_config.refresh_tournaments()
         tournament_names = list(tournament_config.tournaments.keys())
         if not tournament_names:
             await interaction.response.send_message("Aucun tournoi disponible.", ephemeral=True)
