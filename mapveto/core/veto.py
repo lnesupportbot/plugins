@@ -5,14 +5,18 @@ import discord # type: ignore
 from discord.ui import Modal, TextInput, Button, Select, View # type: ignore
 from discord.ext import commands # type: ignore
 
-from .templateveto import MapVetoConfig
-from .teams import TeamConfig
-from .tournament import TournamentConfig
+from .templateveto import MapVetoConfig, TemplateManager, veto_config
+from .tournament import TournamentManager, TournamentConfig, tournament_config
+from .teams import TeamManager, TeamConfig, team_config
+from .veto import MapVeto, MapVetoButton
 
+# Charger les configurations
 veto_config = MapVetoConfig()
 vetos = veto_config.load_vetos()
+tournament_config = TournamentConfig()
+tournaments = tournament_config.load_tournaments()
 team_config = TeamConfig()
-tournament_config = TournamentConfig
+teams = team_config.load_teams()
 
 class SelectTeamForMapVeto(Select):
     def __init__(self, team_a_name, team_b_name, template_name, bot):
@@ -152,7 +156,7 @@ class TournamentSelect(Select):
     def __init__(self, template_name, bot):
         self.template_name = template_name
         self.bot = bot
-        self.tournaments = tournament_config.load_tournaments(self)
+        self.tournaments = tournament_config.load_tournaments()
 
         options = [
             discord.SelectOption(label=name, value=name)
