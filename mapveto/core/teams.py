@@ -150,7 +150,7 @@ class TeamManager:
 
     def save_setup_message_id(self, message_id):
         with open(self.filename, 'w') as f:
-            json.dump({'setup_message_id': message_id}, f)
+            json.dump({'setup_message_id': message_id}, f, indent=4)
 
     def load_setup_message_id(self):
         if os.path.exists(self.filename):
