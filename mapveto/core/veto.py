@@ -8,7 +8,6 @@ from discord.ext import commands # type: ignore
 from .templateveto import MapVetoConfig, TemplateManager, veto_config
 from .tournament import TournamentManager, TournamentConfig, tournament_config
 from .teams import TeamManager, TeamConfig, team_config
-from .veto import MapVeto, MapVetoButton
 
 # Charger les configurations
 veto_config = MapVetoConfig()
