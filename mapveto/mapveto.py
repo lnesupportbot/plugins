@@ -54,6 +54,8 @@ class SetupButtonConfig:
         else:
             await self.send_setup_message(channel)
 
+setupbutton_config = SetupButtonConfig()
+
 class SetupView(View):
     def __init__(self, bot):
         super().__init__(timeout=None)
@@ -81,6 +83,7 @@ class MapVetoCog(commands.Cog):
         self.template_veto = TemplateManager()
         self.tournament = TournamentManager()
         self.teams = TeamManager(bot)
+        self.message_id = setupbutton_config.load_setup_message_id()
         self.current_veto = None
 
     def set_veto_params(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel):
@@ -175,37 +178,39 @@ class MapVetoCog(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def setup_buttons(self, ctx):
         """Affiche trois boutons pour lancer les commandes de configuration."""
-        
-        class SetupView(View):
-            def __init__(self):
-                super().__init__()
-
-                self.add_item(Button(label="Gestion des templates d'événements", custom_id="mapveto_setup", style=discord.ButtonStyle.blurple))
-                self.add_item(Button(label="Gestion des tournois", custom_id="tournament_setup", style=discord.ButtonStyle.green))
-                self.add_item(Button(label="Gestion des teams", custom_id="team_setup", style=discord.ButtonStyle.red))
-
-            async def interaction_check(self, interaction: discord.Interaction) -> bool:
-                return interaction.user == ctx.author
-
-            @discord.ui.button(label="Gestion des templates d'événements", custom_id="mapveto_setup", style=discord.ButtonStyle.blurple)
-            async def mapveto_setup_button(self, interaction: discord.Interaction, button: Button):
-                await ctx.invoke(self.mapveto_setup)
-
-            @discord.ui.button(label="Gestion des tournois", custom_id="tournament_setup", style=discord.ButtonStyle.green)
-            async def tournament_setup_button(self, interaction: discord.Interaction, button: Button):
-                await ctx.invoke(self.tournament_setup)
-
-            @discord.ui.button(label="Gestion des teams", custom_id="team_setup", style=discord.ButtonStyle.red)
-            async def team_setup_button(self, interaction: discord.Interaction, button: Button):
-                await ctx.invoke(self.team_setup)
-
         embed = discord.Embed(
             title="Configuration des Événements",
             description="Utilisez les boutons ci-dessous pour configurer les différents éléments.",
             color=discord.Color.blue()
         )
-        
-        await ctx.send(embed=embed, view=SetupView(timeout=None))
+        view = SetupView(self.bot)
+
+        if self.message_id:
+            try:
+                # Vérifier si le message existe encore
+                channel = ctx.channel
+                message = await channel.fetch_message(self.message_id)
+                await message.edit(embed=embed, view=view)
+            except discord.NotFound:
+                # Si le message n'existe plus, envoyer un nouveau message
+                message = await ctx.send(embed=embed, view=view)
+                setupbutton_config.save_setup_message_id(message.id)
+        else:
+            # Envoyer le message pour la première fois
+            message = await ctx.send(embed=embed, view=view)
+            setupbutton_config.save_setup_message_id(message.id)
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        """Vérifier si un message doit être restauré au démarrage du bot."""
+        if self.message_id:
+            try:
+                channel = self.bot.get_channel(self.channel_id)  # Assurez-vous que vous avez l'ID du canal
+                await channel.fetch_message(self.message_id)  # Vérifier si le message existe toujours
+            except discord.NotFound:
+                # Si le message n'existe plus, supprimez l'ID enregistré
+                #os.remove("message_id.json")
+                print(f"le message est inactif")
 
 async def setup(bot):
     await bot.add_cog(MapVetoCog(bot))
