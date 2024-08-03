@@ -288,7 +288,7 @@ class DeleteTournamentButton(Button):
                 if teams:
                     # Si des équipes sont rattachées, afficher un message d'erreur
                     await interaction.response.send_message(
-                        f"Le tournoi '{self.tournament_name}' ne peut pas être supprimé car les équipes suivantes y sont rattachées : {', '.join(teams)}.",
+                        f"Le tournoi '{selected_tournament}' ne peut pas être supprimé car les équipes suivantes y sont rattachées : {', '.join(teams)}.",
                         ephemeral=True,
                     )
                 else:
