@@ -23,8 +23,10 @@ tournaments = tournament_config.load_tournaments()
 team_config = TeamConfig()
 teams = team_config.load_teams()
 
+
 class SetupButtonConfig:
-    def __init__(self, filename="message_id.json"):
+    def __init__(self, bot, filename="message_id.json"):
+        self.bot = bot  # Store the bot instance
         self.filename = os.path.join(os.path.dirname(__file__), '.', filename)
         self.setup_message_id = None
         self.load_setup_message_id()
@@ -41,7 +43,7 @@ class SetupButtonConfig:
     def save_setup_message_id(self, message_id):
         with open(self.filename, "w") as f:
             json.dump({'setup_button_message_id': message_id}, f, indent=4)
-            
+
     def refresh_setup_message_id(self):
         """Refresh the message id from the file."""
         self.load_setup_message_id()
@@ -73,7 +75,6 @@ class SetupButtonConfig:
         message = await channel.send(embed=embed, view=view)
         self.save_setup_message_id(message.id)
 
-setupbutton_config = SetupButtonConfig()
 
 class SetupView(View):
     def __init__(self, bot):
@@ -94,11 +95,11 @@ class SetupView(View):
         await self.tournament.update_setup_message(interaction.channel)
 
     @discord.ui.button(label="Gestion des teams", custom_id="team_setup", style=discord.ButtonStyle.red)
-    async def team_setup_button(self, bot, interaction: discord.Interaction, button: Button):
-        self.bot = bot
-        team_message_config = TeamManager(bot)
+    async def team_setup_button(self, interaction: discord.Interaction, button: Button):
+        team_message_config = TeamManager(self.bot)  # Use self.bot to initialize
         team_message_config.refresh_setup_message_id()
         await self.teams.update_setup_message(interaction.channel)
+
 
 class MapVetoCog(commands.Cog):
     def __init__(self, bot):
@@ -106,7 +107,7 @@ class MapVetoCog(commands.Cog):
         self.template_veto = TemplateManager()
         self.tournament = TournamentManager()
         self.teams = TeamManager(bot)
-        self.setup_message_id = setupbutton_config.load_setup_message_id()
+        self.setupbutton_config = SetupButtonConfig(bot)  # Pass the bot instance
         self.current_veto = None
 
     def set_veto_params(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel):
@@ -200,8 +201,8 @@ class MapVetoCog(commands.Cog):
     @commands.command(name='setup_buttons')
     @commands.has_permissions(administrator=True)
     async def setup_buttons(self, ctx):
-        setupbutton_config.load_setup_message_id()
-        await setupbutton_config.update_setup_message(ctx.channel)
+        self.setupbutton_config.load_setup_message_id()
+        await self.setupbutton_config.update_setup_message(ctx.channel)
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -212,7 +213,7 @@ class MapVetoCog(commands.Cog):
                 await channel.fetch_message(self.message_id)  # Vérifier si le message existe toujours
             except discord.NotFound:
                 # Si le message n'existe plus, supprimez l'ID enregistré
-                #os.remove("message_id.json")
+                # os.remove("message_id.json")
                 print(f"le message est inactif")
 
 async def setup(bot):
