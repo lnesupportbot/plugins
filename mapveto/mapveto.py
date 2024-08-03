@@ -28,31 +28,31 @@ class SetupButtonConfig:
     def __init__(self, bot, filename="message_id.json"):
         self.bot = bot  # Store the bot instance
         self.filename = os.path.join(os.path.dirname(__file__), '.', filename)
-        self.setup_message_id = None
-        self.load_setup_message_id()
+        self.setup_button_message_id = None
+        self.load_setup_button_message_id()
 
     # Charger l'ID du message depuis le fichier, s'il existe
-    def load_setup_message_id(self):
+    def load_setup_button_message_id(self):
         if os.path.exists(self.filename):
             with open(self.filename, "r") as f:
-                self.setup_message_id = json.load(f).get("setup_button_message_id")
+                self.setup_button_message_id = json.load(f).get("setup_button_message_id")
         else:
-            self.setup_message_id = None
+            self.setup_button_message_id = None
 
     # Sauvegarder l'ID du message dans un fichier
-    def save_setup_message_id(self, message_id):
+    def save_setup_button_message_id(self, message_id):
         with open(self.filename, "w") as f:
             json.dump({'setup_button_message_id': message_id}, f, indent=4)
 
-    def refresh_setup_message_id(self):
-        """Refresh the message id from the file."""
-        self.load_setup_message_id()
+    def refresh_setup_button_message_id(self):
+        """Refresh the setup button message id from the file."""
+        self.load_setup_button_message_id()
 
     async def update_setup_message(self, channel):
-        self.refresh_setup_message_id()
-        if self.setup_message_id:
+        self.refresh_setup_button_message_id()
+        if self.setup_button_message_id:
             try:
-                message = await channel.fetch_message(self.setup_message_id)
+                message = await channel.fetch_message(self.setup_button_message_id)
                 await message.edit(embed=self.create_setup_embed(), view=self.create_setup_view())
             except discord.NotFound:
                 await self.send_setup_message(channel)
@@ -73,7 +73,7 @@ class SetupButtonConfig:
         embed = self.create_setup_embed()
         view = self.create_setup_view()
         message = await channel.send(embed=embed, view=view)
-        self.save_setup_message_id(message.id)
+        self.save_setup_button_message_id(message.id)
 
 
 class SetupView(View):
@@ -201,20 +201,21 @@ class MapVetoCog(commands.Cog):
     @commands.command(name='setup_buttons')
     @commands.has_permissions(administrator=True)
     async def setup_buttons(self, ctx):
-        self.setupbutton_config.load_setup_message_id()
+        self.setupbutton_config.load_setup_button_message_id()
         await self.setupbutton_config.update_setup_message(ctx.channel)
 
     @commands.Cog.listener()
     async def on_ready(self):
         """Vérifier si un message doit être restauré au démarrage du bot."""
-        if self.message_id:
+        if self.setupbutton_config.setup_button_message_id:
             try:
                 channel = self.bot.get_channel(self.channel_id)  # Assurez-vous que vous avez l'ID du canal
-                await channel.fetch_message(self.message_id)  # Vérifier si le message existe toujours
+                await channel.fetch_message(self.setupbutton_config.setup_button_message_id)  # Vérifier si le message existe toujours
             except discord.NotFound:
                 # Si le message n'existe plus, supprimez l'ID enregistré
                 # os.remove("message_id.json")
                 print(f"le message est inactif")
+
 
 async def setup(bot):
     await bot.add_cog(MapVetoCog(bot))
