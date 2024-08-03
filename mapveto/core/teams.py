@@ -76,17 +76,22 @@ class TeamCreateModal(Modal):
     async def on_submit(self, interaction: discord.Interaction):
         team_name = self.name.value
         captain_discord_id = self.captain_discord_id.value
-        
-        # Fetch user object using the bot
-        captain = await self.bot.fetch_user(int(captain_discord_id))
-        
-        if team_config.create_team(team_name, self.tournament_name, captain_discord_id):
-            await interaction.response.send_message(
-                f"L'équipe '{team_name}' a été créée avec succès.\nTournoi: {self.tournament_name}\nCapitaine: {captain.display_name}",
-                ephemeral=True
-            )
-        else:
-            await interaction.response.send_message(f"Une équipe avec le nom '{team_name}' existe déjà.", ephemeral=True)
+
+        try:
+            # Fetch user object using the bot
+            captain = await self.bot.fetch_user(int(captain_discord_id))
+            if team_config.create_team(team_name, self.tournament_name, captain_discord_id):
+                await interaction.response.send_message(
+                    f"L'équipe '{team_name}' a été créée avec succès.\nTournoi: {self.tournament_name}\nCapitaine: {captain.display_name}",
+                    ephemeral=True
+                )
+            else:
+                await interaction.response.send_message(f"Une équipe avec le nom '{team_name}' existe déjà.", ephemeral=True)
+        except discord.NotFound:
+            await interaction.response.send_message("Le Discord ID du capitaine est invalide.", ephemeral=True)
+        except ValueError:
+            await interaction.response.send_message("Veuillez entrer un ID Discord valide pour le capitaine.", ephemeral=True)
+
 
 class TeamEditModal(Modal):
     def __init__(self, team_name, team, show_tournament_field=True):
@@ -368,8 +373,6 @@ class CreateTeamButton(Button):
         view = View()
         view.add_item(select)
         await interaction.response.send_message("Sélectionnez un tournoi pour créer une équipe :", view=view, ephemeral=True)
-
-
 
 class EditTeamButton(Button):
     def __init__(self):
