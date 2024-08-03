@@ -61,20 +61,20 @@ class SetupView(View):
         super().__init__(timeout=None)
         self.bot = bot
 
-    async def interaction_check(self, interaction: discord.Interaction, ctx) -> bool:
-        return interaction.user == ctx.author
-
     @discord.ui.button(label="Gestion des templates d'événements", custom_id="mapveto_setup", style=discord.ButtonStyle.blurple)
     async def mapveto_setup_button(self, interaction: discord.Interaction, button: Button, ctx):
-        await ctx.invoke(self.mapveto_setup)
+        veto_config.load_vetos()
+        await self.template_veto.update_setup_message(ctx.channel)
 
     @discord.ui.button(label="Gestion des tournois", custom_id="tournament_setup", style=discord.ButtonStyle.green)
     async def tournament_setup_button(self, interaction: discord.Interaction, button: Button, ctx):
-        await ctx.invoke(self.tournament_setup)
+        tournament_config.load_tournaments()
+        await self.tournament.update_setup_message(ctx.channel)
 
     @discord.ui.button(label="Gestion des teams", custom_id="team_setup", style=discord.ButtonStyle.red)
     async def team_setup_button(self, interaction: discord.Interaction, button: Button, ctx):
-        await ctx.invoke(self.team_setup)
+        team_config.load_teams()
+        await self.teams.update_setup_message(ctx.channel)
 
 
 class MapVetoCog(commands.Cog):
