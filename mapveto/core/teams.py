@@ -86,7 +86,7 @@ class TeamCreateModal(Modal):
                     ephemeral=True
                 )
             else:
-                await interaction.response.send_message(f"Une équipe avec le nom '{team_name}' existe déjà.", ephemeral=True)
+                await interaction.response.send_message(f"Une équipe avec le nom **{team_name}** existe déjà.", ephemeral=True)
         except discord.NotFound:
             await interaction.response.send_message("Le Discord ID du capitaine est invalide.", ephemeral=True)
         except ValueError:
@@ -124,7 +124,7 @@ class TeamEditModal(Modal):
             captain = await self.bot.fetch_user(int(captain_discord_id))
             if new_name != self.team_name:
                 if team_config.get_team(new_name):
-                    await interaction.response.send_message(f"Une équipe avec le nom '{new_name}' existe déjà.", ephemeral=True)
+                    await interaction.response.send_message(f"Une équipe avec le nom **{new_name}** existe déjà.", ephemeral=True)
                     return
                 else:
                     team_config.teams[new_name] = team_config.teams.pop(self.team_name)
@@ -133,7 +133,7 @@ class TeamEditModal(Modal):
             # Mise à jour des informations de l'équipe
             team_config.update_team(self.team_name, self.team["tournament"], captain_discord_id)
             await interaction.response.send_message(
-                f"Équipe '{self.team_name}' mise à jour avec succès.\nTournoi: {self.team['tournament']}\nCapitaine: {captain.display_name}",
+                f"Équipe **{self.team_name}** mise à jour avec succès.\nTournoi: **{self.team['tournament']}**\nCapitaine: **{captain.display_name}**",
                 ephemeral=True
             )
         except discord.NotFound:
