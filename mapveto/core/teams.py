@@ -328,7 +328,7 @@ class EditTeamButton(Button):
                 view.add_item(select)
                 await interaction.response.send_message("Sélectionnez une équipe à éditer :", view=view, ephemeral=True)
 
-        select = TournamentSelect([discord.SelectOption(label=name, value=name) for name in tournament_names])
+        select = TournamentSelect(self.bot, [discord.SelectOption(label=name, value=name) for name in tournament_names])
         view = View()
         view.add_item(select)
         await interaction.response.send_message("Choisissez un tournoi pour filtrer les équipes :", view=view, ephemeral=True)
