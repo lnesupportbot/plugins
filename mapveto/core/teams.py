@@ -64,9 +64,8 @@ team_config = TeamConfig()
 tournament_config = TournamentConfig()
 
 class TeamCreateModal(Modal):
-    def __init__(self, bot, tournament_name):
+    def __init__(self, tournament_name):
         super().__init__(title="Créer une Équipe")
-        self.bot = bot
         self.tournament_name = tournament_name
         self.name = TextInput(label="Nom de l'Équipe", placeholder="Entrez le nom de l'équipe")
         self.captain_discord_id = TextInput(label="Discord ID du Capitaine", placeholder="Entrez le Discord ID du capitaine")
@@ -76,10 +75,10 @@ class TeamCreateModal(Modal):
     async def on_submit(self, interaction: discord.Interaction):
         team_name = self.name.value
         captain_discord_id = self.captain_discord_id.value
+        captain = await self.bot.fetch_user(int(captain_discord_id))
+        captain_name = captain.display_name if captain else "Inconnu"
 
         if team_config.create_team(team_name, self.tournament_name, captain_discord_id):
-            captain = await self.bot.fetch_user(int(captain_discord_id))
-            captain_name = captain.display_name if captain else "Inconnu"
             await interaction.response.send_message(
                 f"L'équipe '{team_name}' a été créée avec succès.\n"
                 f"Tournoi : {self.tournament_name}\n"
@@ -88,6 +87,7 @@ class TeamCreateModal(Modal):
             )
         else:
             await interaction.response.send_message(f"Une équipe avec le nom '{team_name}' existe déjà.", ephemeral=True)
+
 
 class TeamEditModal(Modal):
     def __init__(self, team_name, team, show_tournament_field=True):
