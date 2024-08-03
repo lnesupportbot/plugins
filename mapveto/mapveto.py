@@ -100,7 +100,6 @@ class SetupView(View):
         team_message_config.refresh_setup_message_id()
         await self.teams.update_setup_message(interaction.channel)
 
-
 class MapVetoCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -201,6 +200,7 @@ class MapVetoCog(commands.Cog):
     @commands.command(name='setup_buttons')
     @commands.has_permissions(administrator=True)
     async def setup_buttons(self, ctx):
+        setupbutton_config.refresh_setup_message_id()
         """Affiche trois boutons pour lancer les commandes de configuration."""
         embed = discord.Embed(
             title="Configuration des Événements",
