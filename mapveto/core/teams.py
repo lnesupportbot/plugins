@@ -80,9 +80,7 @@ class TeamCreateModal(Modal):
             captain = await self.bot.fetch_user(int(captain_discord_id))
             captain_name = captain.display_name if captain else "Inconnu"
             await interaction.response.send_message(
-                f"L'équipe '{team_name}' a été créée avec succès.\n"
-                f"Tournoi : {self.tournament_name}\n"
-                f"Capitaine : {captain_name} ({captain_discord_id})",
+                f"L'équipe **{team_name}** a été créée avec succès pour le tournoi : **{self.tournament_name}** avec **{captain_name}** en tant que capitaine", 
                 ephemeral=True
             )
         else:
