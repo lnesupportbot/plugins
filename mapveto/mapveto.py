@@ -24,10 +24,11 @@ team_config = TeamConfig()
 teams = team_config.load_teams()
 
 class SetupButtonConfig:
-    def __init__(self, filename="message_id.json"):
+    def __init__(self, bot, filename="message_id.json"):
         self.filename = os.path.join(os.path.dirname(__file__), '.', filename)
         self.setup_message_id = None
         self.load_setup_message_id()
+        self.bopt = bot
 
     # Charger l'ID du message depuis le fichier, s'il existe
     def load_setup_message_id(self):
@@ -65,7 +66,7 @@ class SetupButtonConfig:
         )
 
     def create_setup_view(self):
-        return SetupView()
+        return SetupView(self.bot)
 
     async def send_setup_message(self, channel):
         embed = self.create_setup_embed()
