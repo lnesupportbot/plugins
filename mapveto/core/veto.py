@@ -152,7 +152,7 @@ class TeamSelect(Select):
         await ticket_channel.send(embed=embed, view=view)
 
         await interaction.followup.send(
-            f"Le ticket a été créé avec succès pour le MapVeto du match : **{team_a_name}** VS **{team_b_name}**.\n\n"
+            f"Le ticket a été créé avec succès pour le MapVeto du match : **{team_a_name}**(Capitaine : {team_a_user.display_name}) VS **{team_b_name}**(Capitaine : {team_b_user.display_name}).\n\n"
             f"Accédez au thread ici : <#{ticket_channel.id}>",
             ephemeral=True
         )
