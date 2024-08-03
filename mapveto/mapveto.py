@@ -209,21 +209,23 @@ class MapVetoCog(commands.Cog):
         )
         view = SetupView(self.bot)
 
+        self.setup_message_id = message.id
+
         if self.message_id:
             try:
                 setupbutton_config.load_setup_message_id()
                 # Vérifier si le message existe encore
                 channel = ctx.channel
-                message = await channel.fetch_message(self.message_id)
+                message = await channel.fetch_message(message.id)
                 await message.edit(embed=embed, view=view)
             except discord.NotFound:
                 # Si le message n'existe plus, envoyer un nouveau message
                 message = await ctx.send(embed=embed, view=view)
-                setupbutton_config.save_setup_message_id(self.message_id)
+                setupbutton_config.save_setup_message_id(message.id)
         else:
             # Envoyer le message pour la première fois
             message = await ctx.send(embed=embed, view=view)
-            setupbutton_config.save_setup_message_id(self.message_id)
+            setupbutton_config.save_setup_message_id(message.id)
 
     @commands.Cog.listener()
     async def on_ready(self):
