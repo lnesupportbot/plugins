@@ -76,10 +76,10 @@ class TeamCreateModal(Modal):
     async def on_submit(self, interaction: discord.Interaction):
         team_name = self.name.value
         captain_discord_id = self.captain_discord_id.value
+        captain = await self.bot.fetch_user(int(captain_discord_id))
+        captain_name = captain.display_name if captain else "Inconnu"
 
         if team_config.create_team(team_name, self.tournament_name, captain_discord_id):
-            captain = await self.bot.fetch_user(int(captain_discord_id))
-            captain_name = captain.display_name if captain else "Inconnu"
             await interaction.response.send_message(
                 f"L'équipe **{team_name}** a été créée avec succès pour le tournoi : **{self.tournament_name}** avec **{captain_name}** en tant que capitaine", 
                 ephemeral=True
