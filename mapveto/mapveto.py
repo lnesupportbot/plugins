@@ -28,7 +28,7 @@ class SetupButtonConfig:
         self.load_setup_message_id()
 
     # Charger l'ID du message depuis le fichier, s'il existe
-    def load_setup_message_id():
+    def load_setup_message_id(self):
         if os.path.exists("message_id.json"):
             with open("message_id.json", "r") as f:
                 return json.load(f).get("setup_button_message_id")
@@ -214,4 +214,3 @@ class MapVetoCog(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(MapVetoCog(bot))
-
