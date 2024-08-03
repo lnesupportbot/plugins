@@ -142,18 +142,18 @@ class TeamEditModal(Modal):
             await interaction.response.send_message("Veuillez entrer un ID Discord valide pour le capitaine.", ephemeral=True)
 
 class TeamManager:
-    def __init__(self, bot):
-        self.bot = bot
+    def __init__(self, bot, filename="message_id.json"):
+        self.filename = os.path.join(os.path.dirname(__file__), '..', filename)
         self.setup_message_id = None
         self.load_setup_message_id()
 
     def save_setup_message_id(self, message_id):
-        with open('setup_message_id.json', 'w') as f:
+        with open('message_id.json', 'w') as f:
             json.dump({'setup_message_id': message_id}, f)
 
     def load_setup_message_id(self):
-        if os.path.exists('setup_message_id.json'):
-            with open('setup_message_id.json', 'r') as f:
+        if os.path.exists('message_id.json'):
+            with open('message_id.json', 'r') as f:
                 data = json.load(f)
                 self.setup_message_id = data.get('setup_message_id')
 
