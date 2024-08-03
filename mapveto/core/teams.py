@@ -273,7 +273,7 @@ class CreateTeamButton(Button):
         view.add_item(select)
         await interaction.response.send_message("Sélectionnez un tournoi pour créer une équipe :", view=view, ephemeral=True)
 
-class TeamEditButton(Button):
+class EditTeamButton(Button):
     def __init__(self):
         super().__init__(label="Éditer une équipe", style=discord.ButtonStyle.primary, custom_id="edit_team")
 
