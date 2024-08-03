@@ -81,39 +81,39 @@ class TeamCreateModal(Modal):
             await interaction.response.send_message(f"Une équipe avec le nom '{team_name}' existe déjà.", ephemeral=True)
 
 class TeamEditModal(Modal):
-    def __init__(self, team_name, team, tournament_name=None):
+    def __init__(self, team_name, team):
         super().__init__(title=f"Modifier l'Équipe '{team_name}'")
         self.team_name = team_name
         self.team = team
-        self.tournament_name = tournament_name
+
+        # Champ pour le nom de l'équipe
         self.name = TextInput(
             label="Nom de l'Équipe",
             default=team_name,
             placeholder="Entrez le nom de l'équipe"
         )
-        self.template = TextInput(
-            label="Tournoi rattaché à l'Équipe",
-            default=team["tournament"],
-            placeholder="Entrez le nom du tournoi"
-        ) if tournament_name is None else None
+        self.add_item(self.name)
+
+        # Champ pour le Discord ID du capitaine
         self.captain_discord_id = TextInput(
             label="Discord ID du Capitaine",
             default=team["captain_discord_id"],
             placeholder="Entrez le Discord ID du capitaine"
         )
-        self.add_item(self.name)
-        if self.template:
-            self.add_item(self.template)
         self.add_item(self.captain_discord_id)
+
+        # Le champ pour le tournoi ne sera pas ajouté ici
 
     async def on_submit(self, interaction: discord.Interaction):
         new_name = self.name.value.strip()
-        template = self.template.value.strip() if self.template else self.team["tournament"]
         new_captain_discord_id = self.captain_discord_id.value.strip()
 
         if not new_name:
             await interaction.response.send_message("Le nom ne peut pas être vide.", ephemeral=True)
             return
+
+        # Utiliser l'ancien tournoi si le champ n'est pas affiché
+        template = self.team["tournament"]
 
         if new_name != self.team_name:
             if team_config.get_team(new_name):
@@ -145,7 +145,9 @@ class ChangeTournamentButton(Button):
             async def callback(self, interaction: discord.Interaction):
                 selected_tournament = self.values[0]
                 team = team_config.get_team(self.team_name)
-                modal = TeamEditModal(self.team_name, team, tournament_name=selected_tournament)
+                # Créer la fenêtre modale sans le champ "Tournoi"
+                modal = TeamEditModal(self.team_name, team)
+                team_config.update_team(self.team_name, selected_tournament, team["captain_discord_id"])  # Mise à jour du tournoi ici
                 await interaction.response.send_modal(modal)
 
         select = TournamentSelect(self.team_name, [discord.SelectOption(label=name, value=name) for name in tournament_names])
@@ -160,8 +162,12 @@ class NoChangeTournamentButton(Button):
 
     async def callback(self, interaction: discord.Interaction):
         team = team_config.get_team(self.team_name)
-        modal = TeamEditModal(self.team_name, team, tournament_name=None)
+        # Créer la fenêtre modale sans le champ "Tournoi"
+        modal = TeamEditModal(self.team_name, team)
+        # Passer le tournoi actuel à la méthode update_team
+        team_config.update_team(self.team_name, team["tournament"], team["captain_discord_id"])  
         await interaction.response.send_modal(modal)
+
 
 class TeamEditTournamentSelect(Select):
     def __init__(self, current_tournament, options):
