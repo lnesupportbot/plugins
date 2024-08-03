@@ -166,6 +166,15 @@ class TournamentSelect(Select):
 
     async def callback(self, interaction: discord.Interaction):
         tournament_name = self.values[0]
+        teams = team_config.get_teams_by_tournament(tournament_name)
+
+        if not teams:
+            await interaction.response.send_message(
+            f"Le Mapveto ne peut pas être lancé car il n'y a pas d'équipes dans le tournoi selectionné : {tournament_name} ",
+            ephemeral=True,
+            )
+            return
+        
         select = TeamSelect(tournament_name, self.template_name, self.bot)
         view = View()
         view.add_item(select)
@@ -187,6 +196,12 @@ class TemplateSelect(Select):
 
     async def callback(self, interaction: discord.Interaction):
         template_name = self.values[0]
+        tournaments = tournament_config.tournaments
+
+        if not tournaments:
+            await interaction.response.send_message("Le MapVeto ne peut pas être lancé car aucun tournoi n'a trouvé.", ephemeral=True)
+            return
+        
         select = TournamentSelect(template_name, self.bot)
         view = View()
         view.add_item(select)
@@ -197,6 +212,10 @@ class MapVetoButton(Button):
         super().__init__(label="Lancer un MapVeto", style=discord.ButtonStyle.primary)
 
     async def callback(self, interaction: discord.Interaction):
+        vetos = veto_config.vetos
+        if not vetos:
+            await interaction.response.send_message("Le MapVeto ne peut pas être lancé car aucun template de veto n'a été créé.", ephemeral=True)
+            return
 
         select = TemplateSelect(interaction.client)
         view = View()
