@@ -75,13 +75,14 @@ class TeamSelect(Select):
 
         super().__init__(placeholder="Choisir deux équipes...", min_values=2, max_values=2, options=options)
 
-    async def callback(self, interaction: discord.Interaction):        
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)       
         team_a_name, team_b_name = self.values
         team_a_id = int(teams[team_a_name]["captain_discord_id"])
         team_b_id = int(teams[team_b_name]["captain_discord_id"])
 
         if not team_a_id or not team_b_id:
-            await interaction.response.send_message("Un ou les deux capitaines ne sont pas trouvés sur le serveur.", ephemeral=True)
+            await interaction.followup.send("Un ou les deux capitaines ne sont pas trouvés sur le serveur.", ephemeral=True)
             return
 
         # Récupérer les objets utilisateur à partir des IDs
@@ -89,14 +90,14 @@ class TeamSelect(Select):
         team_b_user = await self.bot.fetch_user(team_b_id)
 
         if not team_a_user or not team_b_user:
-            await interaction.response.send_message("Un ou les deux capitaines ne sont pas trouvés sur le serveur.", ephemeral=True)
+            await interaction.followup.send("Un ou les deux capitaines ne sont pas trouvés sur le serveur.", ephemeral=True)
             return
 
         # Vérifier si des threads existent déjà pour les utilisateurs
         errors = []
         modmail_cog = self.bot.get_cog("Modmail")
         if modmail_cog is None:
-            await interaction.response.send_message("Le cog Modmail n'est pas chargé.", ephemeral=True)
+            await interaction.followup.send("Le cog Modmail n'est pas chargé.", ephemeral=True)
             return
 
         existing_thread_a = await self.bot.threads.find(recipient=team_a_user)
@@ -108,7 +109,7 @@ class TeamSelect(Select):
             errors.append(f"Un thread pour **{team_b_user.display_name}** existe déjà.")
 
         if errors:
-            await interaction.response.send_message("\n".join(errors), ephemeral=True)
+            await interaction.followup.send("\n".join(errors), ephemeral=True)
             return
 
         # Crée le ticket avec les capitaines d'équipe
@@ -133,7 +134,7 @@ class TeamSelect(Select):
         thread = await self.bot.threads.find(recipient=team_a_user)
 
         if not thread or not thread.channel:
-            await interaction.response.send_message("Erreur lors de la création du thread.", ephemeral=True)
+            await interaction.followup.send("Erreur lors de la création du thread.", ephemeral=True)
             return
 
         ticket_channel = thread.channel  # Obtenir le canal du thread créé
@@ -150,7 +151,7 @@ class TeamSelect(Select):
         view.add_item(select)
         await ticket_channel.send(embed=embed, view=view)
 
-        await interaction.response.send_message(
+        await interaction.followup.send(
             f"Le ticket a été créé avec succès pour le MapVeto du match : **{team_a_name}** VS **{team_b_name}**.\n\n"
             f"Accédez au thread ici : [#{ticket_channel.name}](https://discord.com/channels/{interaction.guild_id}/{ticket_channel.id})",
             ephemeral=True
