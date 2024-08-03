@@ -60,6 +60,9 @@ class SetupView(View):
     def __init__(self, bot):
         super().__init__(timeout=None)
         self.bot = bot
+        self.template_veto = TemplateManager()
+        self.tournament = TournamentManager()
+        self.teams = TeamManager(bot)
 
     @discord.ui.button(label="Gestion des templates d'événements", custom_id="mapveto_setup", style=discord.ButtonStyle.blurple)
     async def mapveto_setup_button(self, interaction: discord.Interaction, button: Button, ctx):
