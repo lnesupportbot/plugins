@@ -105,7 +105,7 @@ class MapVetoCog(commands.Cog):
         self.template_veto = TemplateManager()
         self.tournament = TournamentManager()
         self.teams = TeamManager(bot)
-        self.setup_message_id = setupbutton_config.load_setup_message_id()
+        self.message_id = SetupButtonConfig.load_setup_message_id()
         self.current_veto = None
 
     def set_veto_params(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel):
