@@ -38,10 +38,9 @@ class SetupButtonConfig:
             self.setup_message_id = None
 
     # Sauvegarder l'ID du message dans un fichier
-    def save_setup_message_id(self, key, message_id):
-        self.setup_message_id[key] = message_id
+    def save_setup_message_id(self, message_id):
         with open(self.filename, "w") as f:
-            json.dump(self.setup_message_id, f, indent=4)
+            json.dump({'setup_button_message_id': message_id}, f, indent=4)
             
     def refresh_setup_message_id(self):
         """Refresh the message id from the file."""
