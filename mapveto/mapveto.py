@@ -21,7 +21,7 @@ tournament_config = TournamentConfig()
 tournament_message_config = TournamentManager()
 tournaments = tournament_config.load_tournaments()
 team_config = TeamConfig()
-team_message_config = TeamManager()
+team_message_config = TeamManager(bot)
 teams = team_config.load_teams()
 
 class SetupButtonConfig:
