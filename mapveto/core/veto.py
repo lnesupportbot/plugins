@@ -75,7 +75,8 @@ class TeamSelect(Select):
 
         super().__init__(placeholder="Choisir deux équipes...", min_values=2, max_values=2, options=options)
 
-    async def callback(self, interaction: discord.Interaction):        
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
         team_a_name, team_b_name = self.values
         team_a_id = int(teams[team_a_name]["captain_discord_id"])
         team_b_id = int(teams[team_b_name]["captain_discord_id"])
