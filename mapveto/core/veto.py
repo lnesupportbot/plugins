@@ -1,13 +1,204 @@
 import json
 import os
+import asyncio
 import discord # type: ignore
 from discord.ui import Modal, TextInput, Button, Select, View # type: ignore
 from discord.ext import commands # type: ignore
 
 from .templateveto import MapVetoConfig
+from .teams import TeamConfig
+from .tournament import TournamentConfig
 
 veto_config = MapVetoConfig()
 vetos = veto_config.load_vetos()
+team_config = TeamConfig()
+tournament_config = TournamentConfig
+
+class SelectTeamForMapVeto(Select):
+    def __init__(self, team_a_name, team_b_name, template_name, bot):
+        self.template_name = template_name
+        self.team_a_name = team_a_name
+        self.team_b_name = team_b_name
+        self.bot = bot
+
+        self.teams = team_config.load_teams()
+
+        options = [
+            discord.SelectOption(label=team_a_name, description=f"{team_a_name} commence", value=team_a_name),
+            discord.SelectOption(label=team_b_name, description=f"{team_b_name} commence", value=team_b_name),
+        ]
+
+        super().__init__(placeholder="Choisir l'équipe qui commence...", min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        teams = team_config.load_teams()
+        starting_team = self.values[0]
+        other_team = self.team_b_name if starting_team == self.team_a_name else self.team_a_name
+
+        # Obtenir les IDs des capitaines des équipes
+        starting_team_id = int(teams[starting_team]["captain_discord_id"])
+        other_team_id = int(teams[other_team]["captain_discord_id"])
+
+        maps = veto_config.vetos[self.template_name]["maps"]
+        rules = veto_config.vetos[self.template_name]["rules"]
+        ticket_channel = interaction.channel
+
+        veto = MapVeto(self.template_name, maps, starting_team_id, starting_team, other_team_id, other_team, rules, ticket_channel, self.bot)
+        vetos[self.template_name] = veto
+
+        await interaction.response.send_message(f"Le Map Veto commence avec {starting_team} contre {other_team}.", ephemeral=True)
+        await veto.send_ticket_message(ticket_channel)
+
+class TeamSelect(Select):
+    def __init__(self, tournament_name, template_name, bot):
+        self.template_name = template_name
+        self.tournament_name = tournament_name
+        self.bot = bot
+        self.teams = team_config.refresh_teams()
+
+        # Filtrer les équipes pour le tournoi spécifié
+        teams = team_config.get_teams_by_tournament(tournament_name)
+
+        # Préparer les options avec les descriptions des capitaines
+        options = []
+        for team in teams:
+            captain_id = int(teams[team]["captain_discord_id"])
+            captain_user = self.bot.get_user(captain_id)
+            if captain_user:
+                description = f"Capitaine : {captain_user.name}"
+            else:
+                description = "Capitaine non trouvé"
+            options.append(discord.SelectOption(label=team, description=description, value=team))
+
+        super().__init__(placeholder="Choisir deux équipes...", min_values=2, max_values=2, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        team_a_name, team_b_name = self.values
+        team_a_id = int(self.teams[team_a_name]["captain_discord_id"])
+        team_b_id = int(self.teams[team_b_name]["captain_discord_id"])
+
+        if not team_a_id or not team_b_id:
+            await interaction.response.send_message("Un ou les deux capitaines ne sont pas trouvés sur le serveur.", ephemeral=True)
+            return
+
+        # Récupérer les objets utilisateur à partir des IDs
+        team_a_user = await self.bot.fetch_user(team_a_id)
+        team_b_user = await self.bot.fetch_user(team_b_id)
+
+        if not team_a_user or not team_b_user:
+            await interaction.response.send_message("Un ou les deux capitaines ne sont pas trouvés sur le serveur.", ephemeral=True)
+            return
+
+        # Vérifier si des threads existent déjà pour les utilisateurs
+        errors = []
+        modmail_cog = self.bot.get_cog("Modmail")
+        if modmail_cog is None:
+            await interaction.response.send_message("Le cog Modmail n'est pas chargé.", ephemeral=True)
+            return
+
+        existing_thread_a = await self.bot.threads.find(recipient=team_a_user)
+        existing_thread_b = await self.bot.threads.find(recipient=team_b_user)
+
+        if existing_thread_a:
+            errors.append(f"Un thread pour **{team_a_user.display_name}** existe déjà.")
+        if existing_thread_b:
+            errors.append(f"Un thread pour **{team_b_user.display_name}** existe déjà.")
+
+        if errors:
+            await interaction.response.send_message("\n".join(errors), ephemeral=True)
+            return
+
+        # Crée le ticket avec les capitaines d'équipe
+        category = None  # Vous pouvez spécifier une catégorie si besoin
+        users = [team_a_user, team_b_user]
+
+        # Créez un contexte factice pour appeler la commande `contact`
+        fake_context = await self.bot.get_context(interaction.message)
+
+        # Créer le thread
+        await modmail_cog.contact(
+            fake_context,  # passez le contexte de commande factice
+            users,
+            category=category,
+            manual_trigger=False
+        )
+
+        # Pause explicite pour attendre la création complète du thread
+        await asyncio.sleep(2)
+
+        # Trouver le thread pour s'assurer qu'il est prêt
+        thread = await self.bot.threads.find(recipient=team_a_user)
+
+        if not thread or not thread.channel:
+            await interaction.response.send_message("Erreur lors de la création du thread.", ephemeral=True)
+            return
+
+        ticket_channel = thread.channel  # Obtenir le canal du thread créé
+
+        # Envoyer l'embed avec la liste déroulante et le bouton dans le thread
+        embed = discord.Embed(
+            title="Sélection de l'équipe qui commence le MapVeto",
+            description=f"Veuillez choisir quelle équipe commence le MapVeto :",
+            color=discord.Color.blue()
+        )
+
+        select = SelectTeamForMapVeto(team_a_name, team_b_name, self.template_name, self.bot)
+        view = View()
+        view.add_item(select)
+
+        await ticket_channel.send(embed=embed, view=view)
+        
+class TournamentSelect(Select):
+    def __init__(self, template_name, bot):
+        self.template_name = template_name
+        self.bot = bot
+        self.tournaments = tournament_config.load_tournaments()
+
+        options = [
+            discord.SelectOption(label=name, value=name)
+            for name in self.tournaments
+        ]
+
+        super().__init__(placeholder="Choisir un tournoi...", min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        tournament_name = self.values[0]
+        select = TeamSelect(tournament_name, self.template_name, self.bot)
+        view = View()
+        view.add_item(select)
+        await interaction.response.send_message(f"Tournament choisi: {tournament_name}", view=view, ephemeral=True)
+
+class TemplateSelect(Select):
+    def __init__(self, bot):
+        self.bot = bot
+        self.vetos = veto_config.load_vetos()
+        options = [
+            discord.SelectOption(
+                label=template, 
+                description=f"Règles: {self.vetos[template]['rules']}",
+                value=template
+            )
+            for template in self.vetos.keys()
+        ]
+        super().__init__(placeholder="Choisir un template de veto...", min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        template_name = self.values[0]
+        select = TournamentSelect(template_name, self.bot)
+        view = View()
+        view.add_item(select)
+        await interaction.response.send_message(f"Template choisi: {template_name}", view=view, ephemeral=True)
+
+class MapVetoButton(Button):
+    def __init__(self):
+        super().__init__(label="Lancer un MapVeto", style=discord.ButtonStyle.primary)
+
+    async def callback(self, interaction: discord.Interaction):
+
+        select = TemplateSelect(interaction.client)
+        view = View()
+        view.add_item(select)
+        await interaction.response.send_message("Choisissez un template de veto:", view=view, ephemeral=True) 
 
 class MapButton(discord.ui.Button):
     def __init__(self, label, veto_name, action_type, channel, veto):
@@ -120,8 +311,6 @@ class MapVeto:
         view = discord.ui.View(timeout=None)
         for component in components:
             view.add_item(component)
-
-        #team_name = veto.team_a_name if veto.get_current_turn() == veto.team_a_id else veto.team_b_name
 
         if action == "Side":
             if len(self.maps) == 1:
