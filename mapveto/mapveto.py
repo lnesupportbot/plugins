@@ -106,7 +106,7 @@ class MapVetoCog(commands.Cog):
         self.template_veto = TemplateManager()
         self.tournament = TournamentManager()
         self.teams = TeamManager(bot)
-        self.message_id = setupbutton_config.load_setup_message_id()
+        self.setup_message_id = setupbutton_config.load_setup_message_id()
         self.current_veto = None
 
     def set_veto_params(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel):
@@ -201,30 +201,7 @@ class MapVetoCog(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def setup_buttons(self, ctx):
         setupbutton_config.load_setup_message_id()
-        """Affiche trois boutons pour lancer les commandes de configuration."""
-        embed = discord.Embed(
-            title="Configuration des Événements",
-            description="Utilisez les boutons ci-dessous pour configurer les différents éléments.",
-            color=discord.Color.blue()
-        )
-        view = SetupView(self.bot)
-
-        self.setup_message_id = message.id
-
-        if self.message_id:
-            try:
-                # Vérifier si le message existe encore
-                channel = ctx.channel
-                message = await channel.fetch_message(self.message_id)
-                await message.edit(embed=embed, view=view)
-            except discord.NotFound:
-                # Si le message n'existe plus, envoyer un nouveau message
-                message = await ctx.send(embed=embed, view=view)
-                setupbutton_config.save_setup_message_id(message.id)
-        else:
-            # Envoyer le message pour la première fois
-            message = await ctx.send(embed=embed, view=view)
-            setupbutton_config.save_setup_message_id(message.id)
+        await setupbutton_config.update_setup_message(ctx.channel)
 
     @commands.Cog.listener()
     async def on_ready(self):
