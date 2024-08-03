@@ -4,8 +4,6 @@ import discord # type: ignore
 from discord.ui import Modal, TextInput, Button, Select, View # type: ignore
 from discord.ext import commands # type: ignore
 
-from .teams import team_config
-
 class TournamentConfig:
     def __init__(self, filename="tourney.json"):
         self.filename = os.path.join(os.path.dirname(__file__), '..', filename)
@@ -237,6 +235,7 @@ class EditTournamentButton(Button):
         super().__init__(label="Éditer un tournoi", style=discord.ButtonStyle.primary, custom_id="edit_tournament")
 
     async def callback(self, interaction: discord.Interaction):
+
         tournament_names = list(tournament_config.tournaments.keys())
         if not tournament_names:
             await interaction.response.send_message("Aucun tournoi disponible pour modification.", ephemeral=True)
@@ -279,11 +278,21 @@ class DeleteTournamentButton(Button):
                 super().__init__(placeholder="Choisissez un tournoi à supprimer...", options=options)
 
             async def callback(self, interaction: discord.Interaction):
+                from .teams import TeamConfig
                 selected_tournament = self.values[0]
                 confirm_view = View()
                 confirm_view.add_item(ConfirmTournamentDeleteButton(selected_tournament))
+                team_config = TeamConfig()
+                teams = team_config.get_teams_for_tournament(self.tournament_name)
 
-                await interaction.response.send_message(
+                if teams:
+                    # Si des équipes sont rattachées, afficher un message d'erreur
+                    await interaction.response.send_message(
+                        f"Le tournoi '{self.tournament_name}' ne peut pas être supprimé car les équipes suivantes y sont rattachées : {', '.join(teams)}.",
+                        ephemeral=True,
+                    )
+                else:
+                    await interaction.response.send_message(
                     f"Êtes-vous sûr de vouloir supprimer le tournoi '{selected_tournament}' ?",
                     view=confirm_view,
                     ephemeral=True
@@ -296,30 +305,11 @@ class DeleteTournamentButton(Button):
 
 class ConfirmTournamentDeleteButton(Button):
     def __init__(self, tournament_name):
-        super().__init__(
-            label=f"Confirmer la suppression de {tournament_name}",
-            style=discord.ButtonStyle.danger,
-            custom_id=f"confirm_delete_tournament_{tournament_name}",
-        )
+        super().__init__(label=f"Confirmer la suppression de {tournament_name}", style=discord.ButtonStyle.danger, custom_id=f"confirm_delete_tournament_{tournament_name}")
         self.tournament_name = tournament_name
 
     async def callback(self, interaction: discord.Interaction):
-        # Vérifiez si des équipes sont rattachées au tournoi
-        teams = team_config.get_teams_by_tournament(self.tournament_name)
-
-        if teams:
-            # Si des équipes sont rattachées, afficher un message d'erreur
-            await interaction.response.send_message(
-                f"Le tournoi '{self.tournament_name}' ne peut pas être supprimé car les équipes suivantes y sont rattachées : {', '.join(teams)}.",
-                ephemeral=True,
-            )
-        elif tournament_config.delete_tournament(self.tournament_name):
-            await interaction.response.send_message(
-                f"Le tournoi '{self.tournament_name}' a été supprimé avec succès.",
-                ephemeral=True,
-            )
+        if tournament_config.delete_tournament(self.tournament_name):
+            await interaction.response.send_message(f"Le tournoi '{self.tournament_name}' a été supprimé avec succès.", ephemeral=True)
         else:
-            await interaction.response.send_message(
-                f"Erreur lors de la suppression du tournoi '{self.tournament_name}'.",
-                ephemeral=True,
-            )
+            await interaction.response.send_message(f"Erreur lors de la suppression du tournoi '{self.tournament_name}'.", ephemeral=True)
