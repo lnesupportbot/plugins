@@ -129,9 +129,8 @@ class TournamentDeleteButton(Button):
             )
 
 class TournamentManager:
-    def __init__(self, bot, filename="message_id.json"):
+    def __init__(self, filename="message_id.json"):
         self.filename = os.path.join(os.path.dirname(__file__), '..', filename)
-        self.bot = bot
         self.setup_message_id = None
         self.load_setup_message_id()
 
