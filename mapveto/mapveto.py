@@ -82,17 +82,17 @@ class SetupView(View):
         self.teams = TeamManager(bot)
 
     @discord.ui.button(label="Gestion des templates d'événements", custom_id="mapveto_setup", style=discord.ButtonStyle.blurple)
-    async def mapveto_setup_button(self, interaction: discord.Interaction, button: Button, ctx):
+    async def mapveto_setup_button(self, interaction: discord.Interaction, button: Button):
         veto_config.load_vetos()
         await self.template_veto.update_setup_message(interaction.channel)
 
     @discord.ui.button(label="Gestion des tournois", custom_id="tournament_setup", style=discord.ButtonStyle.green)
-    async def tournament_setup_button(self, interaction: discord.Interaction, button: Button, ctx):
+    async def tournament_setup_button(self, interaction: discord.Interaction, button: Button):
         tournament_config.load_tournaments()
         await self.tournament.update_setup_message(interaction.channel)
 
     @discord.ui.button(label="Gestion des teams", custom_id="team_setup", style=discord.ButtonStyle.red)
-    async def team_setup_button(self, interaction: discord.Interaction, button: Button, ctx):
+    async def team_setup_button(self, interaction: discord.Interaction, button: Button):
         team_config.load_teams()
         await self.teams.update_setup_message(interaction.channel)
 
