@@ -15,14 +15,8 @@ from .core.veto import MapVeto
 
 # Charger les configurations
 veto_config = MapVetoConfig()
-veto_config.refresh_templates()
-vetos = veto_config.load_vetos()
 tournament_config = TournamentConfig()
-tournament_config.refresh_tournaments()
-tournaments = tournament_config.load_tournaments()
 team_config = TeamConfig()
-team_config.refresh_teams()
-teams = team_config.load_teams()
 
 class SelectTeamForMapVeto(Select):
     def __init__(self, team_a_name, team_b_name, template_name, bot):
@@ -30,6 +24,8 @@ class SelectTeamForMapVeto(Select):
         self.team_a_name = team_a_name
         self.team_b_name = team_b_name
         self.bot = bot
+
+        self.teams = team_config.load_teams()
 
         options = [
             discord.SelectOption(label=team_a_name, description=f"{team_a_name} commence", value=team_a_name),
@@ -61,9 +57,9 @@ class TeamSelect(Select):
         self.template_name = template_name
         self.tournament_name = tournament_name
         self.bot = bot
+        self.teams = team_config.load_teams()
 
         # Filtrer les équipes pour le tournoi spécifié
-        team_config.refresh_teams()
         tournament_teams = [team for team, details in teams.items() if details["tournament"] == tournament_name]
 
         # Préparer les options avec les descriptions des capitaines
@@ -249,12 +245,12 @@ class TournamentSelect(Select):
     def __init__(self, template_name, bot):
         self.template_name = template_name
         self.bot = bot
+        self.tournaments = tournament_config.load_tournaments()
 
-        team_config.refresh_teams()
-        tournaments_set = {details["tournament"] for details in teams.values()}
+        tournaments_set = tournament_config.tournaments
         options = [
-            discord.SelectOption(label=tournament, description=f"Tournament {tournament}")
-            for tournament in tournaments_set
+            discord.SelectOption(label=tournaments_set, description=f"Tournament {tournament['name']}")
+            for tournament in self.tournaments
         ]
 
         super().__init__(placeholder="Choisir un tournoi...", min_values=1, max_values=1, options=options)
