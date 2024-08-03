@@ -64,8 +64,9 @@ team_config = TeamConfig()
 tournament_config = TournamentConfig()
 
 class TeamCreateModal(Modal):
-    def __init__(self, tournament_name):
+    def __init__(self, bot, tournament_name):
         super().__init__(title="Créer une Équipe")
+        self.bot = bot
         self.tournament_name = tournament_name
         self.name = TextInput(label="Nom de l'Équipe", placeholder="Entrez le nom de l'équipe")
         self.captain_discord_id = TextInput(label="Discord ID du Capitaine", placeholder="Entrez le Discord ID du capitaine")
