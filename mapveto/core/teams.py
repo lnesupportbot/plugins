@@ -286,8 +286,9 @@ class EditTeamButton(Button):
             return
 
         class TournamentSelect(Select):
-            def __init__(self, options):
+            def __init__(self, bot, options):
                 super().__init__(placeholder="Choisissez un tournoi...", options=options)
+                self.bot = bot
 
             async def callback(self, interaction: discord.Interaction):
                 selected_tournament = self.values[0]
