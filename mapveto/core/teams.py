@@ -4,7 +4,7 @@ import discord # type: ignore
 from discord.ui import Modal, TextInput, Button, Select, View # type: ignore
 from discord.ext import commands # type: ignore
 
-from .tournament import TournamentConfig, tournament_config
+from .tournament import TournamentConfig
 
 class TeamConfig:
     def __init__(self, filename="teams.json"):
