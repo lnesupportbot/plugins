@@ -384,7 +384,7 @@ class EditTeamButton(Button):
             return
 
         class TournamentSelect(Select):
-            def __init__(self, options):
+            def __init__(self,  options):
                 super().__init__(placeholder="Choisissez un tournoi...", options=options)
 
             async def callback(self, interaction: discord.Interaction):
@@ -396,8 +396,9 @@ class EditTeamButton(Button):
                     return
 
                 class TeamSelect(Select):
-                    def __init__(self, options):
+                    def __init__(self, bot, options):
                         super().__init__(placeholder="Choisissez une équipe...", options=options)
+                        self.bot = bot
 
                     async def callback(self, interaction: discord.Interaction):
                         selected_team = self.values[0]
@@ -409,8 +410,8 @@ class EditTeamButton(Button):
                         
                         # Demander si le tournoi doit être modifié
                         view = View()
-                        view.add_item(ChangeTournamentButton(selected_team))
-                        view.add_item(NoChangeTournamentButton(selected_team))
+                        view.add_item(ChangeTournamentButton(self.bot, selected_team))
+                        view.add_item(NoChangeTournamentButton(self.bot, selected_team))
 
                         await interaction.response.send_message(
                             "Souhaitez-vous également changer le tournoi associé ?",
