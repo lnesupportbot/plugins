@@ -65,6 +65,7 @@ class TeamSelect(Select):
 
         # Filtrer les équipes pour le tournoi spécifié
         teams = team_config.get_teams_by_tournament(tournament_name)
+        print(teams)
 
         # Préparer les options avec les descriptions des capitaines
         options = []
