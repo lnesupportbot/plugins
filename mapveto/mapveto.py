@@ -24,11 +24,10 @@ team_config = TeamConfig()
 teams = team_config.load_teams()
 
 class SetupButtonConfig:
-    def __init__(self, bot, filename="message_id.json"):
+    def __init__(self, filename="message_id.json"):
         self.filename = os.path.join(os.path.dirname(__file__), '.', filename)
         self.setup_message_id = None
         self.load_setup_message_id()
-        self.bot = bot
 
     # Charger l'ID du message depuis le fichier, s'il existe
     def load_setup_message_id(self):
@@ -74,6 +73,8 @@ class SetupButtonConfig:
         message = await channel.send(embed=embed, view=view)
         self.save_setup_message_id(message.id)
 
+setupbutton_config = SetupButtonConfig()
+
 class SetupView(View):
     def __init__(self, bot):
         super().__init__(timeout=None)
@@ -105,7 +106,7 @@ class MapVetoCog(commands.Cog):
         self.template_veto = TemplateManager()
         self.tournament = TournamentManager()
         self.teams = TeamManager(bot)
-        self.message_id = SetupButtonConfig.load_setup_message_id(self)
+        self.setup_message_id = setupbutton_config.load_setup_message_id()
         self.current_veto = None
 
     def set_veto_params(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel):
@@ -199,8 +200,8 @@ class MapVetoCog(commands.Cog):
     @commands.command(name='setup_buttons')
     @commands.has_permissions(administrator=True)
     async def setup_buttons(self, ctx):
-        SetupButtonConfig.load_setup_message_id(self)
-        await SetupButtonConfig.update_setup_message(ctx.channel)
+        setupbutton_config.load_setup_message_id()
+        await setupbutton_config.update_setup_message(ctx.channel)
 
     @commands.Cog.listener()
     async def on_ready(self):
