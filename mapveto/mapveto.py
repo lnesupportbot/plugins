@@ -66,7 +66,7 @@ class SetupButtonConfig:
         )
 
     def create_setup_view(self):
-        return SetupView(self.bot)
+        return SetupView(self)
 
     async def send_setup_message(self, channel):
         embed = self.create_setup_embed()
