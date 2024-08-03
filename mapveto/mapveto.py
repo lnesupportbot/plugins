@@ -15,10 +15,13 @@ from .core.veto import MapVeto, MapVetoButton
 
 # Charger les configurations
 veto_config = MapVetoConfig()
+template_message_config = TemplateManager()
 vetos = veto_config.load_vetos()
 tournament_config = TournamentConfig()
+tournament_message_config = TournamentManager()
 tournaments = tournament_config.load_tournaments()
 team_config = TeamConfig()
+team_message_config = TeamManager()
 teams = team_config.load_teams()
 
 class SetupButtonConfig:
@@ -83,17 +86,17 @@ class SetupView(View):
 
     @discord.ui.button(label="Gestion des templates d'événements", custom_id="mapveto_setup", style=discord.ButtonStyle.blurple)
     async def mapveto_setup_button(self, interaction: discord.Interaction, button: Button):
-        veto_config.load_vetos()
+        template_message_config.refresh_setup_message_id()
         await self.template_veto.update_setup_message(interaction.channel)
 
     @discord.ui.button(label="Gestion des tournois", custom_id="tournament_setup", style=discord.ButtonStyle.green)
     async def tournament_setup_button(self, interaction: discord.Interaction, button: Button):
-        tournament_config.load_tournaments()
+        tournament_message_config.refresh_setup_message_id()
         await self.tournament.update_setup_message(interaction.channel)
 
     @discord.ui.button(label="Gestion des teams", custom_id="team_setup", style=discord.ButtonStyle.red)
     async def team_setup_button(self, interaction: discord.Interaction, button: Button):
-        team_config.load_teams()
+        team_message_config.refresh_setup_message_id()
         await self.teams.update_setup_message(interaction.channel)
 
 
