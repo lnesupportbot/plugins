@@ -48,7 +48,6 @@ class TournamentConfig:
         self.tournaments = self.load_tournaments()
 
 tournament_config = TournamentConfig()
-team_config = TeamConfig()
 
 class TournamentCreateModal(Modal):
     def __init__(self):
