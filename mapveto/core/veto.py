@@ -153,7 +153,7 @@ class TeamSelect(Select):
 
         await interaction.followup.send(
             f"Le ticket a été créé avec succès pour le MapVeto du match : **{team_a_name}** VS **{team_b_name}**.\n\n"
-            f"Accédez au thread ici : [#{ticket_channel.name}](https://discord.com/channels/{interaction.guild_id}/{ticket_channel.id})",
+            f"Accédez au thread ici : <#{ticket_channel.id}>",
             ephemeral=True
         )
     
