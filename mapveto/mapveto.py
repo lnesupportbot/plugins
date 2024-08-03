@@ -36,6 +36,7 @@ class MapVetoCog(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def mapveto_setup(self, ctx):
         """Crée ou met à jour le message avec les boutons pour gérer les templates de veto."""
+        veto_config.load_vetos()
         await self.template_veto.update_setup_message(ctx.channel)
 
     @commands.command(name='tournament_setup')
@@ -47,6 +48,7 @@ class MapVetoCog(commands.Cog):
     @commands.command(name='team_setup')
     @commands.has_permissions(administrator=True)
     async def team_setup(self, ctx):
+        team_config.load_teams()
         await self.teams.update_setup_message(ctx.channel)
 
     @commands.command()
@@ -114,6 +116,42 @@ class MapVetoCog(commands.Cog):
         view = View()
         view.add_item(MapVetoButton())
         await ctx.send(embed=embed, view=view)
+
+    @commands.command(name='setup_buttons')
+    @commands.has_permissions(administrator=True)
+    async def setup_buttons(self, ctx):
+        """Affiche trois boutons pour lancer les commandes de configuration."""
+        
+        class SetupView(View):
+            def __init__(self):
+                super().__init__()
+
+                self.add_item(Button(label="Gestion des templates d'événements", custom_id="mapveto_setup", style=discord.ButtonStyle.blurple))
+                self.add_item(Button(label="Gestion des tournois", custom_id="tournament_setup", style=discord.ButtonStyle.green))
+                self.add_item(Button(label="Gestion des teams", custom_id="team_setup", style=discord.ButtonStyle.red))
+
+            async def interaction_check(self, interaction: discord.Interaction) -> bool:
+                return interaction.user == ctx.author
+
+            @discord.ui.button(label="Gestion des templates d'événements", custom_id="mapveto_setup", style=discord.ButtonStyle.blurple)
+            async def mapveto_setup_button(self, interaction: discord.Interaction, button: Button):
+                await ctx.invoke(self.mapveto_setup)
+
+            @discord.ui.button(label="Gestion des tournois", custom_id="tournament_setup", style=discord.ButtonStyle.green)
+            async def tournament_setup_button(self, interaction: discord.Interaction, button: Button):
+                await ctx.invoke(self.tournament_setup)
+
+            @discord.ui.button(label="Gestion des teams", custom_id="team_setup", style=discord.ButtonStyle.red)
+            async def team_setup_button(self, interaction: discord.Interaction, button: Button):
+                await ctx.invoke(self.team_setup)
+
+        embed = discord.Embed(
+            title="Configuration des Événements",
+            description="Utilisez les boutons ci-dessous pour configurer les différents éléments.",
+            color=discord.Color.blue()
+        )
+        
+        await ctx.send(embed=embed, view=SetupView(timeout=None))
 
 async def setup(bot):
     await bot.add_cog(MapVetoCog(bot))
