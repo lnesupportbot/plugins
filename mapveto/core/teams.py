@@ -95,12 +95,20 @@ class TeamEditModal(Modal):
             default=team["tournament"],
             placeholder="Entrez le nom du tournoi"
         )
+        # Ajouter le champ pour le Discord ID du capitaine
+        self.captain_discord_id = TextInput(
+            label="Discord ID du Capitaine",
+            default=team["captain_discord_id"],
+            placeholder="Entrez le Discord ID du capitaine"
+        )
         self.add_item(self.name)
         self.add_item(self.template)
+        self.add_item(self.captain_discord_id)  # Ajout du nouveau champ
 
     async def on_submit(self, interaction: discord.Interaction):
         new_name = self.name.value.strip()
         template = self.template.value.strip()
+        new_captain_discord_id = self.captain_discord_id.value.strip()  # Nouveau champ capturé
 
         if not new_name:
             await interaction.response.send_message("Le nom ne peut pas être vide.", ephemeral=True)
@@ -114,7 +122,7 @@ class TeamEditModal(Modal):
                 team_config.teams[new_name] = team_config.teams.pop(self.team_name)
                 self.team_name = new_name
 
-        team_config.update_team(self.team_name, template)
+        team_config.update_team(self.team_name, template, new_captain_discord_id)  # Mettre à jour avec le nouveau Discord ID
         await interaction.response.send_message(f"Équipe '{self.team_name}' mise à jour avec succès.", ephemeral=True)
 
 class TeamDeleteButton(Button):
