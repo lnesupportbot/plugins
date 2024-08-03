@@ -21,7 +21,6 @@ tournament_config = TournamentConfig()
 tournament_message_config = TournamentManager()
 tournaments = tournament_config.load_tournaments()
 team_config = TeamConfig()
-team_message_config = TeamManager(bot)
 teams = team_config.load_teams()
 
 class SetupButtonConfig:
@@ -95,7 +94,9 @@ class SetupView(View):
         await self.tournament.update_setup_message(interaction.channel)
 
     @discord.ui.button(label="Gestion des teams", custom_id="team_setup", style=discord.ButtonStyle.red)
-    async def team_setup_button(self, interaction: discord.Interaction, button: Button):
+    async def team_setup_button(self, bot, interaction: discord.Interaction, button: Button):
+        self.bot = bot
+        team_message_config = TeamManager(bot)
         team_message_config.refresh_setup_message_id()
         await self.teams.update_setup_message(interaction.channel)
 
