@@ -148,8 +148,6 @@ class TeamSelect(Select):
         select = SelectTeamForMapVeto(team_a_name, team_b_name, self.template_name, self.bot)
         view = View()
         view.add_item(select)
-
-        await ticket_channel.send(embed=embed, view=view)
         try:
             await interaction.followup.send(
                 f"Ticket pour le Map Veto commence pour le match : **{team_a_name}** VS **{team_b_name}** (#{thread.channel}).",
@@ -158,6 +156,8 @@ class TeamSelect(Select):
         except discord.HTTPException as e:
             # Gérer l'exception pour diagnostiquer les erreurs de webhook
             print(f"Erreur lors de l'envoi du message de suivi : {e}")
+
+        await ticket_channel.send(embed=embed, view=view)
         
 class TournamentSelect(Select):
     def __init__(self, template_name, bot):
