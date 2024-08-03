@@ -213,10 +213,9 @@ class MapVetoCog(commands.Cog):
 
         if self.message_id:
             try:
-                setupbutton_config.load_setup_message_id()
                 # Vérifier si le message existe encore
                 channel = ctx.channel
-                message = await channel.fetch_message(message.id)
+                message = await channel.fetch_message(self.message_id)
                 await message.edit(embed=embed, view=view)
             except discord.NotFound:
                 # Si le message n'existe plus, envoyer un nouveau message
