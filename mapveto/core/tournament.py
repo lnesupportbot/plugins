@@ -4,7 +4,7 @@ import discord # type: ignore
 from discord.ui import Modal, TextInput, Button, Select, View # type: ignore
 from discord.ext import commands # type: ignore
 
-from .teams import TeamConfig
+from .teams import team_config
 
 class TournamentConfig:
     def __init__(self, filename="tourney.json"):
@@ -50,7 +50,6 @@ class TournamentConfig:
         self.tournaments = self.load_tournaments()
 
 tournament_config = TournamentConfig()
-team_config = TeamConfig()
 
 class TournamentCreateModal(Modal):
     def __init__(self):
