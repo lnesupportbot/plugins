@@ -128,18 +128,19 @@ class VetoEditModal(Modal):
         await interaction.response.send_message(f"Template de veto '{self.template_name}' mis à jour avec succès.", ephemeral=True)
 
 class TemplateManager:
-    def __init__(self, bot):
+    def __init__(self, bot, filename="message_id.json"):
+        self.filename = os.path.join(os.path.dirname(__file__), '..', filename)
         self.bot = bot
         self.setup_message_id = None
         self.load_setup_message_id()
 
     def save_setup_message_id(self, message_id):
-        with open('setup_message_id.json', 'w') as f:
+        with open('message_id.json', 'w') as f:
             json.dump({'setup_message_id': message_id}, f)
 
     def load_setup_message_id(self):
-        if os.path.exists('setup_message_id.json'):
-            with open('setup_message_id.json', 'r') as f:
+        if os.path.exists('message_id.json'):
+            with open('message_id.json', 'r') as f:
                 data = json.load(f)
                 self.setup_message_id = data.get('setup_message_id')
 
