@@ -93,16 +93,24 @@ class TeamCreateModal(Modal):
             await interaction.response.send_message("Veuillez entrer un ID Discord valide pour le capitaine.", ephemeral=True)
 
 class TeamEditModal(Modal):
-    def __init__(self, bot, team_name, team):
+    def __init__(self, bot, team_name, team, show_tournament_field=True):
         super().__init__(title=f"Modifier l'Équipe '{team_name}'")
-        self.bot = bot  # Stocker le bot
+        self.bot = bot
         self.team_name = team_name
         self.team = team
+        self.show_tournament_field = show_tournament_field
         self.name = TextInput(
             label="Nom de l'Équipe",
             default=team_name,
             placeholder="Entrez le nom de l'équipe"
         )
+        if self.show_tournament_field:
+            self.template = TextInput(
+                label="Tournoi rattaché à l'Équipe",
+                default=team["tournament"],
+                placeholder="Entrez le nom du tournoi"
+            )
+            self.add_item(self.template)
         self.captain_discord_id = TextInput(
             label="Discord ID du Capitaine",
             default=team["captain_discord_id"],
@@ -114,32 +122,29 @@ class TeamEditModal(Modal):
     async def on_submit(self, interaction: discord.Interaction):
         new_name = self.name.value.strip()
         captain_discord_id = self.captain_discord_id.value.strip()
+        tournament_name = self.template.value.strip() if self.show_tournament_field else self.team["tournament"]
 
         if not new_name:
             await interaction.response.send_message("Le nom ne peut pas être vide.", ephemeral=True)
             return
 
-        try:
-            # Fetch user object using the bot
-            captain = await self.bot.fetch_user(int(captain_discord_id))
-            if new_name != self.team_name:
-                if team_config.get_team(new_name):
-                    await interaction.response.send_message(f"Une équipe avec le nom '{new_name}' existe déjà.", ephemeral=True)
-                    return
-                else:
-                    team_config.teams[new_name] = team_config.teams.pop(self.team_name)
-                    self.team_name = new_name
+        if new_name != self.team_name:
+            if team_config.get_team(new_name):
+                await interaction.response.send_message(f"Une équipe avec le nom '{new_name}' existe déjà.", ephemeral=True)
+                return
+            else:
+                team_config.teams[new_name] = team_config.teams.pop(self.team_name)
+                self.team_name = new_name
 
-            # Mise à jour des informations de l'équipe
-            team_config.update_team(self.team_name, self.team["tournament"], captain_discord_id)
-            await interaction.response.send_message(
-                f"Équipe '{self.team_name}' mise à jour avec succès.\nTournoi: {self.team['tournament']}\nCapitaine: {captain.display_name}",
-                ephemeral=True
-            )
-        except discord.NotFound:
-            await interaction.response.send_message("Le Discord ID du capitaine est invalide.", ephemeral=True)
-        except ValueError:
-            await interaction.response.send_message("Veuillez entrer un ID Discord valide pour le capitaine.", ephemeral=True)
+        team_config.update_team(self.team_name, tournament_name, captain_discord_id)
+        captain = await self.bot.fetch_user(int(captain_discord_id))
+        captain_name = captain.display_name if captain else "Inconnu"
+        await interaction.response.send_message(
+            f"L'équipe '{self.team_name}' a été mise à jour avec succès.\n"
+            f"Tournoi : {tournament_name}\n"
+            f"Capitaine : {captain_name} ({captain_discord_id})",
+            ephemeral=True
+        )
 
 class ChangeTournamentButton(Button):
     def __init__(self, team_name):
@@ -375,31 +380,49 @@ class EditTeamButton(Button):
         self.bot = bot
 
     async def callback(self, interaction: discord.Interaction):
-        team_names = list(team_config.teams.keys())
-        if not team_names:
-            await interaction.response.send_message("Aucune équipe disponible pour modification.", ephemeral=True)
+        tournament_config.refresh_tournaments()
+        tournament_names = list(tournament_config.tournaments.keys())
+        if not tournament_names:
+            await interaction.response.send_message("Aucun tournoi trouvé.", ephemeral=True)
             return
 
-        class TeamEditSelect(Select):
-            def __init__(self, bot, options):
-                self.bot = bot
-                super().__init__(placeholder="Choisissez une équipe à éditer...", options=options)
+        class TournamentSelect(Select):
+            def __init__(self, options):
+                super().__init__(placeholder="Choisissez un tournoi...", options=options)
 
             async def callback(self, interaction: discord.Interaction):
-                selected_team = self.values[0]
-                team = team_config.get_team(selected_team)
-
-                if not team:
-                    await interaction.response.send_message("Équipe introuvable.", ephemeral=True)
+                selected_tournament = self.values[0]
+                teams = team_config.get_teams_by_tournament(selected_tournament)
+                if not teams:
+                    await interaction.response.send_message(f"Aucune équipe trouvée pour le tournoi '{selected_tournament}'.", ephemeral=True)
                     return
 
-                modal = TeamEditModal(self.bot, selected_team, team)  # Passer le bot ici
-                await interaction.response.send_modal(modal)
+                class TeamEditSelect(Select):
+                    def __init__(self, options):
+                        super().__init__(placeholder="Choisissez une équipe à éditer...", options=options)
 
-        select = TeamEditSelect(self.bot, [discord.SelectOption(label=name, value=name) for name in team_names])
+                    async def callback(self, interaction: discord.Interaction):
+                        selected_team = self.values[0]
+                        team = team_config.get_team(selected_team)
+
+                        if not team:
+                            await interaction.response.send_message("Équipe introuvable.", ephemeral=True)
+                            return
+
+                        modal = TeamEditModal(self.view.bot, selected_team, team)
+                        await interaction.response.send_modal(modal)
+
+                select = TeamEditSelect([discord.SelectOption(label=name, value=name) for name in teams.keys()])
+                view = View()
+                view.bot = self.view.bot
+                view.add_item(select)
+                await interaction.response.send_message("Sélectionnez une équipe à éditer :", view=view, ephemeral=True)
+
+        select = TournamentSelect([discord.SelectOption(label=name, value=name) for name in tournament_names])
         view = View()
+        view.bot = self.bot
         view.add_item(select)
-        await interaction.response.send_message("Sélectionnez une équipe à éditer :", view=view, ephemeral=True)
+        await interaction.response.send_message("Sélectionnez un tournoi pour afficher les équipes :", view=view, ephemeral=True)
 
 class DeleteTeamButton(Button):
     def __init__(self):
