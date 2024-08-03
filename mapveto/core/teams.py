@@ -370,8 +370,9 @@ class CreateTeamButton(Button):
         await interaction.response.send_message("Sélectionnez un tournoi pour créer une équipe :", view=view, ephemeral=True)
 
 class EditTeamButton(Button):
-    def __init__(self):
+    def __init__(self, bot):
         super().__init__(label="Éditer une équipe", style=discord.ButtonStyle.primary, custom_id="edit_team")
+        self.bot = bot
 
     async def callback(self, interaction: discord.Interaction):
         tournament_names = list(tournament_config.tournaments.keys())
