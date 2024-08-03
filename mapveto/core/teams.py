@@ -76,14 +76,13 @@ class TeamCreateModal(Modal):
     async def on_submit(self, interaction: discord.Interaction):
         team_name = self.name.value
         captain_discord_id = self.captain_discord_id.value
-
+        
+        # Fetch user object using the bot
+        captain = await self.bot.fetch_user(int(captain_discord_id))
+        
         if team_config.create_team(team_name, self.tournament_name, captain_discord_id):
-            captain = await self.bot.fetch_user(int(captain_discord_id))
-            captain_name = captain.display_name if captain else "Inconnu"
             await interaction.response.send_message(
-                f"L'équipe '{team_name}' a été créée avec succès.\n"
-                f"Tournoi : {self.tournament_name}\n"
-                f"Capitaine : {captain_name} ({captain_discord_id})",
+                f"L'équipe '{team_name}' a été créée avec succès.\nTournoi: {self.tournament_name}\nCapitaine: {captain.display_name}",
                 ephemeral=True
             )
         else:
@@ -356,19 +355,20 @@ class CreateTeamButton(Button):
             return
 
         class TournamentSelect(Select):
-            def __init__(self, options):
+            def __init__(self, bot, options):
+                self.bot = bot
                 super().__init__(placeholder="Choisissez un tournoi...", options=options)
 
             async def callback(self, interaction: discord.Interaction):
                 selected_tournament = self.values[0]
-                modal = TeamCreateModal(self.view.bot, selected_tournament)  # Passez le bot ici
+                modal = TeamCreateModal(self.bot, selected_tournament)  # Passer le bot ici
                 await interaction.response.send_modal(modal)
 
-        select = TournamentSelect([discord.SelectOption(label=name, value=name) for name in tournament_names])
+        select = TournamentSelect(self.bot, [discord.SelectOption(label=name, value=name) for name in tournament_names])
         view = View()
-        view.bot = self.bot  # Assurez-vous que le bot est accessible
         view.add_item(select)
         await interaction.response.send_message("Sélectionnez un tournoi pour créer une équipe :", view=view, ephemeral=True)
+
 
 
 class EditTeamButton(Button):
