@@ -412,30 +412,47 @@ class DeleteTeamButton(Button):
         super().__init__(label="Supprimer une équipe", style=discord.ButtonStyle.danger, custom_id="delete_team")
 
     async def callback(self, interaction: discord.Interaction):
-        team_names = list(team_config.teams.keys())
-        if not team_names:
-            await interaction.response.send_message("Aucune équipe disponible pour suppression.", ephemeral=True)
+        tournament_names = list(tournament_config.tournaments.keys())
+        if not tournament_names:
+            await interaction.response.send_message("Aucun tournoi disponible pour la suppression.", ephemeral=True)
             return
 
-        class TeamDeleteSelect(Select):
+        class TournamentSelect(Select):
             def __init__(self, options):
-                super().__init__(placeholder="Choisissez une équipe à supprimer...", options=options)
+                super().__init__(placeholder="Choisissez un tournoi...", options=options)
 
             async def callback(self, interaction: discord.Interaction):
-                selected_team = self.values[0]
-                confirm_view = View()
-                confirm_view.add_item(ConfirmTeamDeleteButton(selected_team))
+                selected_tournament = self.values[0]
+                teams = team_config.get_teams_by_tournament(selected_tournament)
+                
+                if not teams:
+                    await interaction.response.send_message(f"Aucune équipe trouvée pour le tournoi '{selected_tournament}'.", ephemeral=True)
+                    return
 
-                await interaction.response.send_message(
-                    f"Êtes-vous sûr de vouloir supprimer l'équipe '{selected_team}' ?",
-                    view=confirm_view,
-                    ephemeral=True
-                )
+                class TeamSelect(Select):
+                    def __init__(self, options):
+                        super().__init__(placeholder="Choisissez une équipe à supprimer...", options=options)
 
-        select = TeamDeleteSelect([discord.SelectOption(label=name, value=name) for name in team_names])
+                    async def callback(self, interaction: discord.Interaction):
+                        selected_team = self.values[0]
+                        confirm_view = View()
+                        confirm_view.add_item(ConfirmTeamDeleteButton(selected_team))
+
+                        await interaction.response.send_message(
+                            f"Êtes-vous sûr de vouloir supprimer l'équipe '{selected_team}' ?",
+                            view=confirm_view,
+                            ephemeral=True
+                        )
+
+                select = TeamSelect([discord.SelectOption(label=name, value=name) for name in teams.keys()])
+                view = View()
+                view.add_item(select)
+                await interaction.response.send_message("Sélectionnez une équipe à supprimer :", view=view, ephemeral=True)
+
+        select = TournamentSelect([discord.SelectOption(label=name, value=name) for name in tournament_names])
         view = View()
         view.add_item(select)
-        await interaction.response.send_message("Sélectionnez une équipe à supprimer :", view=view, ephemeral=True)
+        await interaction.response.send_message("Choisissez un tournoi pour filtrer les équipes :", view=view, ephemeral=True)
 
 class ConfirmTeamDeleteButton(Button):
     def __init__(self, team_name):
