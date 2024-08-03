@@ -8,9 +8,9 @@ import os
 from core import checks
 from core.models import PermissionLevel  # type: ignore
 
-from .core.templateveto import MapVetoConfig, TemplateManager, veto_config
-from .core.tournament import TournamentManager, TournamentConfig, tournament_config
-from .core.teams import TeamManager, TeamConfig, team_config
+from .core.templateveto import MapVetoConfig, TemplateManager
+from .core.tournament import TournamentManager, TournamentConfig
+from .core.teams import TeamManager, TeamConfig
 from .core.veto import MapVeto, MapVetoButton
 
 # Charger les configurations
@@ -23,25 +23,26 @@ teams = team_config.load_teams()
 
 class SetupButtonConfig:
     def __init__(self, filename="message_id.json"):
-        self.filename = os.path.join(os.path.dirname(__file__), '.', filename)
+        self.filename = os.path.join(os.path.dirname(__file__), filename)
         self.setup_message_id = None
         self.load_setup_message_id()
 
     # Charger l'ID du message depuis le fichier, s'il existe
     def load_setup_message_id(self):
-        if os.path.exists("message_id.json"):
-            with open("message_id.json", "r") as f:
-                return json.load(f).get("setup_button_message_id")
-        return None
+        if os.path.exists(self.filename):
+            with open(self.filename, "r") as f:
+                self.setup_message_id = json.load(f).get("setup_button_message_id")
+        else:
+            self.setup_message_id = None
 
     # Sauvegarder l'ID du message dans un fichier
-    def save_setup_message_id(message_id):
-        with open("message_id.json", "w") as f:
+    def save_setup_message_id(self, message_id):
+        with open(self.filename, "w") as f:
             json.dump({"setup_button_message_id": message_id}, f)
             
     def refresh_setup_message_id(self):
         """Refresh the message id from the file."""
-        self.message_id = self.load_setup_message_id()
+        self.load_setup_message_id()
 
     async def update_setup_message(self, channel):
         self.refresh_setup_message_id()
@@ -53,6 +54,22 @@ class SetupButtonConfig:
                 await self.send_setup_message(channel)
         else:
             await self.send_setup_message(channel)
+
+    def create_setup_embed(self):
+        return discord.Embed(
+            title="Configuration des Événements",
+            description="Utilisez les boutons ci-dessous pour configurer les différents éléments.",
+            color=discord.Color.blue()
+        )
+
+    def create_setup_view(self):
+        return SetupView(self.bot)
+
+    async def send_setup_message(self, channel):
+        embed = self.create_setup_embed()
+        view = self.create_setup_view()
+        message = await channel.send(embed=embed, view=view)
+        self.save_setup_message_id(message.id)
 
 setupbutton_config = SetupButtonConfig()
 
@@ -67,17 +84,17 @@ class SetupView(View):
     @discord.ui.button(label="Gestion des templates d'événements", custom_id="mapveto_setup", style=discord.ButtonStyle.blurple)
     async def mapveto_setup_button(self, interaction: discord.Interaction, button: Button, ctx):
         veto_config.load_vetos()
-        await self.template_veto.update_setup_message(ctx.channel)
+        await self.template_veto.update_setup_message(interaction.channel)
 
     @discord.ui.button(label="Gestion des tournois", custom_id="tournament_setup", style=discord.ButtonStyle.green)
     async def tournament_setup_button(self, interaction: discord.Interaction, button: Button, ctx):
         tournament_config.load_tournaments()
-        await self.tournament.update_setup_message(ctx.channel)
+        await self.tournament.update_setup_message(interaction.channel)
 
     @discord.ui.button(label="Gestion des teams", custom_id="team_setup", style=discord.ButtonStyle.red)
     async def team_setup_button(self, interaction: discord.Interaction, button: Button, ctx):
         team_config.load_teams()
-        await self.teams.update_setup_message(ctx.channel)
+        await self.teams.update_setup_message(interaction.channel)
 
 
 class MapVetoCog(commands.Cog):
