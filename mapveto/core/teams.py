@@ -91,16 +91,11 @@ class TeamEditModal(Modal):
             default=team_name,
             placeholder="Entrez le nom de l'équipe"
         )
-        # Champ pour le tournoi seulement si tournament_name est None
-        if self.tournament_name is None:
-            self.template = TextInput(
-                label="Tournoi rattaché à l'Équipe",
-                default=team["tournament"],
-                placeholder="Entrez le nom du tournoi"
-            )
-        else:
-            self.template = None
-
+        self.template = TextInput(
+            label="Tournoi rattaché à l'Équipe",
+            default=team["tournament"],
+            placeholder="Entrez le nom du tournoi"
+        ) if tournament_name is None else None
         self.captain_discord_id = TextInput(
             label="Discord ID du Capitaine",
             default=team["captain_discord_id"],
@@ -130,6 +125,84 @@ class TeamEditModal(Modal):
 
         team_config.update_team(self.team_name, template, new_captain_discord_id)
         await interaction.response.send_message(f"Équipe '{self.team_name}' mise à jour avec succès.", ephemeral=True)
+
+class ChangeTournamentButton(Button):
+    def __init__(self, team_name):
+        super().__init__(label="Changer le tournoi", style=discord.ButtonStyle.primary, custom_id=f"change_tournament_{team_name}")
+        self.team_name = team_name
+
+    async def callback(self, interaction: discord.Interaction):
+        tournament_names = list(tournament_config.tournaments.keys())
+        if not tournament_names:
+            await interaction.response.send_message("Aucun tournoi disponible pour la modification.", ephemeral=True)
+            return
+
+        class TournamentSelect(Select):
+            def __init__(self, team_name, options):
+                super().__init__(placeholder="Choisissez un tournoi...", options=options)
+                self.team_name = team_name
+
+            async def callback(self, interaction: discord.Interaction):
+                selected_tournament = self.values[0]
+                team = team_config.get_team(self.team_name)
+                modal = TeamEditModal(self.team_name, team, tournament_name=selected_tournament)
+                await interaction.response.send_modal(modal)
+
+        select = TournamentSelect(self.team_name, [discord.SelectOption(label=name, value=name) for name in tournament_names])
+        view = View()
+        view.add_item(select)
+        await interaction.response.send_message("Choisissez un nouveau tournoi pour l'équipe :", view=view, ephemeral=True)
+
+class NoChangeTournamentButton(Button):
+    def __init__(self, team_name):
+        super().__init__(label="Ne pas changer le tournoi", style=discord.ButtonStyle.secondary, custom_id=f"no_change_tournament_{team_name}")
+        self.team_name = team_name
+
+    async def callback(self, interaction: discord.Interaction):
+        team = team_config.get_team(self.team_name)
+        modal = TeamEditModal(self.team_name, team, tournament_name=None)
+        await interaction.response.send_modal(modal)
+
+class TeamEditTournamentSelect(Select):
+    def __init__(self, current_tournament, options):
+        super().__init__(placeholder="Choisissez un tournoi...", options=options)
+        self.current_tournament = current_tournament
+
+    async def callback(self, interaction: discord.Interaction):
+        selected_tournament = self.values[0]
+        teams = team_config.get_teams_by_tournament(selected_tournament)
+        
+        if not teams:
+            await interaction.response.send_message(f"Aucune équipe trouvée pour le tournoi '{selected_tournament}'.", ephemeral=True)
+            return
+
+        class TeamSelect(Select):
+            def __init__(self, options):
+                super().__init__(placeholder="Choisissez une équipe...", options=options)
+
+            async def callback(self, interaction: discord.Interaction):
+                selected_team = self.values[0]
+                team = team_config.get_team(selected_team)
+                
+                if not team:
+                    await interaction.response.send_message("Équipe introuvable.", ephemeral=True)
+                    return
+                
+                # Demander si le tournoi doit être modifié
+                view = View()
+                view.add_item(ChangeTournamentButton(selected_team))
+                view.add_item(NoChangeTournamentButton(selected_team))
+
+                await interaction.response.send_message(
+                    "Souhaitez-vous également changer le tournoi associé ?",
+                    view=view,
+                    ephemeral=True
+                )
+
+        select = TeamSelect([discord.SelectOption(label=name, value=name) for name in teams.keys()])
+        view = View()
+        view.add_item(select)
+        await interaction.response.send_message("Sélectionnez une équipe à éditer :", view=view, ephemeral=True)
 
 class TeamDeleteButton(Button):
     def __init__(self, team_name):
@@ -309,8 +382,8 @@ class EditTeamButton(Button):
                         
                         # Demander si le tournoi doit être modifié
                         view = View()
-                        view.add_item(Button(label="Oui", style=discord.ButtonStyle.primary, custom_id=f"change_tournament_{selected_team}"))
-                        view.add_item(Button(label="Non", style=discord.ButtonStyle.secondary, custom_id=f"no_change_tournament_{selected_team}"))
+                        view.add_item(ChangeTournamentButton(selected_team))
+                        view.add_item(NoChangeTournamentButton(selected_team))
 
                         await interaction.response.send_message(
                             "Souhaitez-vous également changer le tournoi associé ?",
@@ -326,7 +399,7 @@ class EditTeamButton(Button):
         select = TournamentSelect([discord.SelectOption(label=name, value=name) for name in tournament_names])
         view = View()
         view.add_item(select)
-        await interaction.response.send_message("Sélectionnez un tournoi pour filtrer les équipes :", view=view, ephemeral=True)
+        await interaction.response.send_message("Choisissez un tournoi pour filtrer les équipes :", view=view, ephemeral=True)
 
 class DeleteTeamButton(Button):
     def __init__(self):
