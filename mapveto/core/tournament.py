@@ -136,7 +136,7 @@ class TournamentManager:
 
     def save_setup_message_id(self, message_id):
         with open(self.filename, 'w') as f:
-            json.dump({'setup_message_id': message_id}, f)
+            json.dump({'setup_message_id': message_id}, f, indent=4)
 
     def load_setup_message_id(self):
         if os.path.exists(self.filename):
@@ -313,3 +313,4 @@ class ConfirmTournamentDeleteButton(Button):
             await interaction.response.send_message(f"Le tournoi '{self.tournament_name}' a été supprimé avec succès.", ephemeral=True)
         else:
             await interaction.response.send_message(f"Erreur lors de la suppression du tournoi '{self.tournament_name}'.", ephemeral=True)
+
