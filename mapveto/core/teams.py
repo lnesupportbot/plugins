@@ -321,7 +321,8 @@ class EditTeamButton(Button):
                             ephemeral=True
                         )
 
-                select = TeamSelect([discord.SelectOption(label=name, value=name) for name in teams.keys()])
+                # Pass the options correctly here
+                select = TeamSelect(self.bot, [discord.SelectOption(label=name, value=name) for name in teams.keys()])
                 view = View()
                 view.add_item(select)
                 await interaction.response.send_message("Sélectionnez une équipe à éditer :", view=view, ephemeral=True)
