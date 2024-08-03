@@ -152,7 +152,7 @@ class TournamentSelect(Select):
     def __init__(self, template_name, bot):
         self.template_name = template_name
         self.bot = bot
-        self.tournaments = tournament_config.load_tournaments()
+        self.tournaments = tournament_config.load_tournaments(self)
 
         options = [
             discord.SelectOption(label=name, value=name)
