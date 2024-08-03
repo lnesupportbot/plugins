@@ -5,6 +5,7 @@ from discord.ui import Modal, TextInput, Button, Select, View # type: ignore
 from discord.ext import commands # type: ignore
 
 from .tournament import TournamentConfig, tournament_config
+from ..mapveto import bot
 
 class TeamConfig:
     def __init__(self, filename="teams.json"):
@@ -64,7 +65,7 @@ team_config = TeamConfig()
 tournament_config = TournamentConfig()
 
 class TeamCreateModal(Modal):
-    def __init__(self, tournament_name, bot):
+    def __init__(self, tournament_name):
         super().__init__(title="Créer une Équipe")
         self.tournament_name = tournament_name
         self.name = TextInput(label="Nom de l'Équipe", placeholder="Entrez le nom de l'équipe")
@@ -345,9 +346,8 @@ class ListTeamsButton(Button):
         await interaction.response.send_message("Veuillez choisir un tournoi pour afficher les équipes :", view=view, ephemeral=True)
 
 class CreateTeamButton(Button):
-    def __init__(self, bot):
+    def __init__(self):
         super().__init__(label="Créer une nouvelle équipe", style=discord.ButtonStyle.primary, custom_id="create_team")
-        self.bot = bot
 
     async def callback(self, interaction: discord.Interaction):
         tournament_config.refresh_tournaments()
@@ -362,7 +362,7 @@ class CreateTeamButton(Button):
 
             async def callback(self, interaction: discord.Interaction):
                 selected_tournament = self.values[0]
-                modal = TeamCreateModal(selected_tournament, bot)
+                modal = TeamCreateModal(selected_tournament)
                 await interaction.response.send_modal(modal)
 
         select = TournamentSelect([discord.SelectOption(label=name, value=name) for name in tournament_names])
