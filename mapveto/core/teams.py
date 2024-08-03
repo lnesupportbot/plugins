@@ -359,7 +359,7 @@ class ChangeTournamentButton(Button):
                 team_config.update_team(self.team_name, selected_tournament, team["captain_discord_id"])  # Mise à jour du tournoi ici
                 await interaction.response.send_modal(modal)
 
-        select = TournamentSelect(self.team_name, [discord.SelectOption(label=name, value=name) for name in tournament_names])
+        select = TournamentSelect(self.bot, self.team_name, [discord.SelectOption(label=name, value=name) for name in tournament_names])
         view = View()
         view.add_item(select)
         await interaction.response.send_message("Choisissez un nouveau tournoi pour l'équipe :", view=view, ephemeral=True)
@@ -373,7 +373,7 @@ class NoChangeTournamentButton(Button):
     async def callback(self, interaction: discord.Interaction):
         team = team_config.get_team(self.team_name)
         # Créer la fenêtre modale sans le champ "Tournoi"
-        modal = TeamEditModal(self.team_name, team)
+        modal = TeamEditModal(self.bot, self.team_name, team)
         # Passer le tournoi actuel à la méthode update_team
         team_config.update_team(self.team_name, team["tournament"], team["captain_discord_id"])  
         await interaction.response.send_modal(modal)
