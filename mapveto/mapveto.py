@@ -163,8 +163,8 @@ class TournamentSelect(Select):
         self.tournaments = tournament_config.load_tournaments()
 
         options = [
-            discord.SelectOption(label=tournaments, description=f"Tournament {tournament['name']}")
-            for tournament in self.tournaments
+            discord.SelectOption(label=name, value=name)
+            for name in self.tournaments
         ]
 
         super().__init__(placeholder="Choisir un tournoi...", min_values=1, max_values=1, options=options)
