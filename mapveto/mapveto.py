@@ -61,20 +61,20 @@ class SetupView(View):
         super().__init__(timeout=None)
         self.bot = bot
 
+    async def interaction_check(self, interaction: discord.Interaction, ctx) -> bool:
+        return interaction.user == ctx.author
+
     @discord.ui.button(label="Gestion des templates d'événements", custom_id="mapveto_setup", style=discord.ButtonStyle.blurple)
-    async def mapveto_setup_button(self, interaction: discord.Interaction, button: Button):
-        await interaction.response.send_message("Gestion des templates d'événements", ephemeral=True)
-        await interaction.message.edit(content="Configuration des templates d'événements mise à jour.", view=self)
+    async def mapveto_setup_button(self, interaction: discord.Interaction, button: Button, ctx):
+        await ctx.invoke(self.mapveto_setup)
 
     @discord.ui.button(label="Gestion des tournois", custom_id="tournament_setup", style=discord.ButtonStyle.green)
-    async def tournament_setup_button(self, interaction: discord.Interaction, button: Button):
-        await interaction.response.send_message("Gestion des tournois", ephemeral=True)
-        await interaction.message.edit(content="Configuration des tournois mise à jour.", view=self)
+    async def tournament_setup_button(self, interaction: discord.Interaction, button: Button, ctx):
+        await ctx.invoke(self.tournament_setup)
 
     @discord.ui.button(label="Gestion des teams", custom_id="team_setup", style=discord.ButtonStyle.red)
-    async def team_setup_button(self, interaction: discord.Interaction, button: Button):
-        await interaction.response.send_message("Gestion des teams", ephemeral=True)
-        await interaction.message.edit(content="Configuration des teams mise à jour.", view=self)
+    async def team_setup_button(self, interaction: discord.Interaction, button: Button, ctx):
+        await ctx.invoke(self.team_setup)
 
 
 class MapVetoCog(commands.Cog):
