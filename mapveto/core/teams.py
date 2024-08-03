@@ -141,104 +141,6 @@ class TeamEditModal(Modal):
         except ValueError:
             await interaction.response.send_message("Veuillez entrer un ID Discord valide pour le capitaine.", ephemeral=True)
 
-class ChangeTournamentButton(Button):
-    def __init__(self, bot, team_name):
-        super().__init__(label="Changer le tournoi", style=discord.ButtonStyle.primary, custom_id=f"change_tournament_{team_name}")
-        self.team_name = team_name
-        self.bot = bot
-
-    async def callback(self, interaction: discord.Interaction):
-        tournament_names = list(tournament_config.tournaments.keys())
-        if not tournament_names:
-            await interaction.response.send_message("Aucun tournoi disponible pour la modification.", ephemeral=True)
-            return
-
-        class TournamentSelect(Select):
-            def __init__(self, bot, team_name, options):
-                super().__init__(placeholder="Choisissez un tournoi...", options=options)
-                self.team_name = team_name
-                self.bot = bot
-
-            async def callback(self, interaction: discord.Interaction):
-                selected_tournament = self.values[0]
-                team = team_config.get_team(self.team_name)
-                # Créer la fenêtre modale sans le champ "Tournoi"
-                modal = TeamEditModal(self.bot, self.team_name, team)
-                team_config.update_team(self.team_name, selected_tournament, team["captain_discord_id"])  # Mise à jour du tournoi ici
-                await interaction.response.send_modal(modal)
-
-        select = TournamentSelect(self.team_name, [discord.SelectOption(label=name, value=name) for name in tournament_names])
-        view = View()
-        view.add_item(select)
-        await interaction.response.send_message("Choisissez un nouveau tournoi pour l'équipe :", view=view, ephemeral=True)
-
-class NoChangeTournamentButton(Button):
-    def __init__(self, bot, team_name):
-        super().__init__(label="Ne pas changer le tournoi", style=discord.ButtonStyle.secondary, custom_id=f"no_change_tournament_{team_name}")
-        self.team_name = team_name
-        self.bot = bot
-
-    async def callback(self, interaction: discord.Interaction):
-        team = team_config.get_team(self.team_name)
-        # Créer la fenêtre modale sans le champ "Tournoi"
-        modal = TeamEditModal(self.team_name, team)
-        # Passer le tournoi actuel à la méthode update_team
-        team_config.update_team(self.team_name, team["tournament"], team["captain_discord_id"])  
-        await interaction.response.send_modal(modal)
-
-
-class TeamEditTournamentSelect(Select):
-    def __init__(self, current_tournament, options):
-        super().__init__(placeholder="Choisissez un tournoi...", options=options)
-        self.current_tournament = current_tournament
-
-    async def callback(self, interaction: discord.Interaction):
-        selected_tournament = self.values[0]
-        teams = team_config.get_teams_by_tournament(selected_tournament)
-        
-        if not teams:
-            await interaction.response.send_message(f"Aucune équipe trouvée pour le tournoi '{selected_tournament}'.", ephemeral=True)
-            return
-
-        class TeamSelect(Select):
-            def __init__(self, options):
-                super().__init__(placeholder="Choisissez une équipe...", options=options)
-
-            async def callback(self, interaction: discord.Interaction):
-                selected_team = self.values[0]
-                team = team_config.get_team(selected_team)
-                
-                if not team:
-                    await interaction.response.send_message("Équipe introuvable.", ephemeral=True)
-                    return
-                
-                # Demander si le tournoi doit être modifié
-                view = View()
-                view.add_item(ChangeTournamentButton(selected_team))
-                view.add_item(NoChangeTournamentButton(selected_team))
-
-                await interaction.response.send_message(
-                    "Souhaitez-vous également changer le tournoi associé ?",
-                    view=view,
-                    ephemeral=True
-                )
-
-        select = TeamSelect([discord.SelectOption(label=name, value=name) for name in teams.keys()])
-        view = View()
-        view.add_item(select)
-        await interaction.response.send_message("Sélectionnez une équipe à éditer :", view=view, ephemeral=True)
-
-class TeamDeleteButton(Button):
-    def __init__(self, team_name):
-        super().__init__(label=f"Supprimer {team_name}", style=discord.ButtonStyle.danger, custom_id=f"delete_{team_name}")
-        self.team_name = team_name
-
-    async def callback(self, interaction: discord.Interaction):
-        if team_config.delete_team(self.team_name):
-            await interaction.response.send_message(f"L'équipe '{self.team_name}' a été supprimée avec succès.", ephemeral=True)
-        else:
-            await interaction.response.send_message(f"Erreur lors de la suppression de l'équipe '{self.team_name}'.", ephemeral=True)
-
 class TeamManager:
     def __init__(self, bot):
         self.bot = bot
@@ -384,7 +286,7 @@ class EditTeamButton(Button):
             return
 
         class TournamentSelect(Select):
-            def __init__(self,  options):
+            def __init__(self, options):
                 super().__init__(placeholder="Choisissez un tournoi...", options=options)
 
             async def callback(self, interaction: discord.Interaction):
@@ -428,6 +330,51 @@ class EditTeamButton(Button):
         view = View()
         view.add_item(select)
         await interaction.response.send_message("Choisissez un tournoi pour filtrer les équipes :", view=view, ephemeral=True)
+
+class ChangeTournamentButton(Button):
+    def __init__(self, bot, team_name):
+        super().__init__(label="Changer le tournoi", style=discord.ButtonStyle.primary, custom_id=f"change_tournament_{team_name}")
+        self.team_name = team_name
+        self.bot = bot
+
+    async def callback(self, interaction: discord.Interaction):
+        tournament_names = list(tournament_config.tournaments.keys())
+        if not tournament_names:
+            await interaction.response.send_message("Aucun tournoi disponible pour la modification.", ephemeral=True)
+            return
+
+        class TournamentSelect(Select):
+            def __init__(self, bot, team_name, options):
+                super().__init__(placeholder="Choisissez un tournoi...", options=options)
+                self.team_name = team_name
+                self.bot = bot
+
+            async def callback(self, interaction: discord.Interaction):
+                selected_tournament = self.values[0]
+                team = team_config.get_team(self.team_name)
+                # Créer la fenêtre modale sans le champ "Tournoi"
+                modal = TeamEditModal(self.bot, self.team_name, team)
+                team_config.update_team(self.team_name, selected_tournament, team["captain_discord_id"])  # Mise à jour du tournoi ici
+                await interaction.response.send_modal(modal)
+
+        select = TournamentSelect(self.team_name, [discord.SelectOption(label=name, value=name) for name in tournament_names])
+        view = View()
+        view.add_item(select)
+        await interaction.response.send_message("Choisissez un nouveau tournoi pour l'équipe :", view=view, ephemeral=True)
+
+class NoChangeTournamentButton(Button):
+    def __init__(self, bot, team_name):
+        super().__init__(label="Ne pas changer le tournoi", style=discord.ButtonStyle.secondary, custom_id=f"no_change_tournament_{team_name}")
+        self.team_name = team_name
+        self.bot = bot
+
+    async def callback(self, interaction: discord.Interaction):
+        team = team_config.get_team(self.team_name)
+        # Créer la fenêtre modale sans le champ "Tournoi"
+        modal = TeamEditModal(self.team_name, team)
+        # Passer le tournoi actuel à la méthode update_team
+        team_config.update_team(self.team_name, team["tournament"], team["captain_discord_id"])  
+        await interaction.response.send_modal(modal)
 
 class DeleteTeamButton(Button):
     def __init__(self):
