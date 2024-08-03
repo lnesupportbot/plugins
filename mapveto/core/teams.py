@@ -308,7 +308,7 @@ class TeamManager:
     def create_setup_view(self):
         view = discord.ui.View(timeout=None)
         view.add_item(ListTeamsButton())
-        view.add_item(CreateTeamButton())
+        view.add_item(CreateTeamButton(self.bot))  # Passez le bot ici
         view.add_item(EditTeamButton())
         view.add_item(DeleteTeamButton())
         return view
