@@ -21,6 +21,60 @@ tournaments = tournament_config.load_tournaments()
 team_config = TeamConfig()
 teams = team_config.load_teams()
 
+class SetupButtonConfig:
+    def __init__(self, filename="message_id.json"):
+        self.filename = os.path.join(os.path.dirname(__file__), '.', filename)
+        self.setup_message_id = None
+        self.load_message_id()
+
+    # Charger l'ID du message depuis le fichier, s'il existe
+    def load_setup_message_id():
+        if os.path.exists("message_id.json"):
+            with open("message_id.json", "r") as f:
+                return json.load(f).get("setup_button_message_id")
+        return None
+
+    # Sauvegarder l'ID du message dans un fichier
+    def save_setup_message_id(message_id):
+        with open("message_id.json", "w") as f:
+            json.dump({"setup_button_message_id": message_id}, f)
+            
+    def refresh_setup_message_id(self):
+        """Refresh the message id from the file."""
+        self.message_id = self.load_setup_message_id()
+
+    async def update_setup_message(self, channel):
+        self.refresh_setup_message_id()
+        if self.setup_message_id:
+            try:
+                message = await channel.fetch_message(self.setup_message_id)
+                await message.edit(embed=self.create_setup_embed(), view=self.create_setup_view())
+            except discord.NotFound:
+                await self.send_setup_message(channel)
+        else:
+            await self.send_setup_message(channel)
+
+class SetupView(View):
+    def __init__(self, bot):
+        super().__init__(timeout=None)
+        self.bot = bot
+
+    @discord.ui.button(label="Gestion des templates d'événements", custom_id="mapveto_setup", style=discord.ButtonStyle.blurple)
+    async def mapveto_setup_button(self, interaction: discord.Interaction, button: Button):
+        await interaction.response.send_message("Gestion des templates d'événements", ephemeral=True)
+        await interaction.message.edit(content="Configuration des templates d'événements mise à jour.", view=self)
+
+    @discord.ui.button(label="Gestion des tournois", custom_id="tournament_setup", style=discord.ButtonStyle.green)
+    async def tournament_setup_button(self, interaction: discord.Interaction, button: Button):
+        await interaction.response.send_message("Gestion des tournois", ephemeral=True)
+        await interaction.message.edit(content="Configuration des tournois mise à jour.", view=self)
+
+    @discord.ui.button(label="Gestion des teams", custom_id="team_setup", style=discord.ButtonStyle.red)
+    async def team_setup_button(self, interaction: discord.Interaction, button: Button):
+        await interaction.response.send_message("Gestion des teams", ephemeral=True)
+        await interaction.message.edit(content="Configuration des teams mise à jour.", view=self)
+
+
 class MapVetoCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
