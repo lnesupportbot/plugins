@@ -61,7 +61,7 @@ class TeamSelect(Select):
         self.template_name = template_name
         self.tournament_name = tournament_name
         self.bot = bot
-        self.teams = team_config.load_teams()
+        self.teams = team_config.refresh_teams()
 
         # Filtrer les équipes pour le tournoi spécifié
         teams = team_config.get_teams_by_tournament(tournament_name)
