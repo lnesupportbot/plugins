@@ -345,8 +345,9 @@ class ListTeamsButton(Button):
         await interaction.response.send_message("Veuillez choisir un tournoi pour afficher les équipes :", view=view, ephemeral=True)
 
 class CreateTeamButton(Button):
-    def __init__(self):
+    def __init__(self, bot):
         super().__init__(label="Créer une nouvelle équipe", style=discord.ButtonStyle.primary, custom_id="create_team")
+        self.bot = bot
 
     async def callback(self, interaction: discord.Interaction):
         tournament_config.refresh_tournaments()
@@ -361,7 +362,7 @@ class CreateTeamButton(Button):
 
             async def callback(self, interaction: discord.Interaction):
                 selected_tournament = self.values[0]
-                modal = TeamCreateModal(selected_tournament)
+                modal = TeamCreateModal(selected_tournament, bot)
                 await interaction.response.send_modal(modal)
 
         select = TournamentSelect([discord.SelectOption(label=name, value=name) for name in tournament_names])
