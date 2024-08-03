@@ -78,8 +78,8 @@ class SetupView(View):
 class MapVetoCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.template_veto = TemplateManager(bot)
-        self.tournament = TournamentManager(bot)
+        self.template_veto = TemplateManager()
+        self.tournament = TournamentManager()
         self.teams = TeamManager(bot)
         self.current_veto = None
 
