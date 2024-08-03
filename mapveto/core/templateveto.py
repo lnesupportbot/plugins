@@ -134,8 +134,17 @@ class TemplateManager:
         self.load_setup_message_id()
 
     def save_setup_message_id(self, message_id):
+        data = {}
+        # Load existing data
+        if os.path.exists(self.filename):
+            with open(self.filename, 'r') as f:
+                data = json.load(f)
+        
+        # Update setup_message_id while preserving existing keys
+        data['setup_message_id'] = message_id
+        
         with open(self.filename, 'w') as f:
-            json.dump({'setup_message_id': message_id}, f, indent=4)
+            json.dump(data, f, indent=4)
 
     def load_setup_message_id(self):
         if os.path.exists(self.filename):
@@ -304,4 +313,3 @@ class ConfirmDeleteButton(Button):
             await interaction.response.send_message(f"Le template '{self.template_name}' a été supprimé avec succès.", ephemeral=True)
         else:
             await interaction.response.send_message(f"Erreur lors de la suppression du template '{self.template_name}'.", ephemeral=True)
-
