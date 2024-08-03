@@ -4,7 +4,7 @@ import discord # type: ignore
 from discord.ui import Modal, TextInput, Button, Select, View # type: ignore
 from discord.ext import commands # type: ignore
 
-from .templateveto import MapVetoConfig, veto_config
+from .teams import TeamConfig
 
 class TournamentConfig:
     def __init__(self, filename="tourney.json"):
@@ -21,9 +21,9 @@ class TournamentConfig:
         with open(self.filename, "w") as file:
             json.dump(self.tournaments, file, indent=4)
 
-    def create_tournament(self, name, template_name):
+    def create_tournament(self, name):
         if name not in self.tournaments:
-            self.tournaments[name] = {"template": template_name}
+            self.tournaments[name] = {}
             self.save_tournaments()
             return True
         return False
@@ -38,9 +38,9 @@ class TournamentConfig:
     def get_tournament(self, name):
         return self.tournaments.get(name, None)
 
-    def update_tournament(self, name, template_name):
+    def update_tournament(self, name, new_name):
         if name in self.tournaments:
-            self.tournaments[name]["template"] = template_name
+            self.tournaments[new_name] = self.tournaments.pop(name)
             self.save_tournaments()
             return True
         return False
@@ -50,72 +50,86 @@ class TournamentConfig:
         self.tournaments = self.load_tournaments()
 
 tournament_config = TournamentConfig()
-veto_config = MapVetoConfig()
+team_config = TeamConfig()
 
 class TournamentCreateModal(Modal):
-    def __init__(self, template_name):
+    def __init__(self):
         super().__init__(title="Créer un Tournoi")
-        self.template_name = template_name
-        self.name = TextInput(label="Nom du Tournoi", placeholder="Entrez le nom du tournoi")
-
+        self.name = TextInput(
+            label="Nom du Tournoi", placeholder="Entrez le nom du tournoi"
+        )
         self.add_item(self.name)
 
     async def on_submit(self, interaction: discord.Interaction):
         tournament_name = self.name.value.strip()
-        template_name = self.template_name
 
-        if tournament_config.create_tournament(tournament_name, template_name):
-            await interaction.response.send_message(f"Tournoi '{tournament_name}' créé avec le template '{template_name}'.", ephemeral=True)
+        if tournament_config.create_tournament(tournament_name):
+            await interaction.response.send_message(
+                f"Tournoi '{tournament_name}' créé avec succès.", ephemeral=True
+            )
         else:
-            await interaction.response.send_message(f"Un tournoi avec le nom '{tournament_name}' existe déjà.", ephemeral=True)
+            await interaction.response.send_message(
+                f"Un tournoi avec le nom '{tournament_name}' existe déjà.",
+                ephemeral=True,
+            )
 
 class TournamentEditModal(Modal):
-    def __init__(self, tournament_name, tournament):
+    def __init__(self, tournament_name):
         super().__init__(title=f"Modifier le Tournoi '{tournament_name}'")
         self.tournament_name = tournament_name
-        self.tournament = tournament
         self.name = TextInput(
             label="Nom du Tournoi",
             default=tournament_name,
             placeholder="Entrez le nom du tournoi"
         )
-        self.template = TextInput(
-            label="Template du Tournoi",
-            default=tournament["template"],
-            placeholder="Entrez le nom du template"
-        )
         self.add_item(self.name)
-        self.add_item(self.template)
 
     async def on_submit(self, interaction: discord.Interaction):
         new_name = self.name.value.strip()
-        template = self.template.value.strip()
 
         if not new_name:
-            await interaction.response.send_message("Le nom ne peut pas être vide.", ephemeral=True)
+            await interaction.response.send_message(
+                "Le nom ne peut pas être vide.", ephemeral=True
+            )
             return
 
         if new_name != self.tournament_name:
             if tournament_config.get_tournament(new_name):
-                await interaction.response.send_message(f"Un tournoi avec le nom '{new_name}' existe déjà.", ephemeral=True)
+                await interaction.response.send_message(
+                    f"Un tournoi avec le nom '{new_name}' existe déjà.",
+                    ephemeral=True,
+                )
                 return
             else:
-                tournament_config.tournaments[new_name] = tournament_config.tournaments.pop(self.tournament_name)
+                tournament_config.update_tournament(
+                    self.tournament_name, new_name
+                )
                 self.tournament_name = new_name
 
-        tournament_config.update_tournament(self.tournament_name, template)
-        await interaction.response.send_message(f"Tournoi '{self.tournament_name}' mis à jour avec succès.", ephemeral=True)
+        await interaction.response.send_message(
+            f"Tournoi '{self.tournament_name}' mis à jour avec succès.", ephemeral=True
+        )
 
 class TournamentDeleteButton(Button):
     def __init__(self, tournament_name):
-        super().__init__(label=f"Supprimer {tournament_name}", style=discord.ButtonStyle.danger, custom_id=f"delete_{tournament_name}")
+        super().__init__(
+            label=f"Supprimer {tournament_name}",
+            style=discord.ButtonStyle.danger,
+            custom_id=f"delete_{tournament_name}",
+        )
         self.tournament_name = tournament_name
 
     async def callback(self, interaction: discord.Interaction):
         if tournament_config.delete_tournament(self.tournament_name):
-            await interaction.response.send_message(f"Le tournoi '{self.tournament_name}' a été supprimé avec succès.", ephemeral=True)
+            await interaction.response.send_message(
+                f"Le tournoi '{self.tournament_name}' a été supprimé avec succès.",
+                ephemeral=True,
+            )
         else:
-            await interaction.response.send_message(f"Erreur lors de la suppression du tournoi '{self.tournament_name}'.", ephemeral=True)
+            await interaction.response.send_message(
+                f"Erreur lors de la suppression du tournoi '{self.tournament_name}'.",
+                ephemeral=True,
+            )
 
 class TournamentManager:
     def __init__(self, bot):
@@ -142,14 +156,19 @@ class TournamentManager:
         if self.setup_message_id:
             try:
                 message = await channel.fetch_message(self.setup_message_id)
-                await message.edit(embed=self.create_setup_embed(), view=self.create_setup_view())
+                await message.edit(
+                    embed=self.create_setup_embed(),
+                    view=self.create_setup_view(),
+                )
             except discord.NotFound:
                 await self.send_setup_message(channel)
         else:
             await self.send_setup_message(channel)
 
     async def send_setup_message(self, channel):
-        message = await channel.send(embed=self.create_setup_embed(), view=self.create_setup_view())
+        message = await channel.send(
+            embed=self.create_setup_embed(), view=self.create_setup_view()
+        )
         self.setup_message_id = message.id
         self.save_setup_message_id(message.id)
 
@@ -194,7 +213,6 @@ class ListTournamentsButton(Button):
         super().__init__(label="Liste des Tournois", style=discord.ButtonStyle.secondary, custom_id="list_tournaments")
 
     async def callback(self, interaction: discord.Interaction):
-        veto_config.refresh_templates()
         tournaments = tournament_config.tournaments
         if not tournaments:
             await interaction.response.send_message("Aucun tournoi trouvé.", ephemeral=True)
@@ -202,7 +220,7 @@ class ListTournamentsButton(Button):
 
         embed = discord.Embed(
             title="Liste des Tournois",
-            description="\n".join(f"- {name} (Template: {data['template']})" for name, data in tournaments.items()),
+            description="\n".join(f"- {name}" for name in tournaments.keys()),
             color=discord.Color.green()
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -212,31 +230,14 @@ class CreateTournamentButton(Button):
         super().__init__(label="Créer un tournoi", style=discord.ButtonStyle.primary, custom_id="create_tournament")
 
     async def callback(self, interaction: discord.Interaction):
-        templates = list(veto_config.vetos.keys())
-        if not templates:
-            await interaction.response.send_message("Aucun template disponible pour création de tournoi.", ephemeral=True)
-            return
-        
-        class TemplateSelect(Select):
-            def __init__(self, options):
-                super().__init__(placeholder="Choisissez un template pour le tournoi...", options=options)
-
-            async def callback(self, interaction: discord.Interaction):
-                selected_template = self.values[0]
-                modal = TournamentCreateModal(selected_template)
-                await interaction.response.send_modal(modal)
-
-        select = TemplateSelect([discord.SelectOption(label=name, value=name) for name in templates])
-        view = discord.ui.View()
-        view.add_item(select)
-        await interaction.response.send_message("Veuillez choisir un template pour le tournoi :", view=view, ephemeral=True)
+        modal = TournamentCreateModal()
+        await interaction.response.send_modal(modal)
 
 class EditTournamentButton(Button):
     def __init__(self):
         super().__init__(label="Éditer un tournoi", style=discord.ButtonStyle.primary, custom_id="edit_tournament")
 
     async def callback(self, interaction: discord.Interaction):
-        veto_config.refresh_templates()
         tournament_names = list(tournament_config.tournaments.keys())
         if not tournament_names:
             await interaction.response.send_message("Aucun tournoi disponible pour modification.", ephemeral=True)
@@ -254,10 +255,12 @@ class EditTournamentButton(Button):
                     await interaction.response.send_message("Tournoi introuvable.", ephemeral=True)
                     return
 
-                modal = TournamentEditModal(selected_tournament, tournament)
+                modal = TournamentEditModal(selected_tournament)
                 await interaction.response.send_modal(modal)
 
-        select = TournamentEditSelect([discord.SelectOption(label=name, value=name) for name in tournament_names])
+        select = TournamentEditSelect(
+            [discord.SelectOption(label=name, value=name) for name in tournament_names]
+        )
         view = View()
         view.add_item(select)
         await interaction.response.send_message("Sélectionnez un tournoi à éditer :", view=view, ephemeral=True)
@@ -294,11 +297,30 @@ class DeleteTournamentButton(Button):
 
 class ConfirmTournamentDeleteButton(Button):
     def __init__(self, tournament_name):
-        super().__init__(label=f"Confirmer la suppression de {tournament_name}", style=discord.ButtonStyle.danger, custom_id=f"confirm_delete_tournament_{tournament_name}")
+        super().__init__(
+            label=f"Confirmer la suppression de {tournament_name}",
+            style=discord.ButtonStyle.danger,
+            custom_id=f"confirm_delete_tournament_{tournament_name}",
+        )
         self.tournament_name = tournament_name
 
     async def callback(self, interaction: discord.Interaction):
-        if tournament_config.delete_tournament(self.tournament_name):
-            await interaction.response.send_message(f"Le tournoi '{self.tournament_name}' a été supprimé avec succès.", ephemeral=True)
+        # Vérifiez si des équipes sont rattachées au tournoi
+        teams = team_config.get_teams_by_tournament(self.tournament_name)
+
+        if teams:
+            # Si des équipes sont rattachées, afficher un message d'erreur
+            await interaction.response.send_message(
+                f"Le tournoi '{self.tournament_name}' ne peut pas être supprimé car les équipes suivantes y sont rattachées : {', '.join(teams)}.",
+                ephemeral=True,
+            )
+        elif tournament_config.delete_tournament(self.tournament_name):
+            await interaction.response.send_message(
+                f"Le tournoi '{self.tournament_name}' a été supprimé avec succès.",
+                ephemeral=True,
+            )
         else:
-            await interaction.response.send_message(f"Erreur lors de la suppression du tournoi '{self.tournament_name}'.", ephemeral=True)
+            await interaction.response.send_message(
+                f"Erreur lors de la suppression du tournoi '{self.tournament_name}'.",
+                ephemeral=True,
+            )
