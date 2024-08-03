@@ -151,7 +151,7 @@ class TeamSelect(Select):
 
         await ticket_channel.send(embed=embed, view=view)
         if ticket_channel:
-            await interaction.response.send_message(f"Ticket pour le Map Veto commence pour le match : **{team_a_name}** VS **{team_b_name}** (#{ticket_channel}).", ephemeral=True)
+            await interaction.followup.send(f"Ticket pour le Map Veto commence pour le match : **{team_a_name}** VS **{team_b_name}** (#{ticket_channel}).", ephemeral=True)
         
 class TournamentSelect(Select):
     def __init__(self, template_name, bot):
