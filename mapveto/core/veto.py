@@ -75,9 +75,7 @@ class TeamSelect(Select):
 
         super().__init__(placeholder="Choisir deux équipes...", min_values=2, max_values=2, options=options)
 
-    async def callback(self, interaction: discord.Interaction):
-        await interaction.response.defer(ephemeral=True)
-        
+    async def callback(self, interaction: discord.Interaction):        
         team_a_name, team_b_name = self.values
         team_a_id = int(teams[team_a_name]["captain_discord_id"])
         team_b_id = int(teams[team_b_name]["captain_discord_id"])
@@ -152,8 +150,14 @@ class TeamSelect(Select):
         view.add_item(select)
 
         await ticket_channel.send(embed=embed, view=view)
-        if ticket_channel:
-            await interaction.followup.send(f"Ticket pour le Map Veto commence pour le match : **{team_a_name}** VS **{team_b_name}** (#{ticket_channel}).", ephemeral=True)
+        try:
+            await interaction.followup.send(
+                f"Ticket pour le Map Veto commence pour le match : **{team_a_name}** VS **{team_b_name}** (#{thread.channel}).",
+                ephemeral=True
+            )
+        except discord.HTTPException as e:
+            # Gérer l'exception pour diagnostiquer les erreurs de webhook
+            print(f"Erreur lors de l'envoi du message de suivi : {e}")
         
 class TournamentSelect(Select):
     def __init__(self, template_name, bot):
