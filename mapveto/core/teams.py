@@ -142,9 +142,10 @@ class TeamEditModal(Modal):
             await interaction.response.send_message("Veuillez entrer un ID Discord valide pour le capitaine.", ephemeral=True)
 
 class ChangeTournamentButton(Button):
-    def __init__(self, team_name):
+    def __init__(self, bot, team_name):
         super().__init__(label="Changer le tournoi", style=discord.ButtonStyle.primary, custom_id=f"change_tournament_{team_name}")
         self.team_name = team_name
+        self.bot = bot
 
     async def callback(self, interaction: discord.Interaction):
         tournament_names = list(tournament_config.tournaments.keys())
@@ -153,15 +154,16 @@ class ChangeTournamentButton(Button):
             return
 
         class TournamentSelect(Select):
-            def __init__(self, team_name, options):
+            def __init__(self, bot, team_name, options):
                 super().__init__(placeholder="Choisissez un tournoi...", options=options)
                 self.team_name = team_name
+                self.bot = bot
 
             async def callback(self, interaction: discord.Interaction):
                 selected_tournament = self.values[0]
                 team = team_config.get_team(self.team_name)
                 # Créer la fenêtre modale sans le champ "Tournoi"
-                modal = TeamEditModal(self.team_name, team)
+                modal = TeamEditModal(self.bot, self.team_name, team)
                 team_config.update_team(self.team_name, selected_tournament, team["captain_discord_id"])  # Mise à jour du tournoi ici
                 await interaction.response.send_modal(modal)
 
@@ -171,9 +173,10 @@ class ChangeTournamentButton(Button):
         await interaction.response.send_message("Choisissez un nouveau tournoi pour l'équipe :", view=view, ephemeral=True)
 
 class NoChangeTournamentButton(Button):
-    def __init__(self, team_name):
+    def __init__(self, bot, team_name):
         super().__init__(label="Ne pas changer le tournoi", style=discord.ButtonStyle.secondary, custom_id=f"no_change_tournament_{team_name}")
         self.team_name = team_name
+        self.bot = bot
 
     async def callback(self, interaction: discord.Interaction):
         team = team_config.get_team(self.team_name)
