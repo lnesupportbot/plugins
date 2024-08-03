@@ -283,7 +283,7 @@ class DeleteTournamentButton(Button):
                 confirm_view = View()
                 confirm_view.add_item(ConfirmTournamentDeleteButton(selected_tournament))
                 team_config = TeamConfig()
-                teams = team_config.get_teams_by_tournament(self.tournament_name)
+                teams = team_config.get_teams_by_tournament(selected_tournament)
 
                 if teams:
                     # Si des équipes sont rattachées, afficher un message d'erreur
