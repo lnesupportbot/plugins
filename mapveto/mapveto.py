@@ -23,7 +23,7 @@ teams = team_config.load_teams()
 
 class SetupButtonConfig:
     def __init__(self, filename="message_id.json"):
-        self.filename = os.path.join(os.path.dirname(__file__), filename)
+        self.filename = os.path.join(os.path.dirname(__file__), '.', filename)
         self.setup_message_id = None
         self.load_setup_message_id()
 
