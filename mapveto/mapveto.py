@@ -64,11 +64,11 @@ class TeamSelect(Select):
         self.teams = team_config.load_teams()
 
         # Filtrer les équipes pour le tournoi spécifié
-        tournament_teams = [team for team, details in teams.items() if details["tournament"] == tournament_name]
+        teams = team_config.get_teams_by_tournament(tournament_name)
 
         # Préparer les options avec les descriptions des capitaines
         options = []
-        for team in tournament_teams:
+        for team in teams:
             captain_id = int(teams[team]["captain_discord_id"])
             captain_user = self.bot.get_user(captain_id)
             if captain_user:
