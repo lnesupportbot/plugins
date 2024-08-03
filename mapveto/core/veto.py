@@ -77,8 +77,8 @@ class TeamSelect(Select):
 
     async def callback(self, interaction: discord.Interaction):
         team_a_name, team_b_name = self.values
-        team_a_id = int(self.teams[team_a_name]["captain_discord_id"])
-        team_b_id = int(self.teams[team_b_name]["captain_discord_id"])
+        team_a_id = int(teams[team_a_name]["captain_discord_id"])
+        team_b_id = int(teams[team_b_name]["captain_discord_id"])
 
         if not team_a_id or not team_b_id:
             await interaction.response.send_message("Un ou les deux capitaines ne sont pas trouvés sur le serveur.", ephemeral=True)
