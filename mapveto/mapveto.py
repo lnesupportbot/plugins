@@ -1,7 +1,7 @@
 import asyncio
 import discord  # type: ignore
 from discord.ext import commands  # type: ignore
-from discord.ui import View, Button, Select  # type: ignore
+from discord.ui import View, Button  # type: ignore
 import json
 import os
 
@@ -11,7 +11,7 @@ from core.models import PermissionLevel  # type: ignore
 from .core.templateveto import MapVetoConfig, TemplateManager
 from .core.tournament import TournamentManager, TournamentConfig
 from .core.teams import TeamManager, TeamConfig
-from .core.veto import MapVeto, MapVetoButton
+from .core.veto import MapVeto, VetoManager
 from core import checks
 
 
@@ -19,11 +19,16 @@ from core import checks
 veto_config = MapVetoConfig()
 template_message_config = TemplateManager()
 vetos = veto_config.load_vetos()
+
 tournament_config = TournamentConfig()
 tournament_message_config = TournamentManager()
 tournaments = tournament_config.load_tournaments()
+
 team_config = TeamConfig()
 teams = team_config.load_teams()
+
+veto_start_config = VetoManager()
+veto_start = veto_start_config.load_veto_setup_message_id()
 
 
 class SetupButtonConfig:
@@ -136,6 +141,7 @@ class MapVetoCog(commands.Cog):
         self.template_veto = TemplateManager()
         self.tournament = TournamentManager()
         self.teams = TeamManager(bot)
+        self.veto_start = VetoManager()
         self.setupbutton_config = SetupButtonConfig(bot)  # Pass the bot instance
         self.current_veto = None
 
@@ -218,14 +224,8 @@ class MapVetoCog(commands.Cog):
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def mapveto_button(self, ctx):
         """Affiche un embed avec un bouton pour lancer un map veto."""
-        embed = discord.Embed(
-            title="Lancer un MapVeto",
-            description="Cliquez sur le bouton ci-dessous pour lancer un MapVeto.",
-            color=discord.Color.blue()
-        )
-        view = View()
-        view.add_item(MapVetoButton())
-        await ctx.send(embed=embed, view=view)
+        self.veto_start.refresh_veto_setup_message_id()
+        await self.veto_start.update_veto_setup_message(ctx.channel)
 
     @commands.command(name='setup_buttons')
     @commands.has_permissions(administrator=True)
