@@ -443,8 +443,8 @@ class TeamSelect(Select):
 
             select = SelectTeamForMapVeto(team_a_name, team_b_name, self.template_name, self.bot)
             view = View(timeout = None)
-            view.add_item(CoinFlipMessage(team_a_id, team_b_id))
-            view.add_item(CoinFlipButton(team_a_name, team_b_name, team_a_id, team_b_id))
+            view.add_item(CoinFlipMessage(team_a_id, team_b_id, self.bot))
+            view.add_item(CoinFlipButton(team_a_name, team_b_name, team_a_id, team_b_id, self.bot))
             view.add_item(select)
             await ticket_channel.send(embed=embed, view=view)
 
