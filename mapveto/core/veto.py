@@ -443,7 +443,7 @@ class TeamSelect(Select):
 
             select = SelectTeamForMapVeto(team_a_name, team_b_name, self.template_name, self.bot)
             view = View(timeout = None)
-            view.add_item(CoinFlipButton)
+            view.add_item(CoinFlipButton())
             view.add_item(select)
             await ticket_channel.send(embed=embed, view=view)
 
