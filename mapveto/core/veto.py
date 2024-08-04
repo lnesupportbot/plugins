@@ -556,6 +556,12 @@ class VetoRdyMessage(Button):
         else:
             await interaction.response.send_message("Un ou les deux capitaines ne sont pas trouvés.", ephemeral=True)
 
+async def interaction_to_context(bot, interaction):
+    """Convert an interaction to a context object."""
+    ctx = await bot.get_context(interaction.message)
+    ctx.interaction = interaction
+    return ctx
+
 class CloseMapVetoButton(Button):
     def __init__(self, team_a_id, team_b_id, thread, bot):
         super().__init__(label="Fermer le Map Veto", style=discord.ButtonStyle.danger, custom_id="close_mapveto")
@@ -576,11 +582,15 @@ class CloseMapVetoButton(Button):
         else:
             await interaction.response.send_message("Un ou les deux capitaines ne sont pas trouvés.", ephemeral=True)
 
+        # Convert interaction to context
+        ctx = await interaction_to_context(self.bot, interaction)
+
         # Fermer le ticket de manière silencieuse
         # Assurez-vous que le bot a la permission de supprimer le channel
+        # Ensure modmail cog exists
         if modmail_cog:
             await modmail_cog.close(
-                ctx=interaction,  # Passez l'interaction comme contexte
+                ctx=ctx,  # Use the converted context
                 option="silent"
             )
         else:
