@@ -443,7 +443,8 @@ class TeamSelect(Select):
 
             select = SelectTeamForMapVeto(team_a_name, team_b_name, self.template_name, self.bot)
             view = View(timeout = None)
-            view.add_item(CoinFlipButton(team_a_name, team_b_name))
+            view.add_item(CoinFlipMessage(team_a_id, team_b_id))
+            view.add_item(CoinFlipButton(team_a_name, team_b_name, team_a_id, team_b_id))
             view.add_item(select)
             await ticket_channel.send(embed=embed, view=view)
 
@@ -515,10 +516,8 @@ class CoinFlipButton(Button):
             await interaction.followup.send("Un ou les deux capitaines ne sont pas trouvés pour envoyer le résultat.", ephemeral=True)
 
 class CoinFlipMessage(Button):
-    def __init__(self, team_a_name, team_b_name, team_a_id, team_b_id, bot):
+    def __init__(self, team_a_id, team_b_id, bot):
         super().__init__(label="Prêt pour le CoinFlip?", style=discord.ButtonStyle.primary, custom_id="rdy_coinflip")
-        self.team_a_name = team_a_name
-        self.team_b_name = team_b_name
         self.team_a_id = team_a_id
         self.team_b_id = team_b_id
         self.bot = bot
