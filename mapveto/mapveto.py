@@ -105,7 +105,7 @@ class SetupView(View):
         self.teams = TeamManager(bot)
         self.veto_start_manager = VetoManager(bot)
 
-    @discord.ui.button(label="Gestion des templates d'événements", custom_id="mapveto_setup", style=discord.ButtonStyle.blurple)
+    @discord.ui.button(label="Gestion des templates d'événements", custom_id="mapveto_setup", style=discord.ButtonStyle.grey)
     async def mapveto_setup_button(self, interaction: discord.Interaction, button: Button):
         template_message_config.refresh_setup_message_id()
         await self.template_veto.update_setup_message(interaction.channel)
