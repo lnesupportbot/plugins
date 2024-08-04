@@ -1,6 +1,7 @@
 import json
 import os
 import asyncio
+import random
 import discord # type: ignore
 from discord.ui import Modal, TextInput, Button, Select, View # type: ignore
 from discord.ext import commands # type: ignore
@@ -442,6 +443,7 @@ class TeamSelect(Select):
 
             select = SelectTeamForMapVeto(team_a_name, team_b_name, self.template_name, self.bot)
             view = View(timeout = None)
+            view.add_item(CoinFlipButton)
             view.add_item(select)
             await ticket_channel.send(embed=embed, view=view)
 
@@ -468,6 +470,7 @@ class SelectTeamForMapVeto(Select):
         super().__init__(placeholder="Choisir l'équipe qui commence...", min_values=1, max_values=1, options=options)
 
     async def callback(self, interaction: discord.Interaction):
+        teams = team_config.load_teams()
         starting_team = self.values[0]
         other_team = self.team_b_name if starting_team == self.team_a_name else self.team_a_name
 
@@ -483,24 +486,7 @@ class SelectTeamForMapVeto(Select):
         vetos[self.template_name] = veto
 
         await interaction.response.send_message(f"Le Map Veto commence avec {starting_team} contre {other_team}.", ephemeral=True)
-        
-        # Ajouter le bouton pour le coin flip
-        coin_flip_button = CoinFlipButton(self.team_a_name, self.team_b_name)
-        view = View(timeout=None)
-        select = SelectTeamForMapVeto(self.team_a_name, self.team_b_name, self.template_name, self.bot)
-        view.add_item(select)
-        view.add_item(coin_flip_button)
-
         await veto.send_ticket_message(ticket_channel)
-        await ticket_channel.send(embed=discord.Embed(
-            title="Sélection de l'équipe qui commence le MapVeto",
-            description=(
-                "\n__Sélectionner dans la liste ci-dessous l'équipe commencera le MapVeto :__\n\n"
-                "*Si vous devez relancer le MapVeto et que la liste ci-dessous n'est plus fonctionnelle, vous pouvez lancer le MapVeto avec la commande :*\n"
-                f"- `?start_mapveto {self.template_name} {starting_team_id} {starting_team} {other_team_id} {other_team}`\n"
-            ),
-            color=discord.Color.blue()
-        ), view=view)
 
 class CoinFlipButton(Button):
     def __init__(self, team_a_name, team_b_name):
