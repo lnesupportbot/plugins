@@ -559,13 +559,13 @@ class VetoRdyMessage(Button):
 class CloseMapVetoButton(Button):
     def __init__(self, team_a_id, team_b_id, thread, bot):
         super().__init__(label="Fermer le Map Veto", style=discord.ButtonStyle.danger, custom_id="close_mapveto")
-        modmail_cog = modmail.Modmail(bot)
         self.team_a_id = team_a_id
         self.team_b_id = team_b_id
         self.thread = thread
         self.bot = bot
         
     async def callback(self, interaction: discord.Interaction):
+        modmail_cog = modmail.Modmail(self.bot)
         team_a_user = self.bot.get_user(self.team_a_id)
         team_b_user = self.bot.get_user(self.team_b_id)
         
