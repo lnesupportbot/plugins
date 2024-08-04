@@ -564,7 +564,7 @@ class CloseMapVetoButton(Button):
         self.thread = thread
         self.bot = bot
         
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: discord.Interaction, ctx):
         modmail_cog = modmail.Modmail(self.bot)
         team_a_user = self.bot.get_user(self.team_a_id)
         team_b_user = self.bot.get_user(self.team_b_id)
@@ -580,6 +580,7 @@ class CloseMapVetoButton(Button):
         # Assurez-vous que le bot a la permission de supprimer le channel
         await modmail_cog.close(        
             self,
+            ctx,
             option = "silent",
         )
 
