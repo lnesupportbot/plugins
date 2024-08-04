@@ -110,27 +110,27 @@ class SetupView(View):
     async def mapveto_setup_button(self, interaction: discord.Interaction, button: Button):
         template_message_config.refresh_setup_message_id()
         await self.template_veto.update_setup_message(interaction.channel)
-        pass
+        return
 
     @discord.ui.button(label="Gestion des tournois", custom_id="tournament_setup", style=discord.ButtonStyle.green)
     async def tournament_setup_button(self, interaction: discord.Interaction, button: Button):
         tournament_message_config.refresh_setup_message_id()
         await self.tournament.update_setup_message(interaction.channel)
-        pass
+        return
 
     @discord.ui.button(label="Gestion des teams", custom_id="team_setup", style=discord.ButtonStyle.red)
     async def team_setup_button(self, interaction: discord.Interaction, button: Button):
         team_message_config = TeamManager(self.bot)  # Use self.bot to initialize
         team_message_config.refresh_setup_message_id()
         await self.teams.update_setup_message(interaction.channel)
-        pass
+        return
     
     @discord.ui.button(label="Lancer un MapVeto", custom_id="veto_start_button", style=discord.ButtonStyle.primary)
     async def veto_start_button(self, interaction: discord.Interaction, button: Button):
         veto_start_manager = VetoManager(self.bot)  # Use self.bot to initialize
         veto_start_manager.refresh_veto_setup_message_id()
         await self.veto_start_manager.update_veto_setup_message(interaction.channel)
-        pass
+        return
 
     async def refresh(self, channel_id, message_id):
         channel = self.bot.get_channel(channel_id)
