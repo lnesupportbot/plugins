@@ -449,7 +449,7 @@ class TeamSelect(Select):
             view.add_item(CoinFlipButton(team_a_name, team_b_name, team_a_id, team_b_id, self.bot))
             view.add_item(VetoRdyMessage(team_a_id, team_b_id, self.bot))
             view.add_item(select)
-            view.add_item(CloseMapVetoButton(team_a_id, team_b_id, thread, self.bot, self.ctx))
+            view.add_item(CloseMapVetoButton(team_a_id, team_b_id, thread, self.bot))
             await ticket_channel.send(embed=embed, view=view)
 
             await interaction.followup.send(
@@ -557,32 +557,34 @@ class VetoRdyMessage(Button):
             await interaction.response.send_message("Un ou les deux capitaines ne sont pas trouvés.", ephemeral=True)
 
 class CloseMapVetoButton(Button):
-    def __init__(self, team_a_id, team_b_id, thread, bot, ctx):
+    def __init__(self, team_a_id, team_b_id, thread, bot):
         super().__init__(label="Fermer le Map Veto", style=discord.ButtonStyle.danger, custom_id="close_mapveto")
         self.team_a_id = team_a_id
         self.team_b_id = team_b_id
         self.thread = thread
         self.bot = bot
         
-        async def callback(self, interaction: discord.Interaction):
-            modmail_cog = modmail.Modmail(self.bot)
-            team_a_user = self.bot.get_user(self.team_a_id)
-            team_b_user = self.bot.get_user(self.team_b_id)
-            
-            if team_a_user and team_b_user:
-                await team_a_user.send(f"{team_a_user.mention}, le MapVeto est fini. Bonne chance pour votre match! Ce ticket va être fermé. Si vous avez des questions, merci de nous contacter en passant par #teddy.")
-                await team_b_user.send(f"{team_b_user.mention}, le MapVeto est fini. Bonne chance pour votre match! Ce ticket va être fermé. Si vous avez des questions, merci de nous contacter en passant par #teddy")
-                await interaction.response.send_message("Les capitaines ont été notifiés de la fermeture du ticket de MapVeto.", ephemeral=True)
-            else:
-                await interaction.response.send_message("Un ou les deux capitaines ne sont pas trouvés.", ephemeral=True)
+    async def callback(self, interaction: discord.Interaction):
+        modmail_cog = self.bot.get_cog('Modmail')
+        team_a_user = self.bot.get_user(self.team_a_id)
+        team_b_user = self.bot.get_user(self.team_b_id)
+        
+        if team_a_user and team_b_user:
+            await team_a_user.send(f"{team_a_user.mention}, le MapVeto est fini. Bonne chance pour votre match! Ce ticket va être fermé. Si vous avez des questions, merci de nous contacter en passant par #teddy.")
+            await team_b_user.send(f"{team_b_user.mention}, le MapVeto est fini. Bonne chance pour votre match! Ce ticket va être fermé. Si vous avez des questions, merci de nous contacter en passant par #teddy")
+            await interaction.response.send_message("Les capitaines ont été notifiés de la fermeture du ticket de MapVeto.", ephemeral=True)
+        else:
+            await interaction.response.send_message("Un ou les deux capitaines ne sont pas trouvés.", ephemeral=True)
 
-            # Fermer le ticket de manière silencieuse
-            # Assurez-vous que le bot a la permission de supprimer le channel
-            await modmail_cog.close(        
-                self,
-                ctx,
-                option = "silent",
+        # Fermer le ticket de manière silencieuse
+        # Assurez-vous que le bot a la permission de supprimer le channel
+        if modmail_cog:
+            await modmail_cog.close(
+                ctx=interaction,  # Passez l'interaction comme contexte
+                option="silent"
             )
+        else:
+            await interaction.followup.send("Erreur: Impossible de trouver le module Modmail.", ephemeral=True)
 
 class MapButton(discord.ui.Button):
     def __init__(self, label, veto_name, action_type, channel, veto):
