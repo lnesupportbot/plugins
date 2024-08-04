@@ -263,6 +263,7 @@ class VetoManager:
     def create_veto_setup_view(self):
         view = discord.ui.View(timeout=None)
         view.add_item(MapVetoButton())
+        return view
 
     async def send_veto_setup_message(self, channel):
         message = await channel.send(embed=self.create_veto_setup_embed(), view=self.create_veto_setup_view())
