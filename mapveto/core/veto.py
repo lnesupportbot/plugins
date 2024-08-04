@@ -491,7 +491,7 @@ class SelectTeamForMapVeto(Select):
 
 class CoinFlipButton(Button):
     def __init__(self, team_a_name, team_b_name, team_a_id, team_b_id, bot):
-        super().__init__(label="Lancer le coinflip", style=discord.ButtonStyle.primary, custom_id="coinflip")
+        super().__init__(label="Lancer le coinflip", style=discord.ButtonStyle.green, custom_id="coinflip")
         self.team_a_name = team_a_name
         self.team_b_name = team_b_name
         self.team_a_id = team_a_id
@@ -504,7 +504,7 @@ class CoinFlipButton(Button):
             return
 
         result = random.choice([self.team_a_name, self.team_b_name])
-        result_message = f"Le coinflip a donné l'équipe **{result}** comme gagnant !"
+        result_message = f"Le CoinFlip a donné l'équipe **{result}** comme gagnant !"
         await interaction.response.send_message(result_message)
         
         team_a_user = self.bot.get_user(self.team_a_id)
@@ -518,7 +518,7 @@ class CoinFlipButton(Button):
 
 class CoinFlipMessage(Button):
     def __init__(self, team_a_id, team_b_id, bot):
-        super().__init__(label="Prêt pour le CoinFlip?", style=discord.ButtonStyle.primary, custom_id="rdy_coinflip")
+        super().__init__(label="Prêt pour le CoinFlip?", style=discord.ButtonStyle.grey, custom_id="rdy_coinflip")
         self.team_a_id = team_a_id
         self.team_b_id = team_b_id
         self.bot = bot
@@ -528,9 +528,9 @@ class CoinFlipMessage(Button):
         team_b_user = self.bot.get_user(self.team_b_id)
         
         if team_a_user and team_b_user:
-            await team_a_user.send(f"{team_a_user.mention}, êtes-vous prêt pour lancer le coin flip ?")
-            await team_b_user.send(f"{team_b_user.mention}, êtes-vous prêt pour lancer le coin flip ?")
-            await interaction.response.send_message("Les capitaines ont été notifiés pour se préparer au coin flip.", ephemeral=True)
+            await team_a_user.send(f"{team_a_user.mention}, êtes-vous prêt pour lancer le CoinFlip ?")
+            await team_b_user.send(f"{team_b_user.mention}, êtes-vous prêt pour lancer le CoinFlip ?")
+            await interaction.response.send_message("Les capitaines ont été notifiés pour se préparer au CoinFlip.", ephemeral=True)
         else:
             await interaction.response.send_message("Un ou les deux capitaines ne sont pas trouvés.", ephemeral=True)
 
