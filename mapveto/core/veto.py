@@ -490,12 +490,13 @@ class SelectTeamForMapVeto(Select):
         await veto.send_ticket_message(ticket_channel)
 
 class CoinFlipButton(Button):
-    def __init__(self, team_a_name, team_b_name, team_a_id, team_b_id):
+    def __init__(self, team_a_name, team_b_name, team_a_id, team_b_id, bot):
         super().__init__(label="Lancer le coinflip", style=discord.ButtonStyle.primary, custom_id="coinflip")
         self.team_a_name = team_a_name
         self.team_b_name = team_b_name
         self.team_a_id = team_a_id
         self.team_b_id = team_b_id
+        self.bot = bot
 
     async def callback(self, interaction: discord.Interaction):
         if interaction.user.id != self.team_a_id and interaction.user.id != self.team_b_id:
