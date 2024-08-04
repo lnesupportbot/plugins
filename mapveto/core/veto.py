@@ -489,15 +489,50 @@ class SelectTeamForMapVeto(Select):
         await veto.send_ticket_message(ticket_channel)
 
 class CoinFlipButton(Button):
-    def __init__(self, team_a_name, team_b_name):
+    def __init__(self, team_a_name, team_b_name, team_a_id, team_b_id):
         super().__init__(label="Lancer le coinflip", style=discord.ButtonStyle.primary, custom_id="coinflip")
         self.team_a_name = team_a_name
         self.team_b_name = team_b_name
+        self.team_a_id = team_a_id
+        self.team_b_id = team_b_id
 
     async def callback(self, interaction: discord.Interaction):
+        if interaction.user.id != self.team_a_id and interaction.user.id != self.team_b_id:
+            await interaction.response.send_message("Ce n'est pas votre tour.", ephemeral=True)
+            return
 
         result = random.choice([self.team_a_name, self.team_b_name])
-        await interaction.response.send_message(f"Le coinflip a donné {result} comme gagnant !", ephemeral=True)
+        result_message = f"Le coinflip a donné l'équipe **{result}** comme gagnant !"
+        await interaction.response.send_message(result_message)
+        
+        team_a_user = self.bot.get_user(self.team_a_id)
+        team_b_user = self.bot.get_user(self.team_b_id)
+        
+        if team_a_user and team_b_user:
+            await team_a_user.send(result_message)
+            await team_b_user.send(result_message)
+        else:
+            await interaction.followup.send("Un ou les deux capitaines ne sont pas trouvés pour envoyer le résultat.", ephemeral=True)
+
+class CoinFlipMessage(Button):
+    def __init__(self, team_a_name, team_b_name, team_a_id, team_b_id, bot):
+        super().__init__(label="Prêt pour le CoinFlip?", style=discord.ButtonStyle.primary, custom_id="rdy_coinflip")
+        self.team_a_name = team_a_name
+        self.team_b_name = team_b_name
+        self.team_a_id = team_a_id
+        self.team_b_id = team_b_id
+        self.bot = bot
+
+    async def callback(self, interaction: discord.Interaction):
+        team_a_user = self.bot.get_user(self.team_a_id)
+        team_b_user = self.bot.get_user(self.team_b_id)
+        
+        if team_a_user and team_b_user:
+            await team_a_user.send(f"{team_a_user.mention}, êtes-vous prêt pour lancer le coin flip ?")
+            await team_b_user.send(f"{team_b_user.mention}, êtes-vous prêt pour lancer le coin flip ?")
+            await interaction.response.send_message("Les capitaines ont été notifiés pour se préparer au coin flip.", ephemeral=True)
+        else:
+            await interaction.response.send_message("Un ou les deux capitaines ne sont pas trouvés.", ephemeral=True)
 
 class MapButton(discord.ui.Button):
     def __init__(self, label, veto_name, action_type, channel, veto):
