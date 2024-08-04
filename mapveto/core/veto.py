@@ -19,7 +19,6 @@ tournament_config = TournamentConfig()
 tournaments = tournament_config.load_tournaments()
 team_config = TeamConfig()
 teams = team_config.load_teams()
-modmail_cog = modmail.Modmail()
 
 class MapVeto:
     def __init__(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel, bot):
@@ -560,6 +559,7 @@ class VetoRdyMessage(Button):
 class CloseMapVetoButton(Button):
     def __init__(self, team_a_id, team_b_id, thread, bot):
         super().__init__(label="Fermer le Map Veto", style=discord.ButtonStyle.danger, custom_id="close_mapveto")
+        modmail_cog = modmail.Modmail(bot)
         self.team_a_id = team_a_id
         self.team_b_id = team_b_id
         self.thread = thread
