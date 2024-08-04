@@ -445,6 +445,7 @@ class TeamSelect(Select):
             view = View(timeout = None)
             view.add_item(CoinFlipMessage(team_a_id, team_b_id, self.bot))
             view.add_item(CoinFlipButton(team_a_name, team_b_name, team_a_id, team_b_id, self.bot))
+            view.add_item(VetoRdyMessage(team_a_id, team_b_id, self.bot))
             view.add_item(select)
             await ticket_channel.send(embed=embed, view=view)
 
@@ -531,6 +532,24 @@ class CoinFlipMessage(Button):
             await team_a_user.send(f"{team_a_user.mention}, êtes-vous prêt pour lancer le CoinFlip ?")
             await team_b_user.send(f"{team_b_user.mention}, êtes-vous prêt pour lancer le CoinFlip ?")
             await interaction.response.send_message("Les capitaines ont été notifiés pour se préparer au CoinFlip.", ephemeral=True)
+        else:
+            await interaction.response.send_message("Un ou les deux capitaines ne sont pas trouvés.", ephemeral=True)
+
+class VetoRdyMessage(Button):
+    def __init__(self, team_a_id, team_b_id, bot):
+        super().__init__(label="Prêt pour le MapVeto?", style=discord.ButtonStyle.grey, custom_id="rdy_mapveto")
+        self.team_a_id = team_a_id
+        self.team_b_id = team_b_id
+        self.bot = bot
+
+    async def callback(self, interaction: discord.Interaction):
+        team_a_user = self.bot.get_user(self.team_a_id)
+        team_b_user = self.bot.get_user(self.team_b_id)
+        
+        if team_a_user and team_b_user:
+            await team_a_user.send(f"{team_a_user.mention}, êtes-vous prêt pour lancer le MapVeto ?")
+            await team_b_user.send(f"{team_b_user.mention}, êtes-vous prêt pour lancer le MapVeto ?")
+            await interaction.response.send_message("Les capitaines ont été notifiés pour se préparer au MapVeto.", ephemeral=True)
         else:
             await interaction.response.send_message("Un ou les deux capitaines ne sont pas trouvés.", ephemeral=True)
 
