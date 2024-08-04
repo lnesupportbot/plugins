@@ -557,12 +557,13 @@ class VetoRdyMessage(Button):
             await interaction.response.send_message("Un ou les deux capitaines ne sont pas trouvés.", ephemeral=True)
 
 class CloseMapVetoButton(Button):
-    def __init__(self, team_a_id, team_b_id, thread, bot):
+    def __init__(self, team_a_id, team_b_id, thread, bot, ctx):
         super().__init__(label="Fermer le Map Veto", style=discord.ButtonStyle.danger, custom_id="close_mapveto")
         self.team_a_id = team_a_id
         self.team_b_id = team_b_id
         self.thread = thread
         self.bot = bot
+        self.ctx = ctx
         
     async def callback(self, interaction: discord.Interaction):
         modmail_cog = modmail.Modmail(self.bot)
