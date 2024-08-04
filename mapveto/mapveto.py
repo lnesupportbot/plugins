@@ -40,7 +40,7 @@ class SetupButtonConfig:
             self.setup_button_message_id = None
 
     # Sauvegarder l'ID du message dans un fichier
-    def save_setup_message_id(self, message_id):
+    def save_setup_button_message_id(self, message_id):
         data = {}
         # Load existing data
         if os.path.exists(self.filename):
