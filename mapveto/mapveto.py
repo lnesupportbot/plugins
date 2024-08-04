@@ -103,6 +103,7 @@ class SetupView(View):
         self.template_veto = TemplateManager()
         self.tournament = TournamentManager()
         self.teams = TeamManager(bot)
+        self.veto_start_manager = VetoManager(bot)
 
     @discord.ui.button(label="Gestion des templates d'événements", custom_id="mapveto_setup", style=discord.ButtonStyle.blurple)
     async def mapveto_setup_button(self, interaction: discord.Interaction, button: Button):
@@ -120,6 +121,12 @@ class SetupView(View):
         team_message_config = TeamManager(self.bot)  # Use self.bot to initialize
         team_message_config.refresh_setup_message_id()
         await self.teams.update_setup_message(interaction.channel)
+    
+    @discord.ui.button(label="Lancer un MapVeto", custom_id="mapveto_button", style=discord.ButtonStyle.red)
+    async def team_setup_button(self, interaction: discord.Interaction, button: Button):
+        veto_start_manager = VetoManager(self.bot)  # Use self.bot to initialize
+        veto_start_manager.refresh_veto_setup_message_id()
+        await self.veto_start_manager.update_veto_setup_message(interaction.channel)
 
     async def refresh(self, channel_id, message_id):
         channel = self.bot.get_channel(channel_id)
@@ -137,7 +144,7 @@ class MapVetoCog(commands.Cog):
         self.template_veto = TemplateManager()
         self.tournament = TournamentManager()
         self.teams = TeamManager(bot)
-        self.veto_start = VetoManager(bot)
+        self.veto_start_manager = VetoManager(bot)
         self.setupbutton_config = SetupButtonConfig(bot)  # Pass the bot instance
         self.current_veto = None
 
@@ -220,7 +227,7 @@ class MapVetoCog(commands.Cog):
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def mapveto_button(self, ctx):
         """Affiche un embed avec un bouton pour lancer un map veto."""
-        self.veto_start.load_veto_setup_message_id()
+        self.veto_start_manager.load_veto_setup_message_id()
         await self.veto_start.update_veto_setup_message(ctx.channel)
 
     @commands.command(name='setup_buttons')
