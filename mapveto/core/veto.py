@@ -580,6 +580,7 @@ class CloseMapVetoButton(Button):
         # Assurez-vous que le bot a la permission de supprimer le channel
         await modmail_cog.close(        
             self,
+            self.ctx,
             option = "silent",
         )
 
