@@ -27,10 +27,6 @@ tournaments = tournament_config.load_tournaments()
 team_config = TeamConfig()
 teams = team_config.load_teams()
 
-veto_start_config = VetoManager()
-veto_start = veto_start_config.load_veto_setup_message_id()
-
-
 class SetupButtonConfig:
     def __init__(self, bot, filename="message_id.json"):
         self.bot = bot  # Store the bot instance
@@ -224,13 +220,13 @@ class MapVetoCog(commands.Cog):
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def mapveto_button(self, ctx):
         """Affiche un embed avec un bouton pour lancer un map veto."""
-        self.veto_start.refresh_veto_setup_message_id()
+        veto_start_config.load_veto_setup_message_id()
         await self.veto_start.update_veto_setup_message(ctx.channel)
 
     @commands.command(name='setup_buttons')
     @commands.has_permissions(administrator=True)
     async def setup_buttons(self, ctx):
-        self.setupbutton_config.refresh_setup_button_message_id()
+        self.setupbutton_config.load_setup_button_message_id()
         await self.setupbutton_config.update_setup_message(ctx.channel)
 
     @commands.Cog.listener()
