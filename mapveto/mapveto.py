@@ -65,6 +65,7 @@ class SetupButtonConfig:
     def refresh_setup_button_message_id(self):
         """Refresh the setup button message id from the file."""
         print(self.setup_button_message_id)
+        print(self.setup_channel_id)
         self.load_setup_button_message_id()
 
     async def update_setup_button_message(self, channel):
