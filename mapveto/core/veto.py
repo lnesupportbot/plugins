@@ -449,7 +449,7 @@ class TeamSelect(Select):
             view.add_item(CoinFlipButton(team_a_name, team_b_name, team_a_id, team_b_id, self.bot))
             view.add_item(VetoRdyMessage(team_a_id, team_b_id, self.bot))
             view.add_item(select)
-            view.add_item(CloseMapVetoButton(team_a_id, team_b_id, thread ,self.bot))
+            view.add_item(CloseMapVetoButton(team_a_id, team_b_id, thread, self.bot, self.ctx))
             await ticket_channel.send(embed=embed, view=view)
 
             await interaction.followup.send(
