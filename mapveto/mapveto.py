@@ -13,6 +13,18 @@ from .core.tournament import TournamentManager, TournamentConfig
 from .core.teams import TeamManager, TeamConfig
 from .core.veto import MapVeto, MapVetoButton
 
+from typing import TYPE_CHECKING
+
+import discord
+from discord.ext import commands
+from discord.utils import MISSING
+
+from core import checks
+
+if TYPE_CHECKING:
+    from bot import ModmailBot
+
+
 # Charger les configurations
 veto_config = MapVetoConfig()
 template_message_config = TemplateManager()
@@ -232,5 +244,6 @@ class MapVetoCog(commands.Cog):
                 await self.setupbutton_config.update_setup_message(setup_channel)
         print("Bot is ready, views are registered.")
 
-async def setup(bot):
+async def setup(bot: ModmailBot) -> None:
     await bot.add_cog(MapVetoCog(bot))
+
