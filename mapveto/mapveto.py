@@ -12,17 +12,7 @@ from .core.templateveto import MapVetoConfig, TemplateManager
 from .core.tournament import TournamentManager, TournamentConfig
 from .core.teams import TeamManager, TeamConfig
 from .core.veto import MapVeto, MapVetoButton
-
-from typing import TYPE_CHECKING
-
-import discord
-from discord.ext import commands
-from discord.utils import MISSING
-
 from core import checks
-
-if TYPE_CHECKING:
-    from bot import ModmailBot
 
 
 # Charger les configurations
@@ -141,14 +131,13 @@ class SetupView(View):
             print("Message not found.")
 
 class MapVetoCog(commands.Cog):
-    def __init__(self, bot: ModmailBot):
+    def __init__(self, bot: commands.bot):
         self.bot = bot
         self.template_veto = TemplateManager()
         self.tournament = TournamentManager()
         self.teams = TeamManager(bot)
         self.setupbutton_config = SetupButtonConfig(bot)  # Pass the bot instance
         self.current_veto = None
-        self.bot: ModmailBot = bot
 
     def set_veto_params(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel):
         self.current_veto = MapVeto(name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel, self.bot)
@@ -253,6 +242,6 @@ class MapVetoCog(commands.Cog):
             await setup_view.refresh(self.setupbutton_config.setup_channel_id, self.setupbutton_config.setup_message_id)
         print("Bot is ready, views are registered.")
 
-async def setup(bot: ModmailBot) -> None:
+async def setup(bot: commands.bot) -> None:
     await bot.add_cog(MapVetoCog(bot))
 
