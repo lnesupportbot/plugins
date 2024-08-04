@@ -84,7 +84,6 @@ class SetupButtonConfig:
         message = await channel.send(embed=embed, view=view)
         self.save_setup_button_message_id(message.id)
 
-
 class SetupView(View):
     def __init__(self, bot):
         super().__init__(timeout=None)
@@ -108,7 +107,6 @@ class SetupView(View):
         team_message_config = TeamManager(self.bot)  # Use self.bot to initialize
         team_message_config.refresh_setup_message_id()
         await self.teams.update_setup_message(interaction.channel)
-
 
 class MapVetoCog(commands.Cog):
     def __init__(self, bot):
@@ -210,7 +208,7 @@ class MapVetoCog(commands.Cog):
     @commands.command(name='setup_buttons')
     @commands.has_permissions(administrator=True)
     async def setup_buttons(self, ctx):
-        self.setupbutton_config.load_setup_button_message_id()
+        self.setupbutton_config.refresh_setup_button_message_id()
         await self.setupbutton_config.update_setup_message(ctx.channel)
 
     @commands.Cog.listener()
