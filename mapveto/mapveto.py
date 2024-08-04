@@ -220,7 +220,7 @@ class MapVetoCog(commands.Cog):
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def mapveto_button(self, ctx):
         """Affiche un embed avec un bouton pour lancer un map veto."""
-        veto_start_config.load_veto_setup_message_id()
+        self.veto_start.load_veto_setup_message_id()
         await self.veto_start.update_veto_setup_message(ctx.channel)
 
     @commands.command(name='setup_buttons')
