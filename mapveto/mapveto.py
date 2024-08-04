@@ -237,11 +237,14 @@ class MapVetoCog(commands.Cog):
     async def on_ready(self):
         """Rafraîchit automatiquement le message de configuration lors du démarrage du bot."""
         await self.bot.wait_until_ready()
-        if self.setupbutton_config.setup_channel_id and self.setupbutton_config.setup_message_id:
+        if self.setupbutton_config.setup_channel_id and self.setupbutton_config.setup_button_message_id:
             setup_view = SetupView(self.bot)
-            await setup_view.refresh(self.setupbutton_config.setup_channel_id, self.setupbutton_config.setup_message_id)
+            # Register the view with the bot
+            self.bot.add_view(setup_view)
+            await setup_view.refresh(self.setupbutton_config.setup_channel_id, self.setupbutton_config.setup_button_message_id)
         print("Bot is ready, views are registered.")
 
-async def setup(bot: commands.bot) -> None:
+async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(MapVetoCog(bot))
-
+    # Register the view globally at the startup
+    bot.add_view(SetupView(bot))
