@@ -581,7 +581,6 @@ class CloseMapVetoButton(Button):
         await modmail_cog.close(        
             self,
             option = "silent",
-            UserFriendlyTime = None
         )
 
 class MapButton(discord.ui.Button):
