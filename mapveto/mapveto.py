@@ -68,7 +68,8 @@ class SetupButtonConfig:
         self.load_setup_button_message_id()
 
     async def update_setup_button_message(self, channel):
-        self.refresh_setup_button_message_id()
+        self.load_setup_button_message_id()
+        print(self.setup_button_message_id)
         if self.setup_button_message_id:
             try:
                 message = await channel.fetch_message(self.setup_button_message_id)
@@ -233,7 +234,7 @@ class MapVetoCog(commands.Cog):
     @commands.command(name='setup_buttons')
     @commands.has_permissions(administrator=True)
     async def setup_buttons(self, ctx):
-        self.setupbutton_config.load_setup_button_message_id()
+        self.setupbutton_config.refresh_setup_button_message_id()
         await self.setupbutton_config.update_setup_button_message(ctx.channel)
 
     @commands.Cog.listener()
