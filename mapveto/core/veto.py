@@ -495,9 +495,6 @@ class CoinFlipButton(Button):
         self.team_b_name = team_b_name
 
     async def callback(self, interaction: discord.Interaction):
-        if interaction.user.id != self.team_a_id and interaction.user.id != self.team_b_id:
-            await interaction.response.send_message("Ce n'est pas votre tour.", ephemeral=True)
-            return
 
         result = random.choice([self.team_a_name, self.team_b_name])
         await interaction.response.send_message(f"Le coinflip a donné {result} comme gagnant !", ephemeral=True)
