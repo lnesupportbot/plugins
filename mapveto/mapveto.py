@@ -233,7 +233,7 @@ class MapVetoCog(commands.Cog):
     @commands.command(name='setup_buttons')
     @commands.has_permissions(administrator=True)
     async def setup_buttons(self, ctx):
-        self.setupbutton_config.refresh_setup_button_message_id()
+        self.setupbutton_config.load_setup_button_message_id()
         await self.setupbutton_config.update_setup_button_message(ctx.channel)
 
     @commands.Cog.listener()
