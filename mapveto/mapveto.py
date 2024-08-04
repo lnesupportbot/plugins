@@ -139,6 +139,7 @@ class MapVetoCog(commands.Cog):
         self.teams = TeamManager(bot)
         self.setupbutton_config = SetupButtonConfig(bot)  # Pass the bot instance
         self.current_veto = None
+        self.bot: ModmailBot = bot
 
     def set_veto_params(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel):
         self.current_veto = MapVeto(name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel, self.bot)
