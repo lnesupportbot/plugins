@@ -432,8 +432,8 @@ class TeamSelect(Select):
             embed = discord.Embed(
                 title="Sélection de l'équipe qui commence le MapVeto",
                 description=(
-                    "Sélectionner dans la liste ci-dessous l'équipe commencera le MapVeto :\n\n"
-                    "*Si un problème devait survenir et que le MapVeto s'arrête, vous pouvez le relancer à tout moment avec la commande :*\n\n"
+                    "\n__Sélectionner dans la liste ci-dessous l'équipe commencera le MapVeto :__\n\n"
+                    "*Si un problème devait survenir et que le MapVeto s'arrête, vous pouvez le relancer à tout moment avec la commande :*\n"
                     f"- `?start_mapveto {self.template_name} {team_a_id} {team_a_name} {team_b_id} {team_b_name}`\n*(Si l'équipe **{team_a_name}** doit démarrer le veto)*\n\n"
                     f"- `?start_mapveto {self.template_name} {team_b_id} {team_b_name} {team_a_id} {team_a_name}`\n*(Si l'équipe **{team_b_name}** doit démarrer le veto)*\n"
                 ),
