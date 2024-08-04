@@ -119,7 +119,6 @@ class SetupView(View):
         await self.template_veto.update_setup_message(interaction.channel)
         await interaction.response.send_message("Template Veto setup invoked.", ephemeral=True)
 
-
     @discord.ui.button(label="Gestion des tournois", custom_id="tournament_setup", style=discord.ButtonStyle.green)
     async def tournament_setup_button(self, interaction: discord.Interaction, button: Button):
         tournament_message_config.refresh_setup_message_id()
@@ -130,6 +129,16 @@ class SetupView(View):
         team_message_config = TeamManager(self.bot)  # Use self.bot to initialize
         team_message_config.refresh_setup_message_id()
         await self.teams.update_setup_message(interaction.channel)
+
+    async def refresh(self, channel_id, message_id):
+        channel = self.bot.get_channel(channel_id)
+        if channel is None:
+            return
+        try:
+            message = await channel.fetch_message(message_id)
+            await message.edit(view=self)
+        except discord.NotFound:
+            print("Message not found.")
 
 class MapVetoCog(commands.Cog):
     def __init__(self, bot: ModmailBot):
@@ -239,10 +248,9 @@ class MapVetoCog(commands.Cog):
     async def on_ready(self):
         """Rafraîchit automatiquement le message de configuration lors du démarrage du bot."""
         await self.bot.wait_until_ready()
-        if self.setupbutton_config.setup_channel_id:
-            setup_channel = self.bot.get_channel(self.setupbutton_config.setup_channel_id)
-            if setup_channel is not None:
-                await self.setupbutton_config.update_setup_message(setup_channel)
+        if self.setupbutton_config.setup_channel_id and self.setupbutton_config.setup_message_id:
+            setup_view = SetupView(self.bot)
+            await setup_view.refresh(self.setupbutton_config.setup_channel_id, self.setupbutton_config.setup_message_id)
         print("Bot is ready, views are registered.")
 
 async def setup(bot: ModmailBot) -> None:
