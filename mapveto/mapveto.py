@@ -27,7 +27,7 @@ tournaments = tournament_config.load_tournaments()
 team_config = TeamConfig()
 teams = team_config.load_teams()
 
-veto_start_config = VetoManager(bot)
+veto_start_config = VetoManager()
 veto_start = veto_start_config.load_veto_setup_message_id()
 
 
