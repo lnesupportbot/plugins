@@ -132,7 +132,7 @@ class SetupView(View):
         await self.teams.update_setup_message(interaction.channel)
 
 class MapVetoCog(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: ModmailBot):
         self.bot = bot
         self.template_veto = TemplateManager()
         self.tournament = TournamentManager()
