@@ -67,30 +67,30 @@ class SetupButtonConfig:
         """Refresh the setup button message id from the file."""
         self.load_setup_button_message_id()
 
-    async def update_button_setup_message(self, channel):
+    async def update_setup_button_message(self, channel):
         self.refresh_setup_button_message_id()
         if self.setup_button_message_id:
             try:
                 message = await channel.fetch_message(self.setup_button_message_id)
-                await message.edit(embed=self.create_button_setup_embed(), view=self.create_button_setup_view())
+                await message.edit(embed=self.create_setup_button_embed(), view=self.create_setup_button_view())
             except discord.NotFound:
-                await self.send_button_setup_message(channel)
+                await self.send_setup_button_message(channel)
         else:
-            await self.send_button_setup_message(channel)
+            await self.send_setup_button_message(channel)
 
-    def create_button_setup_embed(self):
+    def create_setup_button_embed(self):
         return discord.Embed(
             title="Configuration des Événements",
             description="Utilisez les boutons ci-dessous pour configurer les différents éléments.",
             color=discord.Color.blue()
         )
 
-    def create_button_setup_view(self):
+    def create_setup_button_view(self):
         return SetupView(self.bot)
 
-    async def send_button_setup_message(self, channel):
-        embed = self.create_button_setup_embed()
-        view = self.create_button_setup_embed()
+    async def send_setup_button_message(self, channel):
+        embed = self.create_setup_button_embed()
+        view = self.create_setup_button_view()
         message = await channel.send(embed=embed, view=view)
         self.setup_message_id = message.id
         self.setup_channel_id = channel.id
@@ -234,7 +234,7 @@ class MapVetoCog(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def setup_buttons(self, ctx):
         self.setupbutton_config.load_setup_button_message_id()
-        await self.setupbutton_config.update_button_setup_message(ctx.channel)
+        await self.setupbutton_config.update_setup_button_message(ctx.channel)
 
     @commands.Cog.listener()
     async def on_ready(self):
