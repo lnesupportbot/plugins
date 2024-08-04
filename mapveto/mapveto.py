@@ -74,9 +74,9 @@ class SetupButtonConfig:
                 message = await channel.fetch_message(self.setup_button_message_id)
                 await message.edit(embed=self.create_button_setup_embed(), view=self.create_button_setup_view())
             except discord.NotFound:
-                await self.send_setup_message(channel)
+                await self.send_button_setup_message(channel)
         else:
-            await self.send_setup_message(channel)
+            await self.send_button_setup_message(channel)
 
     def create_button_setup_embed(self):
         return discord.Embed(
