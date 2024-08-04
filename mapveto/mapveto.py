@@ -105,6 +105,8 @@ class SetupView(View):
     async def mapveto_setup_button(self, interaction: discord.Interaction, button: Button):
         template_message_config.refresh_setup_message_id()
         await self.template_veto.update_setup_message(interaction.channel)
+        await interaction.response.send_message("Template Veto setup invoked.", ephemeral=True)
+
 
     @discord.ui.button(label="Gestion des tournois", custom_id="tournament_setup", style=discord.ButtonStyle.green)
     async def tournament_setup_button(self, interaction: discord.Interaction, button: Button):
@@ -222,11 +224,13 @@ class MapVetoCog(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
+        """Rafraîchit automatiquement le message de configuration lors du démarrage du bot."""
         await self.bot.wait_until_ready()
         if self.setupbutton_config.setup_channel_id:
             setup_channel = self.bot.get_channel(self.setupbutton_config.setup_channel_id)
             if setup_channel is not None:
                 await self.setupbutton_config.update_setup_message(setup_channel)
+        print("Bot is ready, views are registered.")
 
 async def setup(bot):
     await bot.add_cog(MapVetoCog(bot))
