@@ -19,6 +19,7 @@ tournament_config = TournamentConfig()
 tournaments = tournament_config.load_tournaments()
 team_config = TeamConfig()
 teams = team_config.load_teams()
+modmail = Modmail()
 
 class MapVeto:
     def __init__(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel, bot):
@@ -577,7 +578,7 @@ class CloseMapVetoButton(Button):
 
         # Fermer le ticket de manière silencieuse
         # Assurez-vous que le bot a la permission de supprimer le channel
-        await Modmail.close(        
+        await modmail.close(        
             self,
             option = "silent",
             UserFriendlyTime = None
