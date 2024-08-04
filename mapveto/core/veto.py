@@ -434,8 +434,8 @@ class TeamSelect(Select):
                 description=(
                     "Sélectionner dans la liste ci-dessous l'équipe commencera le MapVeto :\n\n"
                     "(Si un problème devait survenir et que le MapVeto s'arrête, vous pouvez le relancer à tout moment avec la commande\n"
-                    f"`?start_mapveto {self.template_name} {team_a_name} {team_a_id} {team_b_name} {team_b_id}` (Si l'équipe **{team_a_name}** doit démarrer le veto)\n"
-                    f"`?start_mapveto {self.template_name} {team_b_name} {team_b_id} {team_a_name} {team_a_id}` (Si l'équipe **{team_b_name}** doit démarrer le veto)"
+                    f"`?start_mapveto {self.template_name} {team_a_id} {team_a_name} {team_b_id} {team_b_name}` (Si l'équipe **{team_a_name}** doit démarrer le veto)\n"
+                    f"`?start_mapveto {self.template_name} {team_b_id} {team_b_name} {team_a_id} {team_a_name}` (Si l'équipe **{team_b_name}** doit démarrer le veto)"
                 ),
                 color=discord.Color.blue()
             )
