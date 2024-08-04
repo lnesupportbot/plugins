@@ -31,7 +31,8 @@ class SetupButtonConfig:
     def __init__(self, bot, filename="message_id.json"):
         self.bot = bot  # Store the bot instance
         self.filename = os.path.join(os.path.dirname(__file__), '.', filename)
-        self.load_setup_button_message_id()
+        self.setup_channel_id = self.load_setup_button_message_id()
+        self.setup_button_message_id = self.load_setup_button_message_id()
 
     # Charger l'ID du message depuis le fichier, s'il existe
     def load_setup_button_message_id(self):
