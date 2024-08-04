@@ -570,8 +570,8 @@ class CloseMapVetoButton(Button):
         team_b_user = self.bot.get_user(self.team_b_id)
         
         if team_a_user and team_b_user:
-            await team_a_user.send(f"{team_a_user.mention}, êtes-vous prêt pour lancer le MapVeto ?")
-            await team_b_user.send(f"{team_b_user.mention}, êtes-vous prêt pour lancer le MapVeto ?")
+            await team_a_user.send(f"{team_a_user.mention}, le MapVeto est fini. Bonne chance pour votre match! Ce ticket va être fermé. Si vous avez des questions, merci de nous contacter en passant par #teddy.")
+            await team_b_user.send(f"{team_b_user.mention}, le MapVeto est fini. Bonne chance pour votre match! Ce ticket va être fermé. Si vous avez des questions, merci de nous contacter en passant par #teddy")
             await interaction.response.send_message("Les capitaines ont été notifiés de la fermeture du ticket de MapVeto.", ephemeral=True)
         else:
             await interaction.response.send_message("Un ou les deux capitaines ne sont pas trouvés.", ephemeral=True)
