@@ -123,7 +123,7 @@ class SetupView(View):
         await self.teams.update_setup_message(interaction.channel)
     
     @discord.ui.button(label="Lancer un MapVeto", custom_id="mapveto_button", style=discord.ButtonStyle.primary)
-    async def team_setup_button(self, interaction: discord.Interaction, button: Button):
+    async def veto_setup_button(self, interaction: discord.Interaction, button: Button):
         veto_start_manager = VetoManager(self.bot)  # Use self.bot to initialize
         veto_start_manager.refresh_veto_setup_message_id()
         await self.veto_start_manager.update_veto_setup_message(interaction.channel)
