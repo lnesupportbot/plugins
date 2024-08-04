@@ -27,7 +27,7 @@ tournaments = tournament_config.load_tournaments()
 team_config = TeamConfig()
 teams = team_config.load_teams()
 
-veto_start_config = VetoManager()
+veto_start_config = VetoManager(bot)
 veto_start = veto_start_config.load_veto_setup_message_id()
 
 
@@ -141,7 +141,7 @@ class MapVetoCog(commands.Cog):
         self.template_veto = TemplateManager()
         self.tournament = TournamentManager()
         self.teams = TeamManager(bot)
-        self.veto_start = VetoManager()
+        self.veto_start = VetoManager(bot)
         self.setupbutton_config = SetupButtonConfig(bot)  # Pass the bot instance
         self.current_veto = None
 
