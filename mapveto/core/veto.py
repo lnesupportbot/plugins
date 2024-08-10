@@ -590,7 +590,7 @@ class CloseMapVetoButton(Button):
         # Ensure modmail cog exists
         if modmail_cog:
             await modmail_cog.close(
-                ctx,  # Use the converted context
+                ctx=ctx,  # Use the converted context
                 option="silent"
             )
         else:
