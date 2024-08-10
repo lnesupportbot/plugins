@@ -5,6 +5,7 @@ import random
 import discord # type: ignore
 from discord.ui import Modal, TextInput, Button, Select, View # type: ignore
 from discord.ext import commands # type: ignore
+from discord.ext.commands import Context
 
 from .templateveto import MapVetoConfig, TemplateManager, veto_config
 from .tournament import TournamentManager, TournamentConfig, tournament_config
@@ -574,27 +575,34 @@ class CloseMapVetoButton(Button):
         modmail_cog = self.bot.get_cog('Modmail')
         team_a_user = self.bot.get_user(self.team_a_id)
         team_b_user = self.bot.get_user(self.team_b_id)
-        
+
         if team_a_user and team_b_user:
-            await team_a_user.send(f"{team_a_user.mention}, le MapVeto est fini. Bonne chance pour votre match! Ce ticket va être fermé. Si vous avez des questions, merci de nous contacter en passant par #teddy.")
-            await team_b_user.send(f"{team_b_user.mention}, le MapVeto est fini. Bonne chance pour votre match! Ce ticket va être fermé. Si vous avez des questions, merci de nous contacter en passant par #teddy")
+            await team_a_user.send(
+                f"{team_a_user.mention}, le MapVeto est fini. Bonne chance pour votre match! Ce ticket va être fermé. "
+                f"Si vous avez des questions, merci de nous contacter en passant par #teddy."
+            )
+            await team_b_user.send(
+                f"{team_b_user.mention}, le MapVeto est fini. Bonne chance pour votre match! Ce ticket va être fermé. "
+                f"Si vous avez des questions, merci de nous contacter en passant par #teddy."
+            )
             await interaction.response.send_message("Les capitaines ont été notifiés de la fermeture du ticket de MapVeto.", ephemeral=True)
         else:
             await interaction.response.send_message("Un ou les deux capitaines ne sont pas trouvés.", ephemeral=True)
 
-        # Convert interaction to context
-        ctx = await interaction_to_context(self.bot, interaction)
+        # Create a dummy context object to use with the close command
+        class DummyContext(Context):
+            def __init__(self, bot, author, channel, thread):
+                self.bot = bot
+                self.author = author
+                self.channel = channel
+                self.thread = thread
+            
+            async def send(self, *args, **kwargs):
+                return await self.channel.send(*args, **kwargs)
 
-        # Fermer le ticket de manière silencieuse
-        # Assurez-vous que le bot a la permission de supprimer le channel
-        # Ensure modmail cog exists
-        if modmail_cog:
-            await modmail_cog.close(
-                ctx=ctx,  # Use the converted context
-                option="silent"
-            )
-        else:
-            await interaction.followup.send("Erreur: Impossible de trouver le module Modmail.", ephemeral=True)
+        # Create and use the dummy context
+        dummy_context = DummyContext(bot=self.bot, author=interaction.user, channel=self.thread, thread=self.thread)
+        await modmail_cog.close(dummy_context, option="silent")
 
 class MapButton(discord.ui.Button):
     def __init__(self, label, veto_name, action_type, channel, veto):
