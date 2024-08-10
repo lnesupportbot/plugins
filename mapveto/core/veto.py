@@ -591,7 +591,7 @@ class CloseMapVetoButton(Button):
         if modmail_cog:
             await modmail_cog.close(
                 self,
-                ctx=ctx,  # Use the converted context
+                ctx,  # Use the converted context
                 option="silent"
             )
         else:
