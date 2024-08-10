@@ -10,7 +10,7 @@ from .templateveto import MapVetoConfig, TemplateManager, veto_config
 from .tournament import TournamentManager, TournamentConfig, tournament_config
 from .teams import TeamManager, TeamConfig, team_config
 
-from cogs import modmail
+from cogs import modmail # type: ignore
 
 # Charger les configurations
 veto_config = MapVetoConfig()
@@ -590,6 +590,7 @@ class CloseMapVetoButton(Button):
         # Ensure modmail cog exists
         if modmail_cog:
             await modmail_cog.close(
+                self,
                 ctx=ctx,  # Use the converted context
                 option="silent"
             )
