@@ -568,7 +568,7 @@ class CoinFlipMessage(Button):
             await interaction.response.send_message("Un ou les deux capitaines ne sont pas trouvés.", ephemeral=True)
 
 class VetoRdyMessage(Button):
-    def __init__(self, team_a_id, team_b_id, bot):
+    def __init__(self, team_a_name, team_b_name, team_a_id, team_b_id, bot):
         super().__init__(label="Prêt pour le MapVeto?", style=discord.ButtonStyle.grey, custom_id="rdy_mapveto")
         self.team_a_id = team_a_id
         self.team_b_id = team_b_id
