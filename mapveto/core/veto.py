@@ -624,15 +624,27 @@ class CloseMapVetoButton(Button):
         team_b_user = self.bot.get_user(self.team_b_id)
 
         if team_a_user and team_b_user:
-            await team_a_user.send(
-                f"{team_a_user.mention}, le MapVeto est fini. Bonne chance pour votre match! Ce ticket va être fermé. "
-                f"Si vous avez des questions, merci de nous contacter en passant par #teddy."
-            )
-            await team_b_user.send(
-                f"{team_b_user.mention}, le MapVeto est fini. Bonne chance pour votre match! Ce ticket va être fermé. "
-                f"Si vous avez des questions, merci de nous contacter en passant par #teddy."
-            )
-            await interaction.response.send_message("Les capitaines ont été notifiés de la fermeture du ticket de MapVeto.")
+            # Find the existing thread for one of the team captains
+            thread = await self.bot.threads.find(recipient=team_a_user)
+
+            if thread:
+                # Prepare messages for both team captains
+                msg_content = f"Le MapVeto est fini. Bonne chance pour votre match!"
+                f"\n\nCe ticket va être fermé. Si vous avez des questions, merci de nous contacter en passant par #teddy."
+
+                # Create dummy messages to use for replies
+                dummy_message = DummyMessage(interaction.message)
+                dummy_message.author = self.bot.modmail_guild.me  # Assuming the bot user is used as author
+                dummy_message.content = msg_content
+
+                # Clear residual attributes
+                dummy_message.attachments = []
+                dummy_message.components = []
+                dummy_message.embeds = []
+                dummy_message.stickers = []
+
+                # Use the thread's reply method to send the messages
+                await thread.reply(dummy_message, anonymous=True, plain=True)
         else:
             await interaction.response.send_message("Un ou les deux capitaines ne sont pas trouvés.", ephemeral=True)
 
