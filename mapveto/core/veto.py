@@ -724,7 +724,7 @@ class MapButton(discord.ui.Button):
 
             await thread.reply(dummy_message, anonymous=True, plain=True)
 
-        veto.next_turn()
+        await veto.next_turn()
         if veto.current_turn is not None:
             if len(veto.maps) == 1:
                 last_map = veto.maps[0]
