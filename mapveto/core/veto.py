@@ -679,7 +679,7 @@ class MapButton(discord.ui.Button):
 
     async def callback(self, interaction: discord.Interaction):
         veto = self.veto  # Use the passed veto object
-        team_a_user = self.bot.get_user(self.team_a_id)
+        team_a_user = self.bot.get_user(veto.team_a_id)
         thread = await self.bot.threads.find(recipient=team_a_user)
         if not veto:
             await interaction.response.send_message("Veto non trouvé.", ephemeral=True)
