@@ -204,16 +204,7 @@ class MapVeto:
     
             # Envoyer le résumé dans le canal où la commande a été lancée
             if self.channel:
-                self.bot.loop.create_task(self.channel.send(embed=embed))
-    
-            # Envoyer le résumé aux participants en DM
-            for participant_id in self.participants:
-                participant = self.bot.get_user(participant_id)
-                if participant:
-                    try:
-                        self.bot.loop.create_task(participant.send(embed=embed))
-                    except discord.Forbidden:
-                        print(f"Cannot DM user {participant_id}")
+                self.bot.loop.create_task(self.channel.reply(embed=embed))
 
 class VetoManager:
     def __init__(self, bot, filename="message_id.json"):
@@ -717,27 +708,24 @@ class MapButton(discord.ui.Button):
 
             await thread.reply(dummy_message, anonymous=True, plain=True)
 
-        opponent_user = interaction.client.get_user(veto.team_b_id if interaction.user.id == veto.team_a_id else veto.team_a_id)
-
         veto.next_turn()
         if veto.current_turn is not None:
-            await veto.send_ticket_message(self.channel)  # Correct method call
-        else:
             if len(veto.maps) == 1:
                 last_map = veto.maps[0]
                 veto.pick_map(last_map, "DECIDER")
                 message = f"**Map {last_map} choisie par DECIDER.**"
                 dummy_message.content = message
                 await thread.reply(dummy_message, anonymous=True, plain=True)
+            else:
+                await veto.send_ticket_message(self.channel)  # Correct method call
+        else:
+            last_side_chooser = f"{interaction.user.mention} ({team_name})"
+            message = f"*Side Attaque choisi par {last_side_chooser}*"
+            dummy_message.content = message
+            await thread.reply(dummy_message, anonymous=True, plain=True)
 
-                last_side_chooser = f"{interaction.user.mention} ({team_name})"
-                message = f"*Side Attaque choisi par {last_side_chooser}*"
-                dummy_message.content = message
-                await thread.reply(dummy_message, anonymous=True, plain=True)
-
-            await self.channel.send("Le veto est terminé!")
-            embed = veto.create_summary_embed()
-            await self.channel.send(embed=embed)
+            #embed = veto.create_summary_embed()
+            #await self.channel.send(embed=embed)
 
         # Disable the button and update the message
         view = discord.ui.View()
