@@ -54,11 +54,11 @@ class MapVeto:
 
         components = []
         if action == "Side":
-            components.append(MapButton(label="Attaque", veto_name=self.name, action_type="side", channel=channel, veto=self))
-            components.append(MapButton(label="Défense", veto_name=self.name, action_type="side", channel=channel, veto=self))
+            components.append(MapButton(self.bot, label="Attaque", veto_name=self.name, action_type="side", channel=channel, veto=self))
+            components.append(MapButton(self.bot, label="Défense", veto_name=self.name, action_type="side", channel=channel, veto=self))
         else:
             for map_name in self.listmaps:
-                button = MapButton(label=map_name, veto_name=self.name, action_type=action.lower(), channel=channel, veto=self)
+                button = MapButton(self.bot, label=map_name, veto_name=self.name, action_type=action.lower(), channel=channel, veto=self)
                 if map_name in self.banned_maps or map_name in self.picked_maps_only:
                     button.disabled = True
                 components.append(button)
@@ -666,7 +666,7 @@ class CloseMapVetoButton(Button):
         await modmail_cog.close(dummy_context, option="silent")
 
 class MapButton(discord.ui.Button):
-    def __init__(self, label, veto_name, action_type, channel, veto, bot):
+    def __init__(self, bot, label, veto_name, action_type, channel, veto):
         super().__init__(label=label, style=discord.ButtonStyle.primary, custom_id=f"{veto_name}_{label}_{action_type}")
         self.veto_name = veto_name
         self.action_type = action_type
@@ -676,7 +676,6 @@ class MapButton(discord.ui.Button):
         self.paused = False
         self.stopped = False
         self.bot = bot
-        self.team_a_user
 
     async def callback(self, interaction: discord.Interaction):
         veto = self.veto  # Use the passed veto object
