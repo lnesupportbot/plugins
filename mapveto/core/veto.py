@@ -194,17 +194,33 @@ class MapVeto:
         self.stopped = True
         self.paused = False
     
-    def end_veto(self):
+    async def end_veto(self):
         if not self.stopped:
             self.stopped = True
             self.paused = False
     
             # Créer l'embed de résumé
             embed = self.create_summary_embed()
-    
-            # Envoyer le résumé dans le canal où la commande a été lancée
-            if self.channel:
-                self.bot.loop.create_task(self.channel.reply(embed=embed))
+
+            thread = await self.bot.threads.find(recipient=veto.team_a_user)
+
+            if thread:
+                # Prepare messages for both team captains
+                msg_content = embed
+
+                # Create dummy messages to use for replies
+                dummy_message = DummyMessage()
+                dummy_message.author = self.bot.modmail_guild.me  # Assuming the bot user is used as author
+                dummy_message.content = msg_content
+
+                # Clear residual attributes
+                dummy_message.attachments = []
+                dummy_message.components = []
+                dummy_message.embeds = []
+                dummy_message.stickers = []
+
+                # Use the thread's reply method to send the messages
+                await thread.reply(dummy_message, anonymous=True, plain=True)
 
 class VetoManager:
     def __init__(self, bot, filename="message_id.json"):
