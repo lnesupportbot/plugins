@@ -553,7 +553,7 @@ class VetoRdyMessage(Button):
 
             if thread:
                 # Prepare messages for both team captains
-                msg_content_a = f"{team_a_user.mention} {team_b_user.mention}, êtes-vous prêt pour lancer le MapVeto ?"
+                msg_content = f"{team_a_user.mention} {team_b_user.mention}, êtes-vous prêt pour lancer le MapVeto ?"
 
                 # Create dummy messages to use for replies
                 dummy_message = DummyMessage(interaction.message)
