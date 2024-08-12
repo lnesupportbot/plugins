@@ -216,7 +216,7 @@ class MapVeto:
             dummy_message.embeds = [embed]  # Ajouter l'embed ici
 
             # Utiliser la méthode reply du thread
-            await thread.reply(content=dummy_message.content, embeds=dummy_message.embeds, anonymous=True, plain=True)
+            await thread.reply(dummy_message, anonymous=True, plain=True)
 
 class VetoManager:
     def __init__(self, bot, filename="message_id.json"):
