@@ -535,6 +535,8 @@ class CoinFlipButton(Button):
 class CoinFlipMessage(Button):
     def __init__(self, team_a_name, team_b_name, team_a_id, team_b_id, bot):
         super().__init__(label="Prêt pour le CoinFlip?", style=discord.ButtonStyle.grey, custom_id="rdy_coinflip")
+        self.team_a_name = team_a_name
+        self.team_b_name = team_b_name
         self.team_a_id = team_a_id
         self.team_b_id = team_b_id
         self.bot = bot
@@ -570,6 +572,8 @@ class CoinFlipMessage(Button):
 class VetoRdyMessage(Button):
     def __init__(self, team_a_name, team_b_name, team_a_id, team_b_id, bot):
         super().__init__(label="Prêt pour le MapVeto?", style=discord.ButtonStyle.grey, custom_id="rdy_mapveto")
+        self.team_a_name = team_a_name
+        self.team_b_name = team_b_name
         self.team_a_id = team_a_id
         self.team_b_id = team_b_id
         self.bot = bot
@@ -662,7 +666,7 @@ class CloseMapVetoButton(Button):
         await modmail_cog.close(dummy_context, option="silent")
 
 class MapButton(discord.ui.Button):
-    def __init__(self, label, veto_name, action_type, channel, veto):
+    def __init__(self, label, veto_name, action_type, channel, veto, bot):
         super().__init__(label=label, style=discord.ButtonStyle.primary, custom_id=f"{veto_name}_{label}_{action_type}")
         self.veto_name = veto_name
         self.action_type = action_type
@@ -671,6 +675,7 @@ class MapButton(discord.ui.Button):
         self.current_action = 0
         self.paused = False
         self.stopped = False
+        self.bot = bot
 
     async def callback(self, interaction: discord.Interaction):
         veto = self.veto  # Use the passed veto object
