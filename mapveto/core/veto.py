@@ -491,7 +491,6 @@ class SelectTeamForMapVeto(Select):
         veto = MapVeto(self.template_name, maps, starting_team_id, starting_team, other_team_id, other_team, rules, ticket_channel, self.bot)
         vetos[self.template_name] = veto
 
-        await interaction.response.send_message(f"Le Map Veto commence avec {starting_team} contre {other_team}.", ephemeral=True)
         await veto.send_ticket_message(ticket_channel)
 
 class CoinFlipButton(Button):
