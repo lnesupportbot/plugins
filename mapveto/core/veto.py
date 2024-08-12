@@ -446,9 +446,9 @@ class TeamSelect(Select):
 
             select = SelectTeamForMapVeto(team_a_name, team_b_name, self.template_name, self.bot)
             view = View(timeout = None)
-            view.add_item(CoinFlipMessage(team_a_id, team_b_id, self.bot))
+            view.add_item(CoinFlipMessage(team_a_name, team_b_nameteam_a_id, team_b_id, self.bot))
             view.add_item(CoinFlipButton(team_a_name, team_b_name, team_a_id, team_b_id, self.bot))
-            view.add_item(VetoRdyMessage(team_a_id, team_b_id, self.bot))
+            view.add_item(VetoRdyMessage(team_a_name, team_b_nameteam_a_id, team_b_id, self.bot))
             view.add_item(select)
             view.add_item(CloseMapVetoButton(team_a_id, team_b_id, thread, self.bot))
             await ticket_channel.send(embed=embed, view=view)
@@ -514,7 +514,7 @@ class CoinFlipButton(Button):
 
             if thread:
                 # Prepare messages for both team captains
-                msg_content = f"Le CoinFlip a donné l'équipe **{result}** comme gagnant !"
+                msg_content = f"L'équipe **{result}** remporte le CoinFlip !"
 
                 # Create dummy messages to use for replies
                 dummy_message = DummyMessage(interaction.message)
@@ -533,7 +533,7 @@ class CoinFlipButton(Button):
             await interaction.followup.send("Un ou les deux capitaines ne sont pas trouvés pour envoyer le résultat.", ephemeral=True)
 
 class CoinFlipMessage(Button):
-    def __init__(self, team_a_id, team_b_id, bot):
+    def __init__(self, team_a_name, team_b_name, team_a_id, team_b_id, bot):
         super().__init__(label="Prêt pour le CoinFlip?", style=discord.ButtonStyle.grey, custom_id="rdy_coinflip")
         self.team_a_id = team_a_id
         self.team_b_id = team_b_id
@@ -549,7 +549,7 @@ class CoinFlipMessage(Button):
 
             if thread:
                 # Prepare messages for both team captains
-                msg_content = f"@everyone, êtes-vous prêt pour lancer le CoinFlip ?"
+                msg_content = f"{team_a_name} et {team_b_name}, êtes-vous prêt pour lancer le CoinFlip ?"
 
                 # Create dummy messages to use for replies
                 dummy_message = DummyMessage(interaction.message)
@@ -585,7 +585,7 @@ class VetoRdyMessage(Button):
 
             if thread:
                 # Prepare messages for both team captains
-                msg_content = f"{team_a_user.mention} {team_b_user.mention}, êtes-vous prêt pour lancer le MapVeto ?"
+                msg_content = f"{team_a_name} et {team_b_name}, êtes-vous prêt pour lancer le MapVeto ?"
 
                 # Create dummy messages to use for replies
                 dummy_message = DummyMessage(interaction.message)
@@ -741,4 +741,3 @@ class MapButton(discord.ui.Button):
                 item.disabled = True
                 view.add_item(item)
         await interaction.message.edit(view=view)
-
