@@ -83,8 +83,9 @@ class MapVeto:
         except discord.Forbidden:
             print(f"Cannot DM user {current_user.id}")
 
-    def create_summary_embed(self):
-        message = "__**Résumé du Veto**__"
+    def create_summary_message(self):
+        # Initialize the message with a title
+        message = "__**Résumé du Veto**__\n\n"
 
         # Maps choisies
         picked_maps_str = []
@@ -115,7 +116,7 @@ class MapVeto:
             last_map = self.maps[0]
             picked_maps_str.append(f"**{last_map}** choisi par DECIDER / Side Attaque choisi par {last_side_chooser}")
 
-        # Ajouter les maps et side choisis
+        # Append the chosen maps information
         if picked_maps_str:
             message += "__**Maps choisies**__\n" + "\n".join(picked_maps_str) + "\n\n"
         else:
