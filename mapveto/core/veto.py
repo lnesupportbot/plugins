@@ -558,11 +558,11 @@ class VetoRdyMessage(Button):
 
                 # Create dummy messages to use for replies
                 dummy_message_a = DummyMessage(interaction.message)
-                dummy_message_a.author = self.bot.user  # Assuming the bot user is used as author
+                dummy_message_a.author = self.bot.modmail_guild.me  # Assuming the bot user is used as author
                 dummy_message_a.content = msg_content_a
 
                 dummy_message_b = DummyMessage(interaction.message)
-                dummy_message_b.author = self.bot.user  # Assuming the bot user is used as author
+                dummy_message_b.author = self.bot.modmail_guild.me  # Assuming the bot user is used as author
                 dummy_message_b.content = msg_content_b
 
                 # Clear residual attributes
