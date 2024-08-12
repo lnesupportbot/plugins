@@ -696,13 +696,13 @@ class MapButton(discord.ui.Button):
         team_name = veto.team_a_name if interaction.user.id == veto.team_a_id else veto.team_b_name
         if self.action_type == "ban":
             veto.ban_map(self.label)
-            message = f"Map {self.label} bannie par {interaction.user.mention} ({team_name})."
+            message = f"Map {self.label} bannie par {interaction.user.display_name}({team_name})."
         elif self.action_type == "pick":
             veto.pick_map(self.label, f"{interaction.user.mention} ({team_name})")
-            message = f"**Map {self.label} choisie par {interaction.user.mention} ({team_name}).**"
+            message = f"**Map {self.label} choisie par {interaction.user.display_name}({team_name}).**"
         elif self.action_type == "side":
             veto.pick_side(self.label, f"{interaction.user.mention} ({team_name})")
-            message = f"*Side {self.label} choisi par {interaction.user.mention} ({team_name}).*"
+            message = f"*Side {self.label} choisi par {interaction.user.display_name}({team_name}).*"
 
         if thread:
             # Use thread.reply to send messages to the thread
@@ -718,8 +718,6 @@ class MapButton(discord.ui.Button):
             await thread.reply(dummy_message, anonymous=True, plain=True)
 
         opponent_user = interaction.client.get_user(veto.team_b_id if interaction.user.id == veto.team_a_id else veto.team_a_id)
-        if opponent_user:
-            await opponent_user.send(message)
 
         veto.next_turn()
         if veto.current_turn is not None:
