@@ -214,12 +214,6 @@ class MapVeto:
                 dummy_message.author = self.bot.modmail_guild.me  # Assuming the bot user is used as author
                 dummy_message.content = msg_content
 
-                # Clear residual attributes
-                dummy_message.attachments = []
-                dummy_message.components = []
-                dummy_message.embeds = []
-                dummy_message.stickers = []
-
                 # Use the thread's reply method to send the messages
                 await thread.reply(dummy_message, anonymous=True, plain=True)
 
