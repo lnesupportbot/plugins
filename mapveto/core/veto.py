@@ -505,15 +505,31 @@ class CoinFlipButton(Button):
 
     async def callback(self, interaction: discord.Interaction):
         result = random.choice([self.team_a_name, self.team_b_name])
-        result_message = f"Le CoinFlip a donné l'équipe **{result}** comme gagnant !"
-        await interaction.response.send_message(result_message)
         
         team_a_user = self.bot.get_user(self.team_a_id)
         team_b_user = self.bot.get_user(self.team_b_id)
-        
+
         if team_a_user and team_b_user:
-            await team_a_user.send(result_message)
-            await team_b_user.send(result_message)
+            # Find the existing thread for one of the team captains
+            thread = await self.bot.threads.find(recipient=team_a_user)
+
+            if thread:
+                # Prepare messages for both team captains
+                msg_content = f"Le CoinFlip a donné l'équipe **{result}** comme gagnant !"
+
+                # Create dummy messages to use for replies
+                dummy_message = DummyMessage(interaction.message)
+                dummy_message.author = self.bot.modmail_guild.me  # Assuming the bot user is used as author
+                dummy_message.content = msg_content
+
+                # Clear residual attributes
+                dummy_message.attachments = []
+                dummy_message.components = []
+                dummy_message.embeds = []
+                dummy_message.stickers = []
+
+                # Use the thread's reply method to send the messages
+                await thread.reply(dummy_message, anonymous=True, plain=True)
         else:
             await interaction.followup.send("Un ou les deux capitaines ne sont pas trouvés pour envoyer le résultat.", ephemeral=True)
 
