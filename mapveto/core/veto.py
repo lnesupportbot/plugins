@@ -545,11 +545,28 @@ class VetoRdyMessage(Button):
     async def callback(self, interaction: discord.Interaction):
         team_a_user = self.bot.get_user(self.team_a_id)
         team_b_user = self.bot.get_user(self.team_b_id)
-        
+
         if team_a_user and team_b_user:
             await team_a_user.send(f"{team_a_user.mention}, êtes-vous prêt pour lancer le MapVeto ?")
             await team_b_user.send(f"{team_b_user.mention}, êtes-vous prêt pour lancer le MapVeto ?")
-            await interaction.response.send_message("Les capitaines ont été notifiés pour se préparer au MapVeto.")
+
+            # Create a dummy message similar to on_thread_ready
+            dummy_message = DummyMessage(interaction.message)
+            dummy_message.author = self.bot.user  # Assuming bot user is used as author
+            dummy_message.content = "Les capitaines ont été notifiés pour se préparer au MapVeto."
+
+            # Clear residual attributes
+            dummy_message.attachments = []
+            dummy_message.components = []
+            dummy_message.embeds = []
+            dummy_message.stickers = []
+
+            # Assuming you have access to the thread where you want to reply
+            thread = self.bot.get_thread(interaction.channel_id)  # Example of retrieving a thread
+            if thread:
+                await thread.reply(dummy_message)
+            else:
+                await interaction.response.send_message("Impossible de trouver le fil pour répondre.", ephemeral=True)
         else:
             await interaction.response.send_message("Un ou les deux capitaines ne sont pas trouvés.", ephemeral=True)
 
