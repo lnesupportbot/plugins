@@ -22,7 +22,7 @@ team_config = TeamConfig()
 teams = team_config.load_teams()
 
 class MapVeto:
-    def __init__(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel, bot, message):
+    def __init__(self, name, maps, team_a_id, team_a_name, team_b_id, team_b_name, rules, channel, bot):
         self.name = name
         self.maps = maps[:]
         self.listmaps = maps[:]
@@ -42,7 +42,6 @@ class MapVeto:
         self.participants = [team_a_id, team_b_id]
         self.bot = bot
         self.channel = channel
-        self.message = message
 
     async def send_ticket_message(self, channel):
         action = self.current_action_type()
@@ -210,19 +209,24 @@ class MapVeto:
                 # Prepare messages for both team captains
                 msg_content = embed
 
-                # Create dummy messages to use for replies
-                dummy_message = DummyMessage(self.message)
-                dummy_message.author = self.bot.modmail_guild.me  # Assuming the bot user is used as author
-                dummy_message.content = msg_content
+            # Créer un message fictif pour la réponse
+            dummy_message = DummyMessage(content=msg_content)
 
-                # Clear residual attributes
-                dummy_message.attachments = []
-                dummy_message.components = []
-                dummy_message.embeds = []
-                dummy_message.stickers = []
+            # Utiliser la méthode reply du thread
+            await thread.reply(content=dummy_message.content, embeds=dummy_message.embeds, anonymous=True, plain=True)
 
-                # Use the thread's reply method to send the messages
-                await thread.reply(dummy_message, anonymous=True, plain=True)
+class DummyMessage:
+    def __init__(self, content=None):
+        self.content = content
+        self.author = None
+        self.attachments = []
+        self.components = []
+        self.embeds = []
+        self.stickers = []
+
+    async def reply(self, *args, **kwargs):
+        # Simule l'envoi d'un message de réponse
+        return await self.channel.send(content=self.content, embeds=self.embeds)
 
 class VetoManager:
     def __init__(self, bot, filename="message_id.json"):
