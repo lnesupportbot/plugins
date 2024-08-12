@@ -715,7 +715,7 @@ class MapButton(discord.ui.Button):
             dummy_message.embeds = []
             dummy_message.stickers = []
 
-            await self.thread.reply(dummy_message, anonymous=True, plain=True)
+            await thread.reply(dummy_message, anonymous=True, plain=True)
 
         opponent_user = interaction.client.get_user(veto.team_b_id if interaction.user.id == veto.team_a_id else veto.team_a_id)
         if opponent_user:
@@ -730,12 +730,12 @@ class MapButton(discord.ui.Button):
                 veto.pick_map(last_map, "DECIDER")
                 message = f"**Map {last_map} choisie par DECIDER.**"
                 dummy_message.content = message
-                await self.thread.reply(dummy_message, anonymous=True, plain=True)
+                await thread.reply(dummy_message, anonymous=True, plain=True)
 
                 last_side_chooser = f"{interaction.user.mention} ({team_name})"
                 message = f"*Side Attaque choisi par {last_side_chooser}*"
                 dummy_message.content = message
-                await self.thread.reply(dummy_message, anonymous=True, plain=True)
+                await thread.reply(dummy_message, anonymous=True, plain=True)
 
             await self.channel.send("Le veto est terminé!")
             embed = veto.create_summary_embed()
