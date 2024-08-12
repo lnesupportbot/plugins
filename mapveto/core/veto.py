@@ -134,7 +134,7 @@ class MapVeto:
     def get_current_turn(self):
         return self.current_turn
 
-    def next_turn(self):
+    async def next_turn(self):
         if self.stopped or self.paused:
             return
 
@@ -160,13 +160,13 @@ class MapVeto:
                 # If there are no more actions, stop the veto
                 if self.current_action >= len(self.rules):
                     print("No more rules, stopping the veto")
-                    self.end_veto()  # Call the method to end the veto
+                    await self.end_veto()  # Call the method to end the veto
                     return
 
         else:
             # No more actions, end the veto
             print("No more actions, stopping the veto")
-            self.end_veto()  # Call the method to end the veto
+            await self.end_veto()  # Call the method to end the veto
             return
         pass
 
