@@ -486,6 +486,7 @@ class SelectTeamForMapVeto(Select):
         super().__init__(placeholder="Choisir l'équipe qui commence...", min_values=1, max_values=1, options=options)
 
     async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()
         teams = team_config.load_teams()
         starting_team = self.values[0]
         other_team = self.team_b_name if starting_team == self.team_a_name else self.team_a_name
@@ -513,6 +514,8 @@ class CoinFlipButton(Button):
         self.bot = bot
 
     async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+
         result = random.choice([self.team_a_name, self.team_b_name])
         
         team_a_user = self.bot.get_user(self.team_a_id)
@@ -552,6 +555,8 @@ class CoinFlipMessage(Button):
         self.bot = bot
 
     async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        
         team_a_user = self.bot.get_user(self.team_a_id)
         team_b_user = self.bot.get_user(self.team_b_id)
         
@@ -589,6 +594,8 @@ class VetoRdyMessage(Button):
         self.bot = bot
 
     async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+
         # Retrieve users based on IDs
         team_a_user = self.bot.get_user(self.team_a_id)
         team_b_user = self.bot.get_user(self.team_b_id)
@@ -616,12 +623,6 @@ class VetoRdyMessage(Button):
                 await thread.reply(dummy_message, anonymous=True, plain=True)
         else:
             await interaction.response.send_message("Un ou les deux capitaines ne sont pas trouvés.", ephemeral=True)
-
-async def interaction_to_context(bot, interaction):
-    """Convert an interaction to a context object."""
-    ctx = await bot.get_context(interaction.message)
-    ctx.interaction = interaction
-    return ctx
 
 class CloseMapVetoButton(Button):
     def __init__(self, team_a_id, team_b_id, thread, bot):
