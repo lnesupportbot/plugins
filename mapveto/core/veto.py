@@ -662,19 +662,19 @@ class CloseMapVetoButton(Button):
         await modmail_cog.close(dummy_context, option="silent")
 
 class MapButton(discord.ui.Button):
-    def __init__(self, label, veto_name, action_type, channel, veto, thread):
+    def __init__(self, label, veto_name, action_type, channel, veto):
         super().__init__(label=label, style=discord.ButtonStyle.primary, custom_id=f"{veto_name}_{label}_{action_type}")
         self.veto_name = veto_name
         self.action_type = action_type
         self.channel = channel
         self.veto = veto  # Add the veto object reference
-        self.thread = thread  # Add a reference to the thread
         self.current_action = 0
         self.paused = False
         self.stopped = False
 
     async def callback(self, interaction: discord.Interaction):
         veto = self.veto  # Use the passed veto object
+        thread = await self.bot.threads.find(recipient=team_a_user)
         if not veto:
             await interaction.response.send_message("Veto non trouvé.", ephemeral=True)
             return
