@@ -717,7 +717,7 @@ class MapButton(discord.ui.Button):
                 dummy_message.content = message
                 await thread.reply(dummy_message, anonymous=True, plain=True)
 
-                await veto.send_ticket_message(self.channel)  # Correct method call
+            await veto.send_ticket_message(self.channel)  # Correct method call
         else:
             last_side_chooser = f"{interaction.user.mention} ({team_name})"
             message = f"*Side Attaque choisi par {last_side_chooser}*"
