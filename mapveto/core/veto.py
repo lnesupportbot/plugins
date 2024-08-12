@@ -736,8 +736,8 @@ class MapButton(discord.ui.Button):
             dummy_message.content = message
             await thread.reply(dummy_message, anonymous=True, plain=True)
 
-            #embed = veto.create_summary_embed()
-            #await self.channel.send(embed=embed)
+            embed = veto.create_summary_embed()
+            await self.channel.send(embed=embed)
 
         # Disable the button and update the message
         view = discord.ui.View()
