@@ -9,7 +9,7 @@ from discord.ext.commands import Context
 from .templateveto import MapVetoConfig, veto_config
 from .tournament import TournamentConfig, tournament_config
 from .teams import TeamConfig, team_config
-from core.models import DummyMessage, PermissionLevel
+from core.models import DummyMessage, PermissionLevel # type: ignore
 
 from cogs import modmail # type: ignore
 
@@ -529,9 +529,26 @@ class CoinFlipMessage(Button):
         team_b_user = self.bot.get_user(self.team_b_id)
         
         if team_a_user and team_b_user:
-            await team_a_user.send(f"{team_a_user.mention}, êtes-vous prêt pour lancer le CoinFlip ?")
-            await team_b_user.send(f"{team_b_user.mention}, êtes-vous prêt pour lancer le CoinFlip ?")
-            await interaction.response.send_message("Les capitaines ont été notifiés pour se préparer au CoinFlip.")
+            # Find the existing thread for one of the team captains
+            thread = await self.bot.threads.find(recipient=team_a_user)
+
+            if thread:
+                # Prepare messages for both team captains
+                msg_content = f"@everyone, êtes-vous prêt pour lancer le CoinFlip ?"
+
+                # Create dummy messages to use for replies
+                dummy_message = DummyMessage(interaction.message)
+                dummy_message.author = self.bot.modmail_guild.me  # Assuming the bot user is used as author
+                dummy_message.content = msg_content
+
+                # Clear residual attributes
+                dummy_message.attachments = []
+                dummy_message.components = []
+                dummy_message.embeds = []
+                dummy_message.stickers = []
+
+                # Use the thread's reply method to send the messages
+                await thread.reply(dummy_message, anonymous=True, plain=True)
         else:
             await interaction.response.send_message("Un ou les deux capitaines ne sont pas trouvés.", ephemeral=True)
 
