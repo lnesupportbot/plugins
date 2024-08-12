@@ -134,7 +134,7 @@ class MapVeto:
     def get_current_turn(self):
         return self.current_turn
 
-    async def next_turn(self, interaction=None):
+    async def next_turn(self, interaction: discord.Interaction):
         if self.stopped or self.paused:
             return
 
@@ -194,7 +194,7 @@ class MapVeto:
         self.stopped = True
         self.paused = False
     
-    async def end_veto(self,interaction=None):
+    async def end_veto(self, interaction: discord.Interaction):
         if not self.stopped:
             self.stopped = True
             self.paused = False
