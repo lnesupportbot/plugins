@@ -663,12 +663,13 @@ class CloseMapVetoButton(Button):
         await modmail_cog.close(dummy_context, option="silent")
 
 class MapButton(discord.ui.Button):
-    def __init__(self, label, veto_name, action_type, channel, veto):
+    def __init__(self, label, veto_name, action_type, channel, veto, thread):
         super().__init__(label=label, style=discord.ButtonStyle.primary, custom_id=f"{veto_name}_{label}_{action_type}")
         self.veto_name = veto_name
         self.action_type = action_type
         self.channel = channel
         self.veto = veto  # Add the veto object reference
+        self.thread = thread  # Add a reference to the thread
         self.current_action = 0
         self.paused = False
         self.stopped = False
@@ -698,8 +699,18 @@ class MapButton(discord.ui.Button):
             veto.pick_side(self.label, f"{interaction.user.mention} ({team_name})")
             message = f"*Side {self.label} choisi par {interaction.user.mention} ({team_name}).*"
 
-        await interaction.response.send_message(message)
-        await self.channel.send(message)
+        # Use thread.reply to send messages to the thread
+        dummy_message = DummyMessage(interaction.message)
+        dummy_message.author = self.bot.modmail_guild.me
+        dummy_message.content = message
+
+        dummy_message.attachments = []
+        dummy_message.components = []
+        dummy_message.embeds = []
+        dummy_message.stickers = []
+
+        await self.thread.reply(dummy_message, anonymous=True, plain=True)
+
         opponent_user = interaction.client.get_user(veto.team_b_id if interaction.user.id == veto.team_a_id else veto.team_a_id)
         if opponent_user:
             await opponent_user.send(message)
@@ -712,10 +723,14 @@ class MapButton(discord.ui.Button):
                 last_map = veto.maps[0]
                 veto.pick_map(last_map, "DECIDER")
                 message = f"**Map {last_map} choisie par DECIDER.**"
-                await self.channel.send(message)
+                dummy_message.content = message
+                await self.thread.reply(dummy_message, anonymous=True, plain=True)
+
                 last_side_chooser = f"{interaction.user.mention} ({team_name})"
                 message = f"*Side Attaque choisi par {last_side_chooser}*"
-                await self.channel.send(message)
+                dummy_message.content = message
+                await self.thread.reply(dummy_message, anonymous=True, plain=True)
+
             await self.channel.send("Le veto est terminé!")
             embed = veto.create_summary_embed()
             await self.channel.send(embed=embed)
@@ -727,3 +742,4 @@ class MapButton(discord.ui.Button):
                 item.disabled = True
                 view.add_item(item)
         await interaction.message.edit(view=view)
+
