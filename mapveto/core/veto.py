@@ -202,7 +202,7 @@ class MapVeto:
             self.paused = False
     
             # Créer l'embed de résumé
-            message = self.create_summary_embed()
+            message = self.create_summary_message()
 
             team_a_user = self.bot.get_user(self.team_a_id)
             thread = await self.bot.threads.find(recipient=team_a_user)
@@ -742,9 +742,6 @@ class MapButton(discord.ui.Button):
             message = f"*Side Attaque choisi par {last_side_chooser}*"
             dummy_message.content = message
             await thread.reply(dummy_message, anonymous=True, plain=True)
-
-            embed = veto.create_summary_embed()
-            await self.channel.send(embed=embed)
 
         # Disable the button and update the message
         view = discord.ui.View()
