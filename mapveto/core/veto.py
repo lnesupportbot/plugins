@@ -550,23 +550,25 @@ class VetoRdyMessage(Button):
             await team_a_user.send(f"{team_a_user.mention}, êtes-vous prêt pour lancer le MapVeto ?")
             await team_b_user.send(f"{team_b_user.mention}, êtes-vous prêt pour lancer le MapVeto ?")
 
-            # Create a dummy message similar to on_thread_ready
-            dummy_message = DummyMessage(interaction.message)
-            dummy_message.author = self.bot.user  # Assuming bot user is used as author
-            dummy_message.content = "Les capitaines ont été notifiés pour se préparer au MapVeto."
+            # Find the existing thread for one of the team captains
+            thread = await self.bot.threads.find(recipient=team_a_user)
 
-            # Clear residual attributes
-            dummy_message.attachments = []
-            dummy_message.components = []
-            dummy_message.embeds = []
-            dummy_message.stickers = []
-
-            # Assuming you have access to the thread where you want to reply
-            thread = self.bot.get_thread(interaction.channel_id)  # Example of retrieving a thread
             if thread:
+                # Create a dummy message to use for the reply
+                dummy_message = DummyMessage(interaction.message)
+                dummy_message.author = self.bot.user  # Assuming the bot user is used as author
+                dummy_message.content = "Les capitaines ont été notifiés pour se préparer au MapVeto."
+
+                # Clear residual attributes
+                dummy_message.attachments = []
+                dummy_message.components = []
+                dummy_message.embeds = []
+                dummy_message.stickers = []
+
+                # Reply to the thread using the dummy message
                 await thread.reply(dummy_message)
             else:
-                await interaction.response.send_message("Impossible de trouver le fil pour répondre.", ephemeral=True)
+                await interaction.response.send_message("Impossible de trouver le thread pour répondre.", ephemeral=True)
         else:
             await interaction.response.send_message("Un ou les deux capitaines ne sont pas trouvés.", ephemeral=True)
 
