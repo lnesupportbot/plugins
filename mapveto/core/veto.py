@@ -212,7 +212,7 @@ class MapVeto:
             # Créer un message fictif pour la réponse en utilisant l'objet message existant
             dummy_message = DummyMessage(interaction.message)  # Utilisez l'objet message d'interaction existant
             dummy_message.author = self.bot.modmail_guild.me  # Assurez-vous que l'auteur est défini
-            dummy_message.content = msg_content
+            dummy_message.content = embed
             dummy_message.embeds = [embed]  # Ajouter l'embed ici
 
             # Utiliser la méthode reply du thread
