@@ -3,13 +3,13 @@ import os
 import asyncio
 import random
 import discord # type: ignore
-from discord.ui import Modal, TextInput, Button, Select, View # type: ignore
-from discord.ext import commands # type: ignore
+from discord.ui import Button, Select, View # type: ignore
 from discord.ext.commands import Context
 
-from .templateveto import MapVetoConfig, TemplateManager, veto_config
-from .tournament import TournamentManager, TournamentConfig, tournament_config
-from .teams import TeamManager, TeamConfig, team_config
+from .templateveto import MapVetoConfig, veto_config
+from .tournament import TournamentConfig, tournament_config
+from .teams import TeamConfig, team_config
+from core.models import DummyMessage, PermissionLevel
 
 from cogs import modmail # type: ignore
 
@@ -504,10 +504,6 @@ class CoinFlipButton(Button):
         self.bot = bot
 
     async def callback(self, interaction: discord.Interaction):
-        if interaction.user.id != self.team_a_id and interaction.user.id != self.team_b_id:
-            await interaction.response.send_message("Ce n'est pas votre tour.", ephemeral=True)
-            return
-
         result = random.choice([self.team_a_name, self.team_b_name])
         result_message = f"Le CoinFlip a donné l'équipe **{result}** comme gagnant !"
         await interaction.response.send_message(result_message)
@@ -535,7 +531,7 @@ class CoinFlipMessage(Button):
         if team_a_user and team_b_user:
             await team_a_user.send(f"{team_a_user.mention}, êtes-vous prêt pour lancer le CoinFlip ?")
             await team_b_user.send(f"{team_b_user.mention}, êtes-vous prêt pour lancer le CoinFlip ?")
-            await interaction.response.send_message("Les capitaines ont été notifiés pour se préparer au CoinFlip.", ephemeral=True)
+            await interaction.response.send_message("Les capitaines ont été notifiés pour se préparer au CoinFlip.")
         else:
             await interaction.response.send_message("Un ou les deux capitaines ne sont pas trouvés.", ephemeral=True)
 
@@ -553,7 +549,7 @@ class VetoRdyMessage(Button):
         if team_a_user and team_b_user:
             await team_a_user.send(f"{team_a_user.mention}, êtes-vous prêt pour lancer le MapVeto ?")
             await team_b_user.send(f"{team_b_user.mention}, êtes-vous prêt pour lancer le MapVeto ?")
-            await interaction.response.send_message("Les capitaines ont été notifiés pour se préparer au MapVeto.", ephemeral=True)
+            await interaction.response.send_message("Les capitaines ont été notifiés pour se préparer au MapVeto.")
         else:
             await interaction.response.send_message("Un ou les deux capitaines ne sont pas trouvés.", ephemeral=True)
 
@@ -585,7 +581,7 @@ class CloseMapVetoButton(Button):
                 f"{team_b_user.mention}, le MapVeto est fini. Bonne chance pour votre match! Ce ticket va être fermé. "
                 f"Si vous avez des questions, merci de nous contacter en passant par #teddy."
             )
-            await interaction.response.send_message("Les capitaines ont été notifiés de la fermeture du ticket de MapVeto.", ephemeral=True)
+            await interaction.response.send_message("Les capitaines ont été notifiés de la fermeture du ticket de MapVeto.")
         else:
             await interaction.response.send_message("Un ou les deux capitaines ne sont pas trouvés.", ephemeral=True)
 
