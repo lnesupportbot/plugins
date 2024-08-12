@@ -575,11 +575,6 @@ class VetoRdyMessage(Button):
                 # Use the thread's reply method to send the messages
                 await thread.reply(dummy_message_a, anonymous=True, plain=True)
                 await thread.reply(dummy_message_b, anonymous=True, plain=True)
-
-                # Respond to the interaction to acknowledge it
-                await interaction.response.send_message("Les messages ont été envoyés dans le thread.", ephemeral=True)
-            else:
-                await interaction.response.send_message("Impossible de trouver le thread pour répondre.", ephemeral=True)
         else:
             await interaction.response.send_message("Un ou les deux capitaines ne sont pas trouvés.", ephemeral=True)
 
