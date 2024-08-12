@@ -716,7 +716,7 @@ class MapButton(discord.ui.Button):
                 message = f"**Map {last_map} choisie par DECIDER.**"
                 dummy_message.content = message
                 await thread.reply(dummy_message, anonymous=True, plain=True)
-            else:
+
                 await veto.send_ticket_message(self.channel)  # Correct method call
         else:
             last_side_chooser = f"{interaction.user.mention} ({team_name})"
