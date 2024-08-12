@@ -551,7 +551,7 @@ class CoinFlipMessage(Button):
 
             if thread:
                 # Prepare messages for both team captains
-                msg_content = f"{team_a_name} et {team_b_name}, êtes-vous prêt pour lancer le CoinFlip ?"
+                msg_content = f"{self.team_a_name} et {self.team_b_name}, êtes-vous prêt pour lancer le CoinFlip ?"
 
                 # Create dummy messages to use for replies
                 dummy_message = DummyMessage(interaction.message)
@@ -589,7 +589,7 @@ class VetoRdyMessage(Button):
 
             if thread:
                 # Prepare messages for both team captains
-                msg_content = f"{team_a_name} et {team_b_name}, êtes-vous prêt pour lancer le MapVeto ?"
+                msg_content = f"{self.team_a_name} et {self.team_b_name}, êtes-vous prêt pour lancer le MapVeto ?"
 
                 # Create dummy messages to use for replies
                 dummy_message = DummyMessage(interaction.message)
@@ -676,9 +676,11 @@ class MapButton(discord.ui.Button):
         self.paused = False
         self.stopped = False
         self.bot = bot
+        self.team_a_user
 
     async def callback(self, interaction: discord.Interaction):
         veto = self.veto  # Use the passed veto object
+        team_a_user = self.bot.get_user(self.team_a_id)
         thread = await self.bot.threads.find(recipient=team_a_user)
         if not veto:
             await interaction.response.send_message("Veto non trouvé.", ephemeral=True)
@@ -703,17 +705,18 @@ class MapButton(discord.ui.Button):
             veto.pick_side(self.label, f"{interaction.user.mention} ({team_name})")
             message = f"*Side {self.label} choisi par {interaction.user.mention} ({team_name}).*"
 
-        # Use thread.reply to send messages to the thread
-        dummy_message = DummyMessage(interaction.message)
-        dummy_message.author = self.bot.modmail_guild.me
-        dummy_message.content = message
+        if thread:
+            # Use thread.reply to send messages to the thread
+            dummy_message = DummyMessage(interaction.message)
+            dummy_message.author = self.bot.modmail_guild.me
+            dummy_message.content = message
 
-        dummy_message.attachments = []
-        dummy_message.components = []
-        dummy_message.embeds = []
-        dummy_message.stickers = []
+            dummy_message.attachments = []
+            dummy_message.components = []
+            dummy_message.embeds = []
+            dummy_message.stickers = []
 
-        await self.thread.reply(dummy_message, anonymous=True, plain=True)
+            await self.thread.reply(dummy_message, anonymous=True, plain=True)
 
         opponent_user = interaction.client.get_user(veto.team_b_id if interaction.user.id == veto.team_a_id else veto.team_a_id)
         if opponent_user:
