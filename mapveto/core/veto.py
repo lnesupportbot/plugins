@@ -84,7 +84,7 @@ class MapVeto:
             print(f"Cannot DM user {current_user.id}")
 
     def create_summary_embed(self):
-        embed = discord.Embed(title="__**Résumé du Veto**__", color=discord.Color.blue())
+        message = "__**Résumé du Veto**__"
 
         # Maps choisies
         picked_maps_str = []
@@ -115,16 +115,17 @@ class MapVeto:
             last_map = self.maps[0]
             picked_maps_str.append(f"**{last_map}** choisi par DECIDER / Side Attaque choisi par {last_side_chooser}")
 
+        # Ajouter les maps et side choisis
         if picked_maps_str:
-            embed.add_field(name="__**Maps choisies**__", value="\n".join(picked_maps_str), inline=False)
+            message += "__**Maps choisies**__\n" + "\n".join(picked_maps_str) + "\n\n"
         else:
-            embed.add_field(name="__**Maps choisies**__", value="Aucune", inline=False)
+            message += "__**Maps choisies**__\nAucune\n\n"
 
         # Maps bannies
         banned_maps_str = ", ".join(self.banned_maps) if self.banned_maps else "Aucune"
-        embed.add_field(name="__**Maps bannies**__", value=banned_maps_str, inline=False)
+        message += "__**Maps bannies**__\n" + banned_maps_str + "\n"
 
-        return embed
+        return message
 
     def current_action_type(self):
         if self.current_action < len(self.rules):
@@ -200,20 +201,25 @@ class MapVeto:
             self.paused = False
     
             # Créer l'embed de résumé
-            embed = self.create_summary_embed()
+            message = self.create_summary_embed()
 
             team_a_user = self.bot.get_user(self.team_a_id)
             thread = await self.bot.threads.find(recipient=team_a_user)
 
         if thread:
             # Préparer le contenu du message
-            msg_content = "Voici le résumé du MapVeto :"
+            msg_content = message
 
             # Créer un message fictif pour la réponse en utilisant l'objet message existant
             dummy_message = DummyMessage(interaction.message)  # Utilisez l'objet message d'interaction existant
             dummy_message.author = self.bot.modmail_guild.me  # Assurez-vous que l'auteur est défini
-            dummy_message.content = embed
-            dummy_message.embeds = [embed]  # Ajouter l'embed ici
+            dummy_message.content = msg_content
+
+            # Clear residual attributes
+            dummy_message.attachments = []
+            dummy_message.components = []
+            dummy_message.embeds = []
+            dummy_message.stickers = []
 
             # Utiliser la méthode reply du thread
             await thread.reply(dummy_message, anonymous=True)
