@@ -210,7 +210,7 @@ class MapVeto:
                 msg_content = embed
 
                 # Create dummy messages to use for replies
-                dummy_message = DummyMessage(self.message)
+                dummy_message = DummyMessage(msg_content)
                 dummy_message.author = self.bot.modmail_guild.me  # Assuming the bot user is used as author
                 dummy_message.content = msg_content
 
