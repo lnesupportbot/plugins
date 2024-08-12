@@ -446,9 +446,9 @@ class TeamSelect(Select):
 
             select = SelectTeamForMapVeto(team_a_name, team_b_name, self.template_name, self.bot)
             view = View(timeout = None)
-            view.add_item(CoinFlipMessage(team_a_name, team_b_nameteam_a_id, team_b_id, self.bot))
+            view.add_item(CoinFlipMessage(team_a_name, team_b_name, team_a_id, team_b_id, self.bot))
             view.add_item(CoinFlipButton(team_a_name, team_b_name, team_a_id, team_b_id, self.bot))
-            view.add_item(VetoRdyMessage(team_a_name, team_b_nameteam_a_id, team_b_id, self.bot))
+            view.add_item(VetoRdyMessage(team_a_name, team_b_name, team_a_id, team_b_id, self.bot))
             view.add_item(select)
             view.add_item(CloseMapVetoButton(team_a_id, team_b_id, thread, self.bot))
             await ticket_channel.send(embed=embed, view=view)
