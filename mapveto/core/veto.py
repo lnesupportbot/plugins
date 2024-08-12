@@ -561,11 +561,10 @@ class VetoRdyMessage(Button):
                 dummy_message.content = msg_content
 
                 # Clear residual attributes
-                for dummy_message in [dummy_message_a, dummy_message_b]:
-                    dummy_message.attachments = []
-                    dummy_message.components = []
-                    dummy_message.embeds = []
-                    dummy_message.stickers = []
+                dummy_message.attachments = []
+                dummy_message.components = []
+                dummy_message.embeds = []
+                dummy_message.stickers = []
 
                 # Use the thread's reply method to send the messages
                 await thread.reply(dummy_message, anonymous=True, plain=True)
