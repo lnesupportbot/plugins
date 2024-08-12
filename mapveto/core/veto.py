@@ -205,28 +205,18 @@ class MapVeto:
             team_a_user = self.bot.get_user(self.team_a_id)
             thread = await self.bot.threads.find(recipient=team_a_user)
 
-            if thread:
-                # Prepare messages for both team captains
-                msg_content = embed
+        if thread:
+            # Préparer le contenu du message
+            msg_content = "Voici le résumé du MapVeto :"
 
-            # Créer un message fictif pour la réponse
-            dummy_message = DummyMessage(content=msg_content)
+            # Créer un message fictif pour la réponse en utilisant l'objet message existant
+            dummy_message = DummyMessage(interaction.message)  # Utilisez l'objet message d'interaction existant
+            dummy_message.author = self.bot.modmail_guild.me  # Assurez-vous que l'auteur est défini
+            dummy_message.content = msg_content
+            dummy_message.embeds = [embed]  # Ajouter l'embed ici
 
             # Utiliser la méthode reply du thread
             await thread.reply(content=dummy_message.content, embeds=dummy_message.embeds, anonymous=True, plain=True)
-
-class DummyMessage:
-    def __init__(self, content=None):
-        self.content = content
-        self.author = None
-        self.attachments = []
-        self.components = []
-        self.embeds = []
-        self.stickers = []
-
-    async def reply(self, *args, **kwargs):
-        # Simule l'envoi d'un message de réponse
-        return await self.channel.send(content=self.content, embeds=self.embeds)
 
 class VetoManager:
     def __init__(self, bot, filename="message_id.json"):
