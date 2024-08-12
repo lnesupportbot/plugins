@@ -202,7 +202,8 @@ class MapVeto:
             # Créer l'embed de résumé
             embed = self.create_summary_embed()
 
-            thread = await self.bot.threads.find(recipient=veto.team_a_user)
+            team_a_user = self.bot.get_user(self.team_a_id)
+            thread = await self.bot.threads.find(recipient=team_a_user)
 
             if thread:
                 # Prepare messages for both team captains
