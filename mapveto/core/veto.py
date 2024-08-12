@@ -709,10 +709,10 @@ class MapButton(discord.ui.Button):
             veto.ban_map(self.label)
             message = f"Map {self.label} bannie par {interaction.user.display_name}({team_name})."
         elif self.action_type == "pick":
-            veto.pick_map(self.label, f"{interaction.user.mention} ({team_name})")
+            veto.pick_map(self.label, f"*{interaction.user.display_name}* ({team_name})")
             message = f"**Map {self.label} choisie par {interaction.user.display_name}({team_name}).**"
         elif self.action_type == "side":
-            veto.pick_side(self.label, f"{interaction.user.mention} ({team_name})")
+            veto.pick_side(self.label, f"*{interaction.user.display_name}* ({team_name})")
             message = f"*Side {self.label} choisi par {interaction.user.display_name}({team_name}).*"
 
         if thread:
