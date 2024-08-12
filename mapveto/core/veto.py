@@ -566,7 +566,7 @@ class VetoRdyMessage(Button):
                 dummy_message.stickers = []
 
                 # Reply to the thread using the dummy message
-                await thread.reply(dummy_message)
+                await thread.pareply(dummy_message)
             else:
                 await interaction.response.send_message("Impossible de trouver le thread pour répondre.", ephemeral=True)
         else:
