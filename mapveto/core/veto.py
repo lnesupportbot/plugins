@@ -553,17 +553,12 @@ class VetoRdyMessage(Button):
 
             if thread:
                 # Prepare messages for both team captains
-                msg_content_a = f"{team_a_user.mention}, êtes-vous prêt pour lancer le MapVeto ?"
-                msg_content_b = f"{team_b_user.mention}, êtes-vous prêt pour lancer le MapVeto ?"
+                msg_content_a = f"{team_a_user.mention} {team_b_user.mention}, êtes-vous prêt pour lancer le MapVeto ?"
 
                 # Create dummy messages to use for replies
-                dummy_message_a = DummyMessage(interaction.message)
-                dummy_message_a.author = self.bot.modmail_guild.me  # Assuming the bot user is used as author
-                dummy_message_a.content = msg_content_a
-
-                dummy_message_b = DummyMessage(interaction.message)
-                dummy_message_b.author = self.bot.modmail_guild.me  # Assuming the bot user is used as author
-                dummy_message_b.content = msg_content_b
+                dummy_message = DummyMessage(interaction.message)
+                dummy_message.author = self.bot.modmail_guild.me  # Assuming the bot user is used as author
+                dummy_message.content = msg_content
 
                 # Clear residual attributes
                 for dummy_message in [dummy_message_a, dummy_message_b]:
@@ -573,8 +568,7 @@ class VetoRdyMessage(Button):
                     dummy_message.stickers = []
 
                 # Use the thread's reply method to send the messages
-                await thread.reply(dummy_message_a, anonymous=True, plain=True)
-                await thread.reply(dummy_message_b, anonymous=True, plain=True)
+                await thread.reply(dummy_message, anonymous=True, plain=True)
         else:
             await interaction.response.send_message("Un ou les deux capitaines ne sont pas trouvés.", ephemeral=True)
 
