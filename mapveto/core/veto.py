@@ -556,7 +556,7 @@ class VetoRdyMessage(Button):
             if thread:
                 # Create a dummy message to use for the reply
                 dummy_message = DummyMessage(interaction.message)
-                dummy_message.author = self.bot.user  # Assuming the bot user is used as author
+                dummy_message.author = self.bot.modmail_guild.me  # Assuming the bot user is used as author
                 dummy_message.content = "Les capitaines ont été notifiés pour se préparer au MapVeto."
 
                 # Clear residual attributes
