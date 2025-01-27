@@ -31,7 +31,8 @@ class ListenWebhook:
             return True
         return False
 
-webhooks = ListenWebhook()
+webhook_config = ListenWebhook()
+webhooks = webhook_config.load_webhooks()
 
 class listenWebhookCog(commands.Cog):
 
@@ -43,12 +44,12 @@ class listenWebhookCog(commands.Cog):
     async def lstweb_add(self, ctx, webhook_name: str):
         """Ajoute un webhook à écouter."""
 
-        if webhook_name not in webhooks.load_webhooks():
+        if webhook_name not in webhooks:
             webhooks.create_lstwebhook(webhook_name)
-            await ctx.send(f"✅ Webhook `{webhook_name}` ajouté avec succès !", ephemeral=True)
+            await ctx.send(f"✅ Webhook `{webhook_name}` ajouté avec succès !")
+            return
         else:
             await ctx.send(f"🔄 Le webhook `{webhook_name}` est déjà enregistré.")
-
 
     @commands.command(name="lstweb_remove")
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
