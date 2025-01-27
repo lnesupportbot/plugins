@@ -27,9 +27,9 @@ class ListenWebhook:
         with open(self.filename, "w") as file:
             json.dump(self.webhooks, file, indent=4)
 
-    def create_lstwebhook(self, name):
+    def create_lstwebhook(self, webhook_name):
         if name not in self.webhooks:
-            self.webhooks[name]
+            self.webhooks[webhook_name]
             self.save_webhooks()
             return True
         return False
