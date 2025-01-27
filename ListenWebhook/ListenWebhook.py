@@ -33,7 +33,7 @@ class listenWebhookCog(commands.Cog):
 
     def __init__(self, bot: commands.bot):
         self.bot = bot
-        self.webhooks = ListenWebhook()
+        self.webhooks = ListenWebhook(bot)
 
     @commands.command(name="lstweb_add")
     @commands.has_permissions(administrator=True)
