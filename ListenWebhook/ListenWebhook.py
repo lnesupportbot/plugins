@@ -61,27 +61,31 @@ class listenWebhookCog(commands.Cog):
             await ctx.send(f"❌ Webhook `{webhook_name}` supprimé avec succès !")
         else:
             await ctx.send(f"⚠️ Le webhook `{webhook_name}` n'est pas enregistré.")
-
+            
     @commands.Cog.listener()
     async def on_message(self, message):
         """Transfère les commandes envoyées par des webhooks enregistrés."""
-        # Affiche dans la console les informations pertinentes
-        if message.author.bot:
-            print(f"Message reçu - Author.bot: {message.author.bot}, Author.name: {message.author.name}")
+        # Affiche le message et son contexte pour débogage
+        print(f"Message reçu : {message}")
+        
+        # Vérifie si l'auteur est un bot (comme un webhook) et s'il est enregistré dans les webhooks
+        if message.author.bot and message.author.name in webhooks:
+            print(f"Webhook détecté : {message.author.name}")
 
-        # Vérifie que le message provient d'un bot et que le nom de l'auteur est dans la liste des webhooks
-        if message.author.bot:
-            if message.author.name in webhooks:
-                # Transforme le message du webhook en commande du bot
-                print(f"Le bot vient jusqu'ici")
-                ctx = await self.bot.get_context(message)
-                print(f"le message est {message}")
-                print(f"le ctx est {ctx}")
-                if ctx.valid:
-                    print(f"le ctx est {ctx}")
-                    # Exécute la commande comme si elle venait d'un utilisateur
-                    await self.bot.invoke(ctx)
-                return
+            # Traite le message comme une commande
+            ctx = await self.bot.get_context(message)
+            print(f"Contexte généré : {ctx}")
+            print(f"Contexte valide : {ctx.valid}")
+
+            # Si le contexte est valide, invoque la commande
+            if ctx.valid:
+                await self.bot.invoke(ctx)
+            else:
+                print("Le message n'a pas été interprété comme une commande valide.")
+        
+        # Force le traitement des commandes pour tous les messages, y compris ceux des webhooks
+        await self.bot.process_commands(message)
+
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(listenWebhookCog(bot))
