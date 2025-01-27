@@ -42,8 +42,8 @@ class listenWebhookCog(commands.Cog):
         if webhook_name in self.webhooks.load_webhooks():
             await ctx.send(f"🔄 Le webhook `{webhook_name}` est déjà enregistré.")
         else:
-            self.webhooks[webhook_name] = True
-            self.save_webhooks()
+            self.webhooks.load_webhooks[webhook_name] = True
+            self.webhooks.save_webhooks()
             await ctx.send(f"✅ Webhook `{webhook_name}` ajouté avec succès !")
 
     @commands.command(name="lstweb_remove")
