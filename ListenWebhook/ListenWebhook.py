@@ -7,12 +7,14 @@ import os
 from core import checks
 from core.models import PermissionLevel  # type: ignore
 
+webhooks_file = ListenWebhook()
+webhooks = webhooks_file.load_webhooks()
+
 class ListenWebhook:
     def __init__(self, bot, filename="webhooklist.json"):
         self.bot = bot
         self.filename = os.path.join(os.path.dirname(__file__), '.', filename)
         self.webhooks = self.load_webhooks()
-
 
     def load_webhooks(self):
         """Charge les webhooks enregistrés depuis un fichier JSON."""
