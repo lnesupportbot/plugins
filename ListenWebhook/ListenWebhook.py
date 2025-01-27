@@ -13,7 +13,7 @@ WEBHOOK_LIST_FILE = "webhooklist.json"
 # Initialisation des webhooks enregistrés
 webhooks = load_webhooks()
 
-class listenWebhookCog(commands.Cog)
+class listenWebhookCog(commands.Cog):
     def __init__(self, bot: commands.bot):
         self.bot = bot
 
