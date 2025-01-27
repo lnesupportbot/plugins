@@ -32,7 +32,7 @@ class listenWebhookCog(commands.Cog):
 
     @commands.command(name="lstweb_add")
     @commands.has_permissions(administrator=True)
-    async def listenWebhook(self, ctx, webhook_name: str):
+    async def lstweb_add(self, ctx, webhook_name: str):
         """Ajoute un webhook à écouter."""
         if not webhook_name.strip():
             await ctx.send("⚠️ Le nom du webhook ne peut pas être vide.")
@@ -47,7 +47,7 @@ class listenWebhookCog(commands.Cog):
 
     @commands.command(name="lstweb_remove")
     @commands.has_permissions(administrator=True)
-    async def removeWebhook(self, ctx, webhook_name: str):
+    async def lstweb_remove(self, ctx, webhook_name: str):
         """Supprime un webhook de la liste."""
         if webhook_name in self.webhooks:
             del self.webhooks[webhook_name]
