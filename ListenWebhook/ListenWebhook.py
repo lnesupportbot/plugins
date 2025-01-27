@@ -17,11 +17,12 @@ class ListenWebhook:
         if os.path.exists(self.filename):
             with open(self.filename, "r") as f:
                 data = json.load(f)
+        return{}
 
     def save_webhooks(self):
         """Sauvegarde les webhooks dans un fichier JSON."""
-        with open(self.filename, "w") as file:
-            json.dump(self.webhooks, file, indent=4)
+        with open(self.filename, "w") as f:
+            json.dump(self.webhooks, f, indent=4)
 
     def create_lstwebhook(self, webhook_name):
         if webhook_name not in self.webhooks:
