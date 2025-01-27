@@ -51,21 +51,16 @@ class listenWebhookCog(commands.Cog):
         else:
             await ctx.send(f"🔄 Le webhook `{webhook_name}` est déjà enregistré.")
 
-    @commands.Cog.listener()
-    async def on_message(self, message):
-        """Gère les messages provenant de webhooks enregistrés."""
-        if message.author.bot and message.author.name in webhooks:
-            if "purge" in message.content.lower():
-                try:
-                    if message.content.split()[-1].isdigit():
-                        number_of_messages = int(message.content.split()[-1])
-                        await message.channel.purge(limit=number_of_messages)
-                        await message.channel.send(f"✅ {number_of_messages} messages supprimés.")
-                    else:
-                        await message.channel.send("⚠️ Le nombre de messages à purger est invalide.")
-                except Exception as e:
-                    await message.channel.send(f"Erreur : {e}")
-        await self.bot.process_commands(message)
+    @commands.command(name="lstweb_remove")
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
+    async def lstweb_remove(self, ctx, webhook_name: str):
+        """Supprime un webhook de la liste."""
+        if webhook_name in webhooks:
+            del webhooks[webhook_name]
+            webhook_config.save_webhooks()
+            await ctx.send(f"❌ Webhook `{webhook_name}` supprimé avec succès !")
+        else:
+            await ctx.send(f"⚠️ Le webhook `{webhook_name}` n'est pas enregistré.")
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(listenWebhookCog(bot))
