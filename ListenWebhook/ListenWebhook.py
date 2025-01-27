@@ -30,7 +30,7 @@ class listenWebhookCog(commands.Cog):
         with open(WEBHOOK_LIST_FILE, "w") as file:
             json.dump(self.webhooks, file, indent=4)
 
-    @commands.command(name="add")
+    @commands.command(name="lstweb_add")
     @commands.has_permissions(administrator=True)
     async def listenWebhook(self, ctx, webhook_name: str):
         """Ajoute un webhook à écouter."""
@@ -45,7 +45,7 @@ class listenWebhookCog(commands.Cog):
             self.save_webhooks()
             await ctx.send(f"✅ Webhook `{webhook_name}` ajouté avec succès !")
 
-    @commands.command(name="remove")
+    @commands.command(name="lstweb_remove")
     @commands.has_permissions(administrator=True)
     async def removeWebhook(self, ctx, webhook_name: str):
         """Supprime un webhook de la liste."""
