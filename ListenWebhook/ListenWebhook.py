@@ -32,25 +32,26 @@ class listenWebhookCog(commands.Cog):
 
     @commands.command(name="add")
     @commands.has_permissions(administrator=True)
-    async def listenWebhook(ctx, webhook_name: str):
+    async def listenWebhook(self, ctx, webhook_name: str):
         """Ajoute un webhook à écouter."""
         if not webhook_name.strip():
             await ctx.send("⚠️ Le nom du webhook ne peut pas être vide.")
             return
-        if webhook_name in webhooks:
+
+        if webhook_name in self.webhooks:
             await ctx.send(f"🔄 Le webhook `{webhook_name}` est déjà enregistré.")
         else:
-            webhooks[webhook_name] = True
-            save_webhooks(webhooks)
+            self.webhooks[webhook_name] = True
+            self.save_webhooks()
             await ctx.send(f"✅ Webhook `{webhook_name}` ajouté avec succès !")
 
     @commands.command(name="remove")
     @commands.has_permissions(administrator=True)
-    async def removeWebhook(ctx, webhook_name: str):
+    async def removeWebhook(self, ctx, webhook_name: str):
         """Supprime un webhook de la liste."""
-        if webhook_name in webhooks:
-            del webhooks[webhook_name]
-            save_webhooks(webhooks)
+        if webhook_name in self.webhooks:
+            del self.webhooks[webhook_name]
+            self.save_webhooks()
             await ctx.send(f"❌ Webhook `{webhook_name}` supprimé avec succès !")
         else:
             await ctx.send(f"⚠️ Le webhook `{webhook_name}` n'est pas enregistré.")
