@@ -28,7 +28,7 @@ class ListenWebhook:
             json.dump(self.webhooks, file, indent=4)
 
     def create_lstwebhook(self, name):
-        if name not in self.vetos:
+        if name not in self.webhooks:
             self.webhooks[name]
             self.save_webhooks()
             return True
