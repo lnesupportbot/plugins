@@ -10,27 +10,25 @@ from core.models import PermissionLevel  # type: ignore
 # Chemin du fichier pour stocker les webhooks
 WEBHOOK_LIST_FILE = "webhooklist.json"
 
-# Initialisation des webhooks enregistrés
-webhooks = load_webhooks()
-
 class listenWebhookCog(commands.Cog):
     def __init__(self, bot: commands.bot):
         self.bot = bot
+        self.webhooks = self.load_webhooks()
 
-    # Chargement des webhooks depuis le fichier JSON
-    def load_webhooks():
+    def load_webhooks(self):
+        """Charge les webhooks enregistrés depuis un fichier JSON."""
         if os.path.exists(WEBHOOK_LIST_FILE):
             try:
                 with open(WEBHOOK_LIST_FILE, "r") as file:
                     return json.load(file)
             except json.JSONDecodeError:
-                return {}  # Retourne un dictionnaire vide en cas d'erreur
+                return {}  # Retourne un dictionnaire vide si le JSON est corrompu
         return {}
 
-    # Sauvegarde des webhooks dans le fichier JSON
-    def save_webhooks(webhooks):
+    def save_webhooks(self):
+        """Sauvegarde les webhooks dans un fichier JSON."""
         with open(WEBHOOK_LIST_FILE, "w") as file:
-            json.dump(webhooks, file, indent=4)
+            json.dump(self.webhooks, file, indent=4)
 
     @commands.command(name="add")
     @commands.has_permissions(administrator=True)
