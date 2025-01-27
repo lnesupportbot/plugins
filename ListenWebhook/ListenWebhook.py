@@ -28,11 +28,19 @@ class ListenWebhook:
         with open(self.filename, "w") as file:
             json.dump(self.webhooks, file, indent=4)
 
+    def create_lstwebhook(self, name):
+        if name not in self.vetos:
+            self.webhooks[name]
+            self.save_webhooks()
+            return True
+        return False
+
+webhooks = ListenWebhook()
+
 class listenWebhookCog(commands.Cog):
 
     def __init__(self, bot: commands.bot):
         self.bot = bot
-        self.webhooks = ListenWebhook(bot)
 
     @commands.command(name="lstweb_add")
     @commands.has_permissions(administrator=True)
@@ -42,9 +50,8 @@ class listenWebhookCog(commands.Cog):
         if webhook_name in self.webhooks.load_webhooks():
             await ctx.send(f"🔄 Le webhook `{webhook_name}` est déjà enregistré.")
         else:
-            self.webhooks.load_webhooks()[webhook_name] = True
-            self.webhooks.save_webhooks()
-            await ctx.send(f"✅ Webhook `{webhook_name}` ajouté avec succès !")
+            if webhooks.create_lstwebhook(webhook_name):
+                await ctx.send(f"✅ Webhook `{webhook_name}` ajouté avec succès !", ephemeral=True)
 
     @commands.command(name="lstweb_remove")
     @commands.has_permissions(administrator=True)
