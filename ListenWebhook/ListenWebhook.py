@@ -87,7 +87,7 @@ class listenWebhookCog(commands.Cog):
 
         # Vérifie que le message provient d'un bot et que le nom de l'auteur est dans la liste des webhooks
         if message.author.bot:
-            if message.author.name in webhooks:
+            if message.author.id in webhooks:
                 # Transforme le message du webhook en commande du bot
                 print(f"Webhook détecté : name : {message.author.name} ID : {message.author.id}")
                 ctx = await self.bot.get_context(message)
