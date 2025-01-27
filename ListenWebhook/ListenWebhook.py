@@ -26,7 +26,7 @@ class ListenWebhook:
 
     def create_lstwebhook(self, webhook_name):
         if webhook_name not in self.webhooks:
-            self.webhooks = webhook_name
+            self.webhooks[] = webhook_name
             self.save_webhooks()
             return True
         return False
