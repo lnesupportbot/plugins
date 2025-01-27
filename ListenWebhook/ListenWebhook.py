@@ -45,7 +45,7 @@ class listenWebhookCog(commands.Cog):
         """Ajoute un webhook à écouter."""
 
         if webhook_name not in webhooks:
-            webhooks.create_lstwebhook(webhook_name)
+            webhook_config.create_lstwebhook(webhook_name)
             await ctx.send(f"✅ Webhook `{webhook_name}` ajouté avec succès !")
             return
         else:
@@ -56,8 +56,8 @@ class listenWebhookCog(commands.Cog):
     async def lstweb_remove(self, ctx, webhook_name: str):
         """Supprime un webhook de la liste."""
         if webhook_name in webhooks:
-            del webhooks.load_webhooks()[webhook_name]
-            webhooks.save_webhooks()
+            del webhooks[webhook_name]
+            webhook_config.save_webhooks()
             await ctx.send(f"❌ Webhook `{webhook_name}` supprimé avec succès !")
         else:
             await ctx.send(f"⚠️ Le webhook `{webhook_name}` n'est pas enregistré.")
