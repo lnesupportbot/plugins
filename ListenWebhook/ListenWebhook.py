@@ -15,12 +15,8 @@ class ListenWebhook:
     def load_webhooks(self):
         """Charge les webhooks enregistrés depuis un fichier JSON."""
         if os.path.exists(self.filename):
-            try:
-                with open(self.filename, "r") as file:
-                    return json.load(file)
-            except json.JSONDecodeError:
-                return {}  # Retourne un dictionnaire vide si le JSON est corrompu
-        return {}
+            with open(self.filename, "r") as f:
+                data = json.load(f)
 
     def save_webhooks(self):
         """Sauvegarde les webhooks dans un fichier JSON."""
