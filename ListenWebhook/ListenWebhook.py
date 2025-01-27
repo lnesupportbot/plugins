@@ -51,17 +51,6 @@ class listenWebhookCog(commands.Cog):
         else:
             await ctx.send(f"🔄 Le webhook `{webhook_name}` est déjà enregistré.")
 
-    @commands.command(name="lstweb_remove")
-    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-    async def lstweb_remove(self, ctx, webhook_name: str):
-        """Supprime un webhook de la liste."""
-        if webhook_name in webhooks:
-            del webhooks[webhook_name]
-            webhook_config.save_webhooks()
-            await ctx.send(f"❌ Webhook `{webhook_name}` supprimé avec succès !")
-        else:
-            await ctx.send(f"⚠️ Le webhook `{webhook_name}` n'est pas enregistré.")
-
     @commands.Cog.listener()
     async def on_message(self, message):
         """Gère les messages provenant de webhooks enregistrés."""
