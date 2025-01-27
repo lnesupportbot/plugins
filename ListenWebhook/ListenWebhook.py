@@ -7,9 +7,6 @@ import os
 from core import checks
 from core.models import PermissionLevel  # type: ignore
 
-webhooks_file = ListenWebhook()
-webhooks = webhooks_file.load_webhooks()
-
 class ListenWebhook:
     def __init__(self, bot, filename="webhooklist.json"):
         self.bot = bot
@@ -35,7 +32,7 @@ class listenWebhookCog(commands.Cog):
 
     def __init__(self, bot: commands.bot):
         self.bot = bot
-        self.webhooks = ListenWebhook(bot)
+        self.webhooks = ListenWebhook(bot).load_webhooks()
 
     @commands.command(name="lstweb_add")
     @commands.has_permissions(administrator=True)
