@@ -8,8 +8,7 @@ from core import checks
 from core.models import PermissionLevel  # type: ignore
 
 class ListenWebhook:
-    def __init__(self, bot, filename="webhooklist.json"):
-        self.bot = bot
+    def __init__(self, filename="webhooklist.json"):
         self.filename = os.path.join(os.path.dirname(__file__), '.', filename)
         self.webhooks = self.load_webhooks()
 
