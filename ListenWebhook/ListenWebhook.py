@@ -13,9 +13,13 @@ WEBHOOK_LIST_FILE = "webhooklist.json"
 # Chargement des webhooks depuis le fichier JSON
 def load_webhooks():
     if os.path.exists(WEBHOOK_LIST_FILE):
-        with open(WEBHOOK_LIST_FILE, "r") as file:
-            return json.load(file)
+        try:
+            with open(WEBHOOK_LIST_FILE, "r") as file:
+                return json.load(file)
+        except json.JSONDecodeError:
+            return {}  # Retourne un dictionnaire vide en cas d'erreur
     return {}
+
 
 # Sauvegarde des webhooks dans le fichier JSON
 def save_webhooks(webhooks):
@@ -25,25 +29,34 @@ def save_webhooks(webhooks):
 # Initialisation des webhooks enregistrés
 webhooks = load_webhooks()
 
-@bot.command()
-async def listenWebhook(ctx, webhook_name: str):
-    """Ajoute un webhook à écouter."""
-    if webhook_name in webhooks:
-        await ctx.send(f"🔄 Le webhook `{webhook_name}` est déjà enregistré.")
-    else:
-        webhooks[webhook_name] = True
-        save_webhooks(webhooks)
-        await ctx.send(f"✅ Webhook `{webhook_name}` ajouté avec succès !")
+class listenWebhook(commands.Cog)
+    def __init__(self, bot: commands.bot):
+        self.bot = bot
 
-@bot.command()
-async def removeWebhook(ctx, webhook_name: str):
-    """Supprime un webhook de la liste."""
-    if webhook_name in webhooks:
-        del webhooks[webhook_name]
-        save_webhooks(webhooks)
-        await ctx.send(f"❌ Webhook `{webhook_name}` supprimé avec succès !")
-    else:
-        await ctx.send(f"⚠️ Le webhook `{webhook_name}` n'est pas enregistré.")
+    @commands.command(name="add")
+    @commands.has_permissions(administrator=True)
+    async def listenWebhook(ctx, webhook_name: str):
+        """Ajoute un webhook à écouter."""
+        if not webhook_name.strip():
+            await ctx.send("⚠️ Le nom du webhook ne peut pas être vide.")
+            return
+        if webhook_name in webhooks:
+            await ctx.send(f"🔄 Le webhook `{webhook_name}` est déjà enregistré.")
+        else:
+            webhooks[webhook_name] = True
+            save_webhooks(webhooks)
+            await ctx.send(f"✅ Webhook `{webhook_name}` ajouté avec succès !")
+
+    @commands.command(name="remove")
+    @commands.has_permissions(administrator=True)
+    async def removeWebhook(ctx, webhook_name: str):
+        """Supprime un webhook de la liste."""
+        if webhook_name in webhooks:
+            del webhooks[webhook_name]
+            save_webhooks(webhooks)
+            await ctx.send(f"❌ Webhook `{webhook_name}` supprimé avec succès !")
+        else:
+            await ctx.send(f"⚠️ Le webhook `{webhook_name}` n'est pas enregistré.")
 
 @bot.event
 async def on_message(message):
@@ -51,8 +64,11 @@ async def on_message(message):
     if message.author.bot and message.author.name in webhooks:
         if "purge" in message.content.lower():
             try:
-                # Exemple : "purge 100"
-                number_of_messages = int(message.content.split()[-1])
+                if message.content.split()[-1].isdigit():
+                    number_of_messages = int(message.content.split()[-1])
+                else:
+                    await message.channel.send("⚠️ Le nombre de messages à purger est invalide.")
+                    return
                 await message.channel.purge(limit=number_of_messages)
                 await message.channel.send(f"✅ {number_of_messages} messages supprimés.")
             except Exception as e:
