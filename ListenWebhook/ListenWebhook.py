@@ -24,9 +24,10 @@ class ListenWebhook:
         with open(self.filename, "w") as f:
             json.dump(self.webhooks, f, indent=4)
 
-    def create_lstwebhook(self, webhook_name):
-        if webhook_name not in self.webhooks:
-            self.webhooks[webhook_name] = {}
+    def create_lstwebhook(self, webhook_id, webhook_name):
+        """Ajoute un webhook avec son ID et son nom."""
+        if webhook_id not in self.webhooks:
+            self.webhooks[webhook_id] = {webhook_name}
             self.save_webhooks()
             return True
         return False
@@ -41,15 +42,30 @@ class listenWebhookCog(commands.Cog):
 
     @commands.command(name="lstweb_add")
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-    async def lstweb_add(self, ctx, webhook_name: str):
-        """Ajoute un webhook à écouter."""
-
-        if webhook_name not in webhooks:
-            webhook_config.create_lstwebhook(webhook_name)
-            await ctx.send(f"✅ Webhook `{webhook_name}` ajouté avec succès !")
+    async def lstweb_add(self, ctx, webhook_id: int):
+        """Ajoute un webhook à écouter en récupérant automatiquement son nom."""
+        webhook_id = str(webhook_id)  # Convertit l'ID en chaîne pour le stockage JSON
+        
+        # Tente de récupérer le webhook à partir de l'API Discord
+        try:
+            webhook = await self.bot.fetch_webhook(webhook_id)
+            webhook_name = webhook.name  # Récupère le nom du webhook
+        except discord.NotFound:
+            await ctx.send(f"⚠️ Aucun webhook trouvé avec l'ID `{webhook_id}`.")
             return
+        except discord.Forbidden:
+            await ctx.send("⚠️ Le bot n'a pas les permissions nécessaires pour accéder à ce webhook.")
+            return
+        except Exception as e:
+            await ctx.send(f"❌ Une erreur s'est produite : {e}")
+            return
+
+        # Ajoute le webhook à la liste si non enregistré
+        if webhook_id not in webhooks:
+            webhook_config.create_lstwebhook(webhook_id, webhook_name)
+            await ctx.send(f"✅ Webhook ajouté avec succès : `{webhook_name}` (ID : `{webhook_id}`)")
         else:
-            await ctx.send(f"🔄 Le webhook `{webhook_name}` est déjà enregistré.")
+            await ctx.send(f"🔄 Le webhook avec l'ID `{webhook_id}` est déjà enregistré.")
 
     @commands.command(name="lstweb_remove")
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
@@ -65,19 +81,16 @@ class listenWebhookCog(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
         """Transfère les commandes envoyées par des webhooks enregistrés."""
-        # Affiche dans la console les informations pertinentes
-        print(f"Message reçu : {message}")
+
 
         # Vérifie que le message provient d'un bot et que le nom de l'auteur est dans la liste des webhooks
         if message.author.bot:
-            if message.author.name in webhooks:
+            if str(message.author.id) in webhooks:
                 # Transforme le message du webhook en commande du bot
-                print(f"Webhook détecté : {message.author.name}")
-                
+                print(f"Le bot vient jusqu'ici")
                 ctx = await self.bot.get_context(message)
-                print(f"Contexte généré : {ctx}")
-                print(f"Contexte valide : {ctx.valid}")
-                
+                print(f"le message est {message}")
+                print(f"le ctx est {ctx}")
                 if ctx.valid:
                     print(f"le ctx est {ctx}")
                     # Exécute la commande comme si elle venait d'un utilisateur
