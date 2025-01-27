@@ -11,6 +11,7 @@ class ListenWebhook:
     def __init__(self, bot, filename="webhooklist.json"):
         self.bot = bot
         self.filename = os.path.join(os.path.dirname(__file__), '.', filename)
+        self.webhooks = self.load_webhooks()
 
 
     def load_webhooks(self):
@@ -32,7 +33,7 @@ class listenWebhookCog(commands.Cog):
 
     def __init__(self, bot: commands.bot):
         self.bot = bot
-        self.webhooks = ListenWebhook.load_webhooks()
+        self.webhooks = ListenWebhook()
 
     @commands.command(name="lstweb_add")
     @commands.has_permissions(administrator=True)
