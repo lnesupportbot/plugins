@@ -27,7 +27,7 @@ class ListenWebhook:
     def create_lstwebhook(self, webhook_id, webhook_name):
         """Ajoute un webhook avec son ID et son nom."""
         if webhook_id not in self.webhooks:
-            self.webhooks[webhook_id] = {'webhook_name'}
+            self.webhooks[webhook_id] = {webhook_name}
             self.save_webhooks()
             return True
         return False
@@ -50,6 +50,7 @@ class listenWebhookCog(commands.Cog):
         try:
             webhook = await self.bot.fetch_webhook(webhook_id)
             webhook_name = webhook.name  # Récupère le nom du webhook
+            print(f"le nom du webhook est : {webhook_name}")
         except discord.NotFound:
             await ctx.send(f"⚠️ Aucun webhook trouvé avec l'ID `{webhook_id}`.")
             return
