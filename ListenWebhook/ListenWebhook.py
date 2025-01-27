@@ -55,7 +55,7 @@ class listenWebhookCog(commands.Cog):
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def lstweb_remove(self, ctx, webhook_name: str):
         """Supprime un webhook de la liste."""
-        if webhook_name in webhooks.load_webhooks():
+        if webhook_name in webhooks:
             del webhooks.load_webhooks()[webhook_name]
             webhooks.save_webhooks()
             await ctx.send(f"❌ Webhook `{webhook_name}` supprimé avec succès !")
@@ -65,7 +65,7 @@ class listenWebhookCog(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
         """Gère les messages provenant de webhooks enregistrés."""
-        if message.author.bot and message.author.name in webhooks.load_webhooks():
+        if message.author.bot and message.author.name in webhooks:
             if "purge" in message.content.lower():
                 try:
                     if message.content.split()[-1].isdigit():
