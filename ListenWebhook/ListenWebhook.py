@@ -83,7 +83,7 @@ class listenWebhookCog(commands.Cog):
     async def on_message(self, message):
         """Transfère les commandes envoyées par des webhooks enregistrés."""
         # Affiche dans la console les informations pertinentes
-        print(f"Message reçu : {message}")
+        print(f"Message reçu - Author.bot: {message.author.bot}, Author.name: {message.author.name} ID : {message.author.id}")
 
         # Vérifie que le message provient d'un bot et que le nom de l'auteur est dans la liste des webhooks
         if message.author.bot:
