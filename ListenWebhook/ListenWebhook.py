@@ -70,15 +70,14 @@ class listenWebhookCog(commands.Cog):
             print(f"Message reçu - Author.bot: {message.author.bot}, Author.name: {message.author.name}")
 
         # Vérifie que le message provient d'un bot et que le nom de l'auteur est dans la liste des webhooks
-        if message.author.bot and message.author.name in webhooks:
-            # Transforme le message du webhook en commande du bot
-            ctx = await self.bot.get_context(message)
-            if ctx.valid:
-                # Exécute la commande comme si elle venait d'un utilisateur
-                await self.bot.invoke(ctx)
-            return
-
-
+        if message.author.bot:
+            if message.author.name in webhooks:
+                # Transforme le message du webhook en commande du bot
+                ctx = await self.bot.get_context(message)
+                if ctx.valid:
+                    # Exécute la commande comme si elle venait d'un utilisateur
+                    await self.bot.invoke(ctx)
+                return
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(listenWebhookCog(bot))
