@@ -75,6 +75,7 @@ class listenWebhookCog(commands.Cog):
                 # Transforme le message du webhook en commande du bot
                 print(f"Le bot vient jusqu'ici")
                 ctx = await self.bot.get_context(message)
+                print(f"le message est {message}")
                 if ctx.valid:
                     # Exécute la commande comme si elle venait d'un utilisateur
                     await self.bot.invoke(ctx)
