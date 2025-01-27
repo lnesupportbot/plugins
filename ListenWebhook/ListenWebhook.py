@@ -24,10 +24,10 @@ class ListenWebhook:
         with open(self.filename, "w") as f:
             json.dump(self.webhooks, f, indent=4)
 
-    def create_lstwebhook(self, webhook_id_str, webhook_name):
+    def create_lstwebhook(self, webhook_id, webhook_name):
         """Ajoute un webhook avec son ID et son nom."""
-        if webhook_id_str not in self.webhooks:
-            self.webhooks[webhook_id_str] = {"name": webhook_name}
+        if webhook_id not in self.webhooks:
+            self.webhooks[webhook_id] = {"name": webhook_name}
             self.save_webhooks()
             return True
         return False
@@ -44,7 +44,7 @@ class listenWebhookCog(commands.Cog):
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def lstweb_add(self, ctx, webhook_id: int):
         """Ajoute un webhook à écouter en récupérant automatiquement son nom."""
-        webhook_id_str = str(webhook_id)  # Convertit l'ID en chaîne pour le stockage JSON
+        webhook_id = str(webhook_id)  # Convertit l'ID en chaîne pour le stockage JSON
         
         # Tente de récupérer le webhook à partir de l'API Discord
         try:
@@ -62,8 +62,8 @@ class listenWebhookCog(commands.Cog):
             return
 
         # Ajoute le webhook à la liste si non enregistré
-        if webhook_id_str not in webhooks:
-            webhook_config.create_lstwebhook(webhook_id_str, webhook_name)
+        if webhook_id not in webhooks:
+            webhook_config.create_lstwebhook(webhook_id, webhook_name)
             await ctx.send(f"✅ Webhook ajouté avec succès : `{webhook_name}` (ID : `{webhook_id}`)")
         else:
             await ctx.send(f"🔄 Le webhook avec l'ID `{webhook_id}` est déjà enregistré.")
