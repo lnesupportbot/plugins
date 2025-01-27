@@ -32,17 +32,14 @@ class listenWebhookCog(commands.Cog):
 
     def __init__(self, bot: commands.bot):
         self.bot = bot
-        self.webhooks = ListenWebhook(bot).load_webhooks()
+        self.webhooks = ListenWebhook(bot)
 
     @commands.command(name="lstweb_add")
     @commands.has_permissions(administrator=True)
     async def lstweb_add(self, ctx, webhook_name: str):
         """Ajoute un webhook à écouter."""
-        if not webhook_name.strip():
-            await ctx.send("⚠️ Le nom du webhook ne peut pas être vide.")
-            return
 
-        if webhook_name in self.webhooks:
+        if webhook_name in self.webhooks.load_webhooks():
             await ctx.send(f"🔄 Le webhook `{webhook_name}` est déjà enregistré.")
         else:
             self.webhooks[webhook_name] = True
@@ -53,9 +50,9 @@ class listenWebhookCog(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def lstweb_remove(self, ctx, webhook_name: str):
         """Supprime un webhook de la liste."""
-        if webhook_name in self.webhooks:
-            del self.webhooks[webhook_name]
-            self.save_webhooks()
+        if webhook_name in self.webhooks.load_webhooks():
+            del self.webhooks.load_webhooks[webhook_name]
+            self.webhooks.save_webhooks()
             await ctx.send(f"❌ Webhook `{webhook_name}` supprimé avec succès !")
         else:
             await ctx.send(f"⚠️ Le webhook `{webhook_name}` n'est pas enregistré.")
@@ -63,7 +60,7 @@ class listenWebhookCog(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
         """Gère les messages provenant de webhooks enregistrés."""
-        if message.author.bot and message.author.name in self.webhooks:
+        if message.author.bot and message.author.name in self.webhooks.load_webhooks():
             if "purge" in message.content.lower():
                 try:
                     if message.content.split()[-1].isdigit():
