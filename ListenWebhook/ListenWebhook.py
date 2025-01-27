@@ -73,4 +73,4 @@ class listenWebhookCog(commands.Cog):
         await self.bot.process_commands(message)
 
 async def setup(bot: commands.Bot) -> None:
-    await bot.add_cog(MapVetoCog(bot))
+    await bot.add_cog(listenWebhookCog(bot))
