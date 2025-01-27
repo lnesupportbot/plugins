@@ -42,7 +42,7 @@ class listenWebhookCog(commands.Cog):
         if webhook_name in self.webhooks.load_webhooks():
             await ctx.send(f"🔄 Le webhook `{webhook_name}` est déjà enregistré.")
         else:
-            self.webhooks.load_webhooks[webhook_name] = True
+            self.webhooks.load_webhooks()[webhook_name] = True
             self.webhooks.save_webhooks()
             await ctx.send(f"✅ Webhook `{webhook_name}` ajouté avec succès !")
 
@@ -51,7 +51,7 @@ class listenWebhookCog(commands.Cog):
     async def lstweb_remove(self, ctx, webhook_name: str):
         """Supprime un webhook de la liste."""
         if webhook_name in self.webhooks.load_webhooks():
-            del self.webhooks.load_webhooks[webhook_name]
+            del self.webhooks.load_webhooks()[webhook_name]
             self.webhooks.save_webhooks()
             await ctx.send(f"❌ Webhook `{webhook_name}` supprimé avec succès !")
         else:
