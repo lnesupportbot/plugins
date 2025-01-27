@@ -24,10 +24,10 @@ class ListenWebhook:
         with open(self.filename, "w") as f:
             json.dump(self.webhooks, f, indent=4)
 
-    def create_lstwebhook(self, webhook_id, webhook_name):
+    def create_lstwebhook(self, webhook_id_str, webhook_name):
         """Ajoute un webhook avec son ID et son nom."""
-        if webhook_id not in self.webhooks:
-            self.webhooks[webhook_id] = {webhook_name}
+        if webhook_id_str not in self.webhooks:
+            self.webhooks[webhook_id_str] = {webhook_name}
             self.save_webhooks()
             return True
         return False
@@ -62,7 +62,7 @@ class listenWebhookCog(commands.Cog):
             return
 
         # Ajoute le webhook à la liste si non enregistré
-        if webhook_id not in webhooks:
+        if webhook_id_str not in webhooks:
             webhook_config.create_lstwebhook(webhook_id_str, webhook_name)
             await ctx.send(f"✅ Webhook ajouté avec succès : `{webhook_name}` (ID : `{webhook_id}`)")
         else:
