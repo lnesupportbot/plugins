@@ -42,7 +42,7 @@ class listenWebhookCog(commands.Cog):
         self.bot = bot
 
     @commands.command(name="lstweb_add")
-    @commands.has_permissions(administrator=True)
+    @commands.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def lstweb_add(self, ctx, webhook_name: str):
         """Ajoute un webhook à écouter."""
 
@@ -53,7 +53,7 @@ class listenWebhookCog(commands.Cog):
                 await ctx.send(f"✅ Webhook `{webhook_name}` ajouté avec succès !", ephemeral=True)
 
     @commands.command(name="lstweb_remove")
-    @commands.has_permissions(administrator=True)
+    @commands.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def lstweb_remove(self, ctx, webhook_name: str):
         """Supprime un webhook de la liste."""
         if webhook_name in webhooks.load_webhooks():
