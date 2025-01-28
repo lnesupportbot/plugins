@@ -24,10 +24,9 @@ class ListenWebhook:
         with open(self.filename, "w") as f:
             json.dump(self.webhooks, f, indent=4)
 
-    def create_lstwebhook(self, webhook_id, webhook_name):
-        """Ajoute un webhook avec son ID et son nom."""
-        if webhook_id not in self.webhooks:
-            self.webhooks[webhook_id] = {"name": webhook_name}
+    def create_lstwebhook(self, webhook_name):
+        if webhook_name not in self.webhooks:
+            self.webhooks[webhook_name] = {}
             self.save_webhooks()
             return True
         return False
@@ -42,31 +41,15 @@ class listenWebhookCog(commands.Cog):
 
     @commands.command(name="lstweb_add")
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-    async def lstweb_add(self, ctx, webhook_id: int):
-        """Ajoute un webhook à écouter en récupérant automatiquement son nom."""
-        webhook_id = str(webhook_id)  # Convertit l'ID en chaîne pour le stockage JSON
-        
-        # Tente de récupérer le webhook à partir de l'API Discord
-        try:
-            webhook = await self.bot.fetch_webhook(webhook_id)
-            webhook_name = webhook.name  # Récupère le nom du webhook
-            print(f"le nom du webhook est : {webhook_name}")
-        except discord.NotFound:
-            await ctx.send(f"⚠️ Aucun webhook trouvé avec l'ID `{webhook_id}`.")
-            return
-        except discord.Forbidden:
-            await ctx.send("⚠️ Le bot n'a pas les permissions nécessaires pour accéder à ce webhook.")
-            return
-        except Exception as e:
-            await ctx.send(f"❌ Une erreur s'est produite : {e}")
-            return
+    async def lstweb_add(self, ctx, webhook_name: str):
+        """Ajoute un webhook à écouter."""
 
-        # Ajoute le webhook à la liste si non enregistré
-        if webhook_id not in webhooks:
-            webhook_config.create_lstwebhook(webhook_id, webhook_name)
-            await ctx.send(f"✅ Webhook ajouté avec succès : `{webhook_name}` (ID : `{webhook_id}`)")
+        if webhook_name not in webhooks:
+            webhook_config.create_lstwebhook(webhook_name)
+            await ctx.send(f"✅ Webhook `{webhook_name}` ajouté avec succès !")
+            return
         else:
-            await ctx.send(f"🔄 Le webhook avec l'ID `{webhook_id}` est déjà enregistré.")
+            await ctx.send(f"🔄 Le webhook `{webhook_name}` est déjà enregistré.")
 
     @commands.command(name="lstweb_remove")
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
@@ -83,25 +66,25 @@ class listenWebhookCog(commands.Cog):
     async def on_message(self, message):
         """Transfère les commandes envoyées par des webhooks enregistrés."""
         # Affiche dans la console les informations pertinentes
-        print(f"Message reçu - Author.bot: {message.author.bot}, Author.name: {message.author.name} ID : {message.author.id}")
+        if message.author.bot:
+            print(f"Message reçu - Author.bot: {message.author.bot}, Author.name: {message.author.name} ID : {message.author.id}")
 
         # Vérifie que le message provient d'un bot et que le nom de l'auteur est dans la liste des webhooks
         if message.author.bot:
-            webhook_id = str(message.author.id)
-        
-            if webhook_id in webhooks:
-                webhook_name = webhooks[webhook_id]  # Récupère le nom associé depuis le JSON
+            if message.author.name in webhooks:
+                # Transforme le message du webhook en commande du bot
+                print(f"Webhook détecté : name : {message.author.name} ID : {message.author.id}")
+                ctx = await self.bot.get_context(message)
+                print(f"le message est {message}")
+                print(f"le ctx est {ctx}")
+                if ctx.valid:
+                    print(f"le ctx est {ctx}")
+                    # Exécute la commande comme si elle venait d'un utilisateur
+                    await self.bot.invoke(ctx)
+                return
             
-            # Log dans la console pour débogage
-            print(f"Message reçu du webhook enregistré : ID = {webhook_id}, Nom = {webhook_name}")
-
-            ctx = await self.bot.get_context(message)
-            print(f"Contexte généré : {ctx}")
-            print(f"Contexte valide : {ctx.valid}")
-            if ctx.valid:
-                # Exécute la commande comme si elle venait d'un utilisateur
-                await self.bot.invoke(ctx)
-            return
+        # Force le traitement des commandes pour tous les messages, y compris ceux des webhooks
+        await self.bot.process_commands(message)
 
 
 async def setup(bot: commands.Bot) -> None:
