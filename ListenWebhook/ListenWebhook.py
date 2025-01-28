@@ -96,11 +96,10 @@ class listenWebhookCog(commands.Cog):
         # Construire une liste des webhooks enregistrés
         description = []
         for webhook_id, data in webhook_config.webhooks.items():
-            id = data.get(webhook_id)
             name = data.get("name", "Inconnu")
             channel = data.get("channel", "Inconnu")
             category = data.get("category", "Inconnu")
-            description.append(f"**Nom**: `{name}`\n**ID**: `{id}`\n**Canal**: `{channel}`\n**Catégorie**: `{category}`\n")
+            description.append(f"**Nom**: `{name}`\n**ID**: `{webhook_id}`\n**Canal**: `{channel}`\n**Catégorie**: `{category}`\n")
 
         embed = discord.Embed(
             title="📜 Liste des Webhooks enregistrés",
