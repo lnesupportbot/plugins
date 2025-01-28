@@ -89,10 +89,15 @@ class listenWebhookCog(commands.Cog):
             if webhook_id in webhooks:  # Vérifie si le webhook est enregistré
                 webhook_name = webhooks[webhook_id]["name"]
 
-                # Log du message reçu
-                print(f"Message reçu du webhook : ID = {webhook_id}, Nom = {webhook_name}, Contenu = {message.content}")
+                # Log du message reçu avec nom du canal et catégorie
+                channel_name = message.channel.name
+                category_name = message.channel.category.name if message.channel.category else "Aucune catégorie"
+                print(
+                    f"Message reçu du webhook : ID = {webhook_id}, Nom = {webhook_name}, "
+                    f"Contenu = {message.content}, Canal = {channel_name}, Catégorie = {category_name}"
+                )
 
-                if message.content.startswith("?"):
+                if message.content.startswith("!"):
                     parts = message.content.split()
                     command = parts[0][1:]  # Enlève le "!"
                     args = parts[1:]
@@ -106,13 +111,18 @@ class listenWebhookCog(commands.Cog):
             await self.send_temporary_message(channel, f"Bonjour depuis le webhook `{webhook_name}` !")
         elif command == "purge":
             try:
-                number_of_messages = int(args[0])
+                if args:  # Si un argument est donné
+                    number_of_messages = int(args[0])
+                else:  # Sinon, calcule tous les messages présents
+                    history = await channel.history(limit=None).flatten()
+                    number_of_messages = len(history)
+
                 await channel.purge(limit=number_of_messages)
                 await self.send_temporary_message(
-                    channel, f"✅ Un maximum de {number_of_messages} messages a été supprimé."
+                    channel, f"✅ {number_of_messages} messages supprimés par le webhook `{webhook_name}`."
                 )
             except (ValueError, IndexError):
-                await self.send_temporary_message(channel, "⚠️ Veuillez spécifier un nombre valide de messages à supprimer.")
+                await self.send_temporary_message(channel, "⚠️ Une erreur est survenue lors de la suppression.")
         else:
             await self.send_temporary_message(channel, f"Commande inconnue : `{command}`")
 
