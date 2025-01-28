@@ -79,32 +79,27 @@ class listenWebhookCog(commands.Cog):
         else:
             await ctx.send(f"⚠️ Le webhook `{webhook_name}` n'est pas enregistré.")
             
-    @commands.Cog.listener()
-    async def on_message(self, message):
-        """Transfère les commandes envoyées par des webhooks enregistrés."""
-        # Affiche dans la console les informations pertinentes
-        print(f"Message reçu - Author.bot: {message.author.bot}, Author.name: {message.author.name} ID : {message.author.id}")
+@commands.Cog.listener()
+async def on_message(self, message):
+    """Gère les messages provenant de webhooks enregistrés."""
+    # Vérifie si le message provient d'un bot (webhook) avec un ID enregistré
+    if message.author.bot:
+        webhook_id = str(message.author.id)  # Récupère l'ID du webhook
+        if webhook_id in webhooks:
+            webhook_name = webhooks[webhook_id]  # Récupère le nom associé
 
-        # Vérifie que le message provient d'un bot et que le nom de l'auteur est dans la liste des webhooks
-        if message.author.bot:
-            webhook_id = str(message.author.id)
-        
-            if webhook_id in webhooks:
-                webhook_name = webhooks[webhook_id]  # Récupère le nom associé depuis le JSON
-            
             # Log dans la console pour débogage
             print(f"Message reçu du webhook enregistré : ID = {webhook_id}, Nom = {webhook_name}")
 
+            # Force l'exécution de la commande, en ignorant les permissions
             ctx = await self.bot.get_context(message)
-            print(f"Contexte généré : {ctx}")
-            print(f"Contexte valide : {ctx.valid}")
             if ctx.valid:
-                # Exécute la commande comme si elle venait d'un utilisateur
+                # Ignore les permissions si le message provient d'un webhook
+                ctx.author.guild_permissions = discord.Permissions.all()
                 await self.bot.invoke(ctx)
-            return
-        
-        # Force le traitement des commandes pour tous les messages, y compris ceux des webhooks
-        await self.bot.process_commands(message)
+    
+    # Assure que le bot traite toutes les autres commandes
+    await self.bot.process_commands(message)
 
 
 async def setup(bot: commands.Bot) -> None:
