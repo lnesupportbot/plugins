@@ -144,7 +144,7 @@ class listenWebhookCog(commands.Cog):
         else:
             await ctx.send(f"⚠️ Le webhook avec l'ID `{webhook_id}` n'est pas enregistré.")
 
-    @listen_webhook.Cog.listener()
+    @commands.Cog.listener()
     async def on_message(self, message):
         """Gère les messages provenant de webhooks enregistrés."""
         if message.author.bot:
