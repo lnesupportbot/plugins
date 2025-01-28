@@ -83,11 +83,8 @@ class listenWebhookCog(commands.Cog):
     async def on_message(self, message):
         """Gère les messages provenant de webhooks enregistrés."""
         # Vérifie si le message provient d'un bot (webhook) avec un ID enregistré
-        print(f"le bot est ici")
         if message.author.bot:
             webhook_id = str(message.author.id)  # Récupère l'ID du webhook
-            print(f"le bot est ici")
-            print(f"l'id est : {webhook_id}")
             if webhook_id in webhooks:
                 webhook_name = webhooks[webhook_id]  # Récupère le nom associé
 
@@ -100,6 +97,8 @@ class listenWebhookCog(commands.Cog):
                     # Ignore les permissions si le message provient d'un webhook
                     ctx.author.guild_permissions = discord.Permissions.all()
                     await self.bot.invoke(ctx)
+        # Force le traitement des commandes pour tous les messages, y compris ceux des webhooks
+        await self.bot.process_commands(message)
 
 
 async def setup(bot: commands.Bot) -> None:
