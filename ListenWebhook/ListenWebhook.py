@@ -40,7 +40,16 @@ class listenWebhookCog(commands.Cog):
     def __init__(self, bot: commands.bot):
         self.bot = bot
 
-    @commands.command(name="lstweb_add")
+
+    @commands.group(name="lstweb", usage="<option>", invoke_without_command=True)
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
+    async def ListenWebhook(self, ctx: commands.Context):
+        """
+        Commande de base pour gérer les webhooks qui pourront être écouter par le bot.
+        """
+        await ctx.send_help(ctx.command)
+
+    @commands.command(name="add")
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def lstweb_add(self, ctx, webhook_id: int):
         """Ajoute un webhook à écouter."""
@@ -83,7 +92,7 @@ class listenWebhookCog(commands.Cog):
         else:
             await ctx.send(f"🔄 Le webhook avec l'ID `{webhook_id}` est déjà enregistré.")
 
-    @commands.command(name="lstweb_list")
+    @commands.command(name="liste", aliases=["lst"])
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def lstweb_list(self, ctx):
         """
@@ -110,7 +119,7 @@ class listenWebhookCog(commands.Cog):
         await ctx.send(embed=embed)
 
 
-    @commands.command(name="lstweb_remove")
+    @commands.command(name="remove", aliases=["rmv", "del"])
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def lstweb_remove(self, ctx, webhook_id: int):
         """Supprime un webhook de la liste."""
