@@ -91,7 +91,7 @@ class listenWebhookCog(commands.Cog):
                 print(f"Message reçu du webhook : ID = {webhook_id}, Nom = {webhook_name}, Contenu = {message.content}")
 
 
-            if message.content.startswith("?"):
+            if message.content.startswith("!"):
                 parts = message.content.split()
                 command = parts[0][1:]  # Enlève le "!"
                 args = parts[1:]
