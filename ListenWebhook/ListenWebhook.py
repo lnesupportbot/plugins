@@ -72,14 +72,14 @@ class listenWebhookCog(commands.Cog):
 
     @commands.command(name="lstweb_remove")
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-    async def lstweb_remove(self, ctx, webhook_name: str):
+    async def lstweb_remove(self, ctx, webhook_id: int):
         """Supprime un webhook de la liste."""
-        if webhook_name in webhooks:
-            del webhooks[webhook_name]
+        if webhook_id in webhooks:
+            del webhooks[webhook_id]
             webhook_config.save_webhooks()
-            await ctx.send(f"❌ Webhook `{webhook_name}` supprimé avec succès !")
+            await ctx.send(f"❌ Webhook `{webhook_id}` supprimé avec succès !")
         else:
-            await ctx.send(f"⚠️ Le webhook `{webhook_name}` n'est pas enregistré.")
+            await ctx.send(f"⚠️ Le webhook `{webhook_id}` n'est pas enregistré.")
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -120,7 +120,7 @@ class listenWebhookCog(commands.Cog):
 
                 await channel.purge(limit=number_of_messages)
                 await self.send_temporary_message(
-                    channel, f"✅ {number_of_messages} messages supprimés par le webhook `{webhook_name}`."
+                    channel, f"✅ {number_of_messages} messages supprimés."
                 )
             except (ValueError, IndexError):
                 await self.send_temporary_message(channel, "⚠️ Une erreur est survenue lors de la suppression.")
