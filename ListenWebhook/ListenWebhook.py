@@ -85,6 +85,7 @@ async def on_message(self, message):
     # Vérifie si le message provient d'un bot (webhook) avec un ID enregistré
     if message.author.bot:
         webhook_id = str(message.author.id)  # Récupère l'ID du webhook
+        print(f"le bot est ici")
         print(f"l'id est : {webhook_id}")
         if webhook_id in webhooks:
             webhook_name = webhooks[webhook_id]  # Récupère le nom associé
