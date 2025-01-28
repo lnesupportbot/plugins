@@ -97,9 +97,6 @@ async def on_message(self, message):
                 # Ignore les permissions si le message provient d'un webhook
                 ctx.author.guild_permissions = discord.Permissions.all()
                 await self.bot.invoke(ctx)
-    
-    # Assure que le bot traite toutes les autres commandes
-    await self.bot.process_commands(message)
 
 
 async def setup(bot: commands.Bot) -> None:
