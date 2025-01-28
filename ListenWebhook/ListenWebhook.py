@@ -86,16 +86,15 @@ class listenWebhookCog(commands.Cog):
         if message.author.bot:
             webhook_id = str(message.author.id)  # Récupère l'ID du webhook
             if webhook_id in webhooks:
-                webhook_name = webhooks[webhook_id]  # Récupère le nom associé
+                webhook_name = webhooks[webhook_id]["name"]  # Récupère le nom associé
 
                 # Log dans la console pour débogage
                 print(f"Message reçu du webhook enregistré : ID = {webhook_id}, Nom = {webhook_name}")
 
-                # Force l'exécution de la commande, en ignorant les permissions
+                # Obtenir le contexte du message et forcer son exécution
                 ctx = await self.bot.get_context(message)
                 if ctx.valid:
-                    # Ignore les permissions si le message provient d'un webhook
-                    ctx.author.guild_permissions = discord.Permissions.all()
+                    # Si une commande est détectée, exécuter sans se soucier des rôles ou permissions
                     await self.bot.invoke(ctx)
 
 
