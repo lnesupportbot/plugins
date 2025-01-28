@@ -28,9 +28,7 @@ class ListenWebhook:
     def create_lstwebhook(self, webhook_id, webhook_name):
         """Ajoute un webhook avec son ID et son nom."""
         if webhook_id not in self.webhooks:
-            self.webhooks[webhook_id] = {
-                "name": webhook_name
-            }
+            self.webhooks[webhook_id] = {}
             self.save_webhooks()
             return True
         return False
