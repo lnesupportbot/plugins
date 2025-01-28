@@ -90,23 +90,35 @@ class listenWebhookCog(commands.Cog):
                 # Log du message reçu
                 print(f"Message reçu du webhook : ID = {webhook_id}, Nom = {webhook_name}, Contenu = {message.content}")
 
-                # Analyse et exécution des commandes spécifiques
-                if message.content.startswith("!ping"):
-                    await message.channel.send("Pong!")  # Exemple de commande `!ping`
-                elif message.content.startswith("!hello"):
-                    await message.channel.send(f"Bonjour depuis le webhook `{webhook_name}` !")
-                elif message.content.startswith("!purge"):
-                    try:
-                        # Extraction du nombre de messages à supprimer
-                        number_of_messages = int(message.content.split()[-1])
-                        await message.channel.purge(limit=number_of_messages)
-                        await message.channel.send(f"✅ {number_of_messages} messages supprimés par le webhook `{webhook_name}`.")
-                    except ValueError:
-                        await message.channel.send("⚠️ Veuillez spécifier un nombre valide de messages à supprimer.")
-                    except Exception as e:
-                        await message.channel.send(f"❌ Une erreur s'est produite : {e}")
 
-                # Ajoutez ici d'autres commandes spécifiques selon vos besoins
+            if message.content.startswith("?"):
+                parts = message.content.split()
+                command = parts[0][1:]  # Enlève le "!"
+                args = parts[1:]
+                await execute_webhook_command(command, args, message.channel, webhook_name)
+
+
+        async def execute_webhook_command(command, args, channel, webhook_name):
+            if command == "ping":
+                await channel.send("Pong!")
+            elif command == "hello":
+                await channel.send(f"Bonjour depuis le webhook `{webhook_name}` !")
+            elif command == "purge":
+                try:
+                    number_of_messages = int(args[0])
+                    await channel.purge(limit=number_of_messages)
+                    await send_temporary_message(message.channel, f"✅ {number_of_messages} messages supprimés par le webhook `{webhook_name}`.")
+                except (ValueError, IndexError):
+                    await send_temporary_message(message.channel, "⚠️ Veuillez spécifier un nombre valide de messages à supprimer.")
+
+                        # Ajoutez ici d'autres commandes spécifiques selon vos besoins
+
+        async def send_temporary_message(channel, content, delay=5):
+            """Envoie un message temporaire dans le canal."""
+            msg = await channel.send(content)
+            await asyncio.sleep(delay)
+            await msg.delete()
+
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(listenWebhookCog(bot))
