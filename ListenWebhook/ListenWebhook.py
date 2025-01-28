@@ -45,7 +45,7 @@ class listenWebhookCog(commands.Cog):
     @commands.command(name="lstweb_add")
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def lstweb_add(self, ctx, webhook_id: int):
-        """Ajoute un webhook à écouter en récupérant automatiquement son nom."""
+        """Ajoute un webhook à écouter."""
         webhook_id = str(webhook_id)  # Convertit l'ID en chaîne pour le stockage JSON
 
         try:
@@ -84,16 +84,57 @@ class listenWebhookCog(commands.Cog):
         else:
             await ctx.send(f"🔄 Le webhook avec l'ID `{webhook_id}` est déjà enregistré.")
 
+    @commands.command(name="lstweb_list")
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
+    async def lstweb_list(self, ctx):
+        """
+        Affiche la liste des webhooks enregistrés.
+        """
+        if not webhooks:
+            await ctx.send("⚠️ Aucun webhook n'est enregistré pour le moment.")
+            return
+
+        # Construire une liste des webhooks enregistrés
+        description = []
+        for webhook_id, data in webhooks.items():
+            name = data.get("name", "Inconnu")
+            channel = data.get("channel", "Inconnu")
+            category = data.get("category", "Inconnu")
+            description.append(f"**Nom**: `{name}`\n**Canal**: `{channel}`\n**Catégorie**: `{category}`\n")
+
+        embed = discord.Embed(
+            title="📜 Liste des Webhooks enregistrés",
+            description="\n\n".join(description),
+            color=discord.Color.blue(),
+        )
+
+        await ctx.send(embed=embed)
+
+
     @commands.command(name="lstweb_remove")
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def lstweb_remove(self, ctx, webhook_id: int):
         """Supprime un webhook de la liste."""
+        webhook_id = str(webhook_id)  # Convertit l'ID en chaîne pour correspondre au stockage JSON
+
         if webhook_id in webhooks:
+            # Récupère les informations avant suppression
+            webhook_data = webhooks[webhook_id]
+            webhook_name = webhook_data.get("name", "Inconnu")
+            channel_name = webhook_data.get("channel", "Inconnu")
+            category_name = webhook_data.get("category", "Sans catégorie")
+
+            # Supprime le webhook de la liste
             del webhooks[webhook_id]
             webhook_config.save_webhooks()
-            await ctx.send(f"❌ Webhook `{webhook_id}` supprimé avec succès !")
+
+            # Envoie un message de confirmation avec les détails
+            await ctx.send(
+                f"❌ Webhook `{webhook_name}` supprimé avec succès ! "
+                f"(Canal : `{channel_name}`, Catégorie : `{category_name}`)"
+            )
         else:
-            await ctx.send(f"⚠️ Le webhook `{webhook_id}` n'est pas enregistré.")
+            await ctx.send(f"⚠️ Le webhook avec l'ID `{webhook_id}` n'est pas enregistré.")
 
     @commands.Cog.listener()
     async def on_message(self, message):
