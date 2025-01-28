@@ -96,7 +96,6 @@ class listenWebhookCog(commands.Cog):
                     parts = message.content.split()
                     command = parts[0][1:]  # Enlève le "!"
                     args = parts[1:]
-                    print(f"Commande : {command}, Arguments : {args}")
                     await self.execute_webhook_command(command, args, message.channel, webhook_name)
 
     async def execute_webhook_command(self, command, args, channel, webhook_name):
