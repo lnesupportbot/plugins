@@ -109,7 +109,7 @@ class listenWebhookCog(commands.Cog):
                 number_of_messages = int(args[0])
                 await channel.purge(limit=number_of_messages)
                 await self.send_temporary_message(
-                    channel, f"✅ Un maximum de {number_of_messages} messages a été supprimés `{webhook_name}`."
+                    channel, f"✅ Un maximum de {number_of_messages} messages a été supprimé."
                 )
             except (ValueError, IndexError):
                 await self.send_temporary_message(channel, "⚠️ Veuillez spécifier un nombre valide de messages à supprimer.")
