@@ -83,6 +83,7 @@ class listenWebhookCog(commands.Cog):
 async def on_message(self, message):
     """Gère les messages provenant de webhooks enregistrés."""
     # Vérifie si le message provient d'un bot (webhook) avec un ID enregistré
+    print(f"le bot est ici")
     if message.author.bot:
         webhook_id = str(message.author.id)  # Récupère l'ID du webhook
         print(f"le bot est ici")
