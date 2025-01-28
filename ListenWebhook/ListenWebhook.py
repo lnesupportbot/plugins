@@ -7,9 +7,10 @@ import os
 from core import checks
 from core.models import PermissionLevel  # type: ignore
 
+
 class ListenWebhook:
     def __init__(self, filename="webhooklist.json"):
-        self.filename = os.path.join(os.path.dirname(__file__), '.', filename)
+        self.filename = os.path.join(os.path.dirname(__file__), ".", filename)
         self.webhooks = self.load_webhooks()
 
     def load_webhooks(self):
@@ -17,7 +18,7 @@ class ListenWebhook:
         if os.path.exists(self.filename):
             with open(self.filename, "r") as f:
                 return json.load(f)
-        return{}
+        return {}
 
     def save_webhooks(self):
         """Sauvegarde les webhooks dans un fichier JSON."""
@@ -32,11 +33,12 @@ class ListenWebhook:
             return True
         return False
 
+
 webhook_config = ListenWebhook()
 webhooks = webhook_config.load_webhooks()
 
-class listenWebhookCog(commands.Cog):
 
+class listenWebhookCog(commands.Cog):
     def __init__(self, bot: commands.bot):
         self.bot = bot
 
@@ -45,12 +47,12 @@ class listenWebhookCog(commands.Cog):
     async def lstweb_add(self, ctx, webhook_id: int):
         """Ajoute un webhook à écouter en récupérant automatiquement son nom."""
         webhook_id = str(webhook_id)  # Convertit l'ID en chaîne pour le stockage JSON
-        
+
         # Tente de récupérer le webhook à partir de l'API Discord
         try:
             webhook = await self.bot.fetch_webhook(webhook_id)
             webhook_name = webhook.name  # Récupère le nom du webhook
-            print(f"le nom du webhook est : {webhook_name}")
+            print(f"Le nom du webhook est : {webhook_name}")
         except discord.NotFound:
             await ctx.send(f"⚠️ Aucun webhook trouvé avec l'ID `{webhook_id}`.")
             return
@@ -78,7 +80,7 @@ class listenWebhookCog(commands.Cog):
             await ctx.send(f"❌ Webhook `{webhook_name}` supprimé avec succès !")
         else:
             await ctx.send(f"⚠️ Le webhook `{webhook_name}` n'est pas enregistré.")
-            
+
     @commands.Cog.listener()
     async def on_message(self, message):
         """Gère les messages provenant de webhooks enregistrés."""
@@ -90,34 +92,36 @@ class listenWebhookCog(commands.Cog):
                 # Log du message reçu
                 print(f"Message reçu du webhook : ID = {webhook_id}, Nom = {webhook_name}, Contenu = {message.content}")
 
+                if message.content.startswith("!"):
+                    parts = message.content.split()
+                    command = parts[0][1:]  # Enlève le "!"
+                    args = parts[1:]
+                    print(f"Commande : {command}, Arguments : {args}")
+                    await self.execute_webhook_command(command, args, message.channel, webhook_name)
 
-            if message.content.startswith("!"):
-                parts = message.content.split()
-                command = parts[0][1:]  # Enlève le "!"
-                args = parts[1:]
-                await execute_webhook_command(command, args, message.channel, webhook_name)
+    async def execute_webhook_command(self, command, args, channel, webhook_name):
+        """Exécute une commande en fonction du message reçu."""
+        if command == "ping":
+            await self.send_temporary_message(channel, "Pong!")
+        elif command == "hello":
+            await self.send_temporary_message(channel, f"Bonjour depuis le webhook `{webhook_name}` !")
+        elif command == "purge":
+            try:
+                number_of_messages = int(args[0])
+                await channel.purge(limit=number_of_messages)
+                await self.send_temporary_message(
+                    channel, f"✅ {number_of_messages} messages supprimés par le webhook `{webhook_name}`."
+                )
+            except (ValueError, IndexError):
+                await self.send_temporary_message(channel, "⚠️ Veuillez spécifier un nombre valide de messages à supprimer.")
+        else:
+            await self.send_temporary_message(channel, f"Commande inconnue : `{command}`")
 
-
-        async def execute_webhook_command(command, args, channel, webhook_name):
-            if command == "ping":
-                await channel.send("Pong!")
-            elif command == "hello":
-                await channel.send(f"Bonjour depuis le webhook `{webhook_name}` !")
-            elif command == "purge":
-                try:
-                    number_of_messages = int(args[0])
-                    await channel.purge(limit=number_of_messages)
-                    await send_temporary_message(message.channel, f"✅ {number_of_messages} messages supprimés par le webhook `{webhook_name}`.")
-                except (ValueError, IndexError):
-                    await send_temporary_message(message.channel, "⚠️ Veuillez spécifier un nombre valide de messages à supprimer.")
-
-                        # Ajoutez ici d'autres commandes spécifiques selon vos besoins
-
-        async def send_temporary_message(channel, content, delay=5):
-            """Envoie un message temporaire dans le canal."""
-            msg = await channel.send(content)
-            await asyncio.sleep(delay)
-            await msg.delete()
+    async def send_temporary_message(self, channel, content, delay=5):
+        """Envoie un message temporaire dans le canal."""
+        msg = await channel.send(content)
+        await asyncio.sleep(delay)
+        await msg.delete()
 
 
 async def setup(bot: commands.Bot) -> None:
