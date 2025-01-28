@@ -114,8 +114,9 @@ class listenWebhookCog(commands.Cog):
                 if args:  # Si un argument est donné
                     number_of_messages = int(args[0])
                 else:  # Sinon, calcule tous les messages présents
-                    history = await channel.history(limit=None).flatten()
-                    number_of_messages = len(history)
+                    number_of_messages = 0
+                    async for _ in channel.history(limit=None):
+                        number_of_messages += 1
 
                 await channel.purge(limit=number_of_messages)
                 await self.send_temporary_message(
@@ -123,6 +124,7 @@ class listenWebhookCog(commands.Cog):
                 )
             except (ValueError, IndexError):
                 await self.send_temporary_message(channel, "⚠️ Une erreur est survenue lors de la suppression.")
+
         else:
             await self.send_temporary_message(channel, f"Commande inconnue : `{command}`")
 
