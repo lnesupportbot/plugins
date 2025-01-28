@@ -35,8 +35,6 @@ class ListenWebhook:
 
 
 webhook_config = ListenWebhook()
-webhooks = webhook_config.load_webhooks()
-
 
 class listenWebhookCog(commands.Cog):
     def __init__(self, bot: commands.bot):
@@ -70,7 +68,7 @@ class listenWebhookCog(commands.Cog):
             return
 
         # Ajoute le webhook avec les informations supplémentaires
-        if webhook_id not in webhooks:
+        if webhook_id not in webhook_config.webhooks:
             webhook_config.create_lstwebhook(
                 webhook_id,
                 {
@@ -91,13 +89,13 @@ class listenWebhookCog(commands.Cog):
         """
         Affiche la liste des webhooks enregistrés.
         """
-        if not webhooks:
+        if not webhook_config.webhooks:
             await ctx.send("⚠️ Aucun webhook n'est enregistré pour le moment.")
             return
 
         # Construire une liste des webhooks enregistrés
         description = []
-        for webhook_id, data in webhooks.items():
+        for webhook_id, data in webhook_config.webhooks.items():
             name = data.get("name", "Inconnu")
             channel = data.get("channel", "Inconnu")
             category = data.get("category", "Inconnu")
@@ -118,15 +116,15 @@ class listenWebhookCog(commands.Cog):
         """Supprime un webhook de la liste."""
         webhook_id = str(webhook_id)  # Convertit l'ID en chaîne pour correspondre au stockage JSON
 
-        if webhook_id in webhooks:
+        if webhook_id in webhook_config.webhooks:
             # Récupère les informations avant suppression
-            webhook_data = webhooks[webhook_id]
+            webhook_data = webhook_config.webhooks[webhook_id]
             webhook_name = webhook_data.get("name", "Inconnu")
             channel_name = webhook_data.get("channel", "Inconnu")
             category_name = webhook_data.get("category", "Sans catégorie")
 
             # Supprime le webhook de la liste
-            del webhooks[webhook_id]
+            del webhook_config.webhooks[webhook_id]
             webhook_config.save_webhooks()
 
             # Envoie un message de confirmation avec les détails
@@ -142,8 +140,8 @@ class listenWebhookCog(commands.Cog):
         """Gère les messages provenant de webhooks enregistrés."""
         if message.author.bot:
             webhook_id = str(message.author.id)  # ID du webhook
-            if webhook_id in webhooks:  # Vérifie si le webhook est enregistré
-                webhook_name = webhooks[webhook_id]["name"]
+            if webhook_id in webhook_config.webhooks:  # Vérifie si le webhook est enregistré
+                webhook_name = webhook_config.webhooks[webhook_id]["name"]
 
                 # Log du message reçu avec nom du canal et catégorie
                 channel_name = message.channel.name
