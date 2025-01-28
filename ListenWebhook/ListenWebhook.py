@@ -79,27 +79,27 @@ class listenWebhookCog(commands.Cog):
         else:
             await ctx.send(f"⚠️ Le webhook `{webhook_name}` n'est pas enregistré.")
             
-@commands.Cog.listener()
-async def on_message(self, message):
-    """Gère les messages provenant de webhooks enregistrés."""
-    # Vérifie si le message provient d'un bot (webhook) avec un ID enregistré
-    print(f"le bot est ici")
-    if message.author.bot:
-        webhook_id = str(message.author.id)  # Récupère l'ID du webhook
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        """Gère les messages provenant de webhooks enregistrés."""
+        # Vérifie si le message provient d'un bot (webhook) avec un ID enregistré
         print(f"le bot est ici")
-        print(f"l'id est : {webhook_id}")
-        if webhook_id in webhooks:
-            webhook_name = webhooks[webhook_id]  # Récupère le nom associé
+        if message.author.bot:
+            webhook_id = str(message.author.id)  # Récupère l'ID du webhook
+            print(f"le bot est ici")
+            print(f"l'id est : {webhook_id}")
+            if webhook_id in webhooks:
+                webhook_name = webhooks[webhook_id]  # Récupère le nom associé
 
-            # Log dans la console pour débogage
-            print(f"Message reçu du webhook enregistré : ID = {webhook_id}, Nom = {webhook_name}")
+                # Log dans la console pour débogage
+                print(f"Message reçu du webhook enregistré : ID = {webhook_id}, Nom = {webhook_name}")
 
-            # Force l'exécution de la commande, en ignorant les permissions
-            ctx = await self.bot.get_context(message)
-            if ctx.valid:
-                # Ignore les permissions si le message provient d'un webhook
-                ctx.author.guild_permissions = discord.Permissions.all()
-                await self.bot.invoke(ctx)
+                # Force l'exécution de la commande, en ignorant les permissions
+                ctx = await self.bot.get_context(message)
+                if ctx.valid:
+                    # Ignore les permissions si le message provient d'un webhook
+                    ctx.author.guild_permissions = discord.Permissions.all()
+                    await self.bot.invoke(ctx)
 
 
 async def setup(bot: commands.Bot) -> None:
