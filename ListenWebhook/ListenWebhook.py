@@ -46,6 +46,7 @@ class listenWebhookCog(commands.Cog):
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def lstweb_add(self, ctx, webhook_id: int):
         """Ajoute un webhook à écouter."""
+        webhook_config.load_webhooks()
         webhook_id = str(webhook_id)  # Convertit l'ID en chaîne pour le stockage JSON
 
         try:
