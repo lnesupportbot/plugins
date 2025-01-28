@@ -82,21 +82,31 @@ class listenWebhookCog(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
         """Gère les messages provenant de webhooks enregistrés."""
-        # Vérifie si le message provient d'un bot (webhook) avec un ID enregistré
         if message.author.bot:
-            webhook_id = str(message.author.id)  # Récupère l'ID du webhook
-            if webhook_id in webhooks:
-                webhook_name = webhooks[webhook_id]["name"]  # Récupère le nom associé
+            webhook_id = str(message.author.id)  # ID du webhook
+            if webhook_id in webhooks:  # Vérifie si le webhook est enregistré
+                webhook_name = webhooks[webhook_id]["name"]
 
-                # Log dans la console pour débogage
-                print(f"Message reçu du webhook enregistré : ID = {webhook_id}, Nom = {webhook_name}")
+                # Log du message reçu
+                print(f"Message reçu du webhook : ID = {webhook_id}, Nom = {webhook_name}, Contenu = {message.content}")
 
-                # Obtenir le contexte du message et forcer son exécution
-                ctx = await self.bot.get_context(message)
-                if ctx.valid:
-                    # Si une commande est détectée, exécuter sans se soucier des rôles ou permissions
-                    await self.bot.invoke(ctx)
+                # Analyse et exécution des commandes spécifiques
+                if message.content.startswith("!ping"):
+                    await message.channel.send("Pong!")  # Exemple de commande `!ping`
+                elif message.content.startswith("!hello"):
+                    await message.channel.send(f"Bonjour depuis le webhook `{webhook_name}` !")
+                elif message.content.startswith("!purge"):
+                    try:
+                        # Extraction du nombre de messages à supprimer
+                        number_of_messages = int(message.content.split()[-1])
+                        await message.channel.purge(limit=number_of_messages)
+                        await message.channel.send(f"✅ {number_of_messages} messages supprimés par le webhook `{webhook_name}`.")
+                    except ValueError:
+                        await message.channel.send("⚠️ Veuillez spécifier un nombre valide de messages à supprimer.")
+                    except Exception as e:
+                        await message.channel.send(f"❌ Une erreur s'est produite : {e}")
 
+                # Ajoutez ici d'autres commandes spécifiques selon vos besoins
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(listenWebhookCog(bot))
