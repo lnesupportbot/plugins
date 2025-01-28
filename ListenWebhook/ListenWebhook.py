@@ -28,7 +28,9 @@ class ListenWebhook:
     def create_lstwebhook(self, webhook_id, webhook_name):
         """Ajoute un webhook avec son ID et son nom."""
         if webhook_id not in self.webhooks:
-            self.webhooks[webhook_id] = {"name": webhook_name}
+            self.webhooks[webhook_id] = {
+                "name": webhook_name
+            }
             self.save_webhooks()
             return True
         return False
@@ -48,11 +50,16 @@ class listenWebhookCog(commands.Cog):
         """Ajoute un webhook à écouter en récupérant automatiquement son nom."""
         webhook_id = str(webhook_id)  # Convertit l'ID en chaîne pour le stockage JSON
 
-        # Tente de récupérer le webhook à partir de l'API Discord
         try:
             webhook = await self.bot.fetch_webhook(webhook_id)
             webhook_name = webhook.name  # Récupère le nom du webhook
-            print(f"Le nom du webhook est : {webhook_name}")
+
+            # Récupère la catégorie et le nom du canal
+            channel_name = webhook.channel.name if webhook.channel else "Inconnu"
+            category_name = (
+                webhook.channel.category.name if webhook.channel and webhook.channel.category else "Sans catégorie"
+            )
+
         except discord.NotFound:
             await ctx.send(f"⚠️ Aucun webhook trouvé avec l'ID `{webhook_id}`.")
             return
@@ -63,10 +70,19 @@ class listenWebhookCog(commands.Cog):
             await ctx.send(f"❌ Une erreur s'est produite : {e}")
             return
 
-        # Ajoute le webhook à la liste si non enregistré
+        # Ajoute le webhook avec les informations supplémentaires
         if webhook_id not in webhooks:
-            webhook_config.create_lstwebhook(webhook_id, webhook_name)
-            await ctx.send(f"✅ Webhook ajouté avec succès : `{webhook_name}` (ID : `{webhook_id}`)")
+            webhook_config.create_lstwebhook(
+                webhook_id,
+                {
+                    "name": webhook_name,
+                    "channel": channel_name,
+                    "category": category_name,
+                },
+            )
+            await ctx.send(
+                f"✅ Webhook ajouté avec succès : `{webhook_name}` (ID : `{webhook_id}`) dans le canal `{channel_name}` de la catégorie `{category_name}`."
+            )
         else:
             await ctx.send(f"🔄 Le webhook avec l'ID `{webhook_id}` est déjà enregistré.")
 
